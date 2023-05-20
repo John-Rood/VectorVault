@@ -82,7 +82,7 @@ vault.save()
 
 
 
-### When you want to use the vault later:
+## When you want to use the vault later:
 ```
 similar_data = vault.get_similar(text_input) # returns 4 results
 similar_data = vault.get_similar(text_input, n = 10) # returns 10 results
@@ -114,7 +114,7 @@ print(science_vault.get_vaults())
 ```
 >> ['biology', 'physics', 'chemistry']
 
-### Vault within vault
+## Access vaults within vaults
 ```
 biology_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/biology')
 ```

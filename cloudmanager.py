@@ -1,3 +1,18 @@
+# VECTOR VAULT CONFIDENTIAL
+# __________________
+# 
+#  All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of Vector Vault and its suppliers,
+# if any.  The intellectual and technical concepts contained
+# herein are proprietary to Vector Vault
+# and its suppliers and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from Vector Vault.
+
 import tempfile
 import os
 import json
@@ -19,25 +34,25 @@ class CloudManager:
         self.storage_client = storage.Client(project='vectorvault-361ab', credentials=credentials)
         self.gcloud = self.storage_client.bucket(self.user)
 
-    def blob_exists(self, blob_name):
-        return storage.Blob(bucket=self.gcloud, name=blob_name).exists(self.storage_client)
+    def vault_exists(self, vault_name):
+        return storage.Blob(bucket=self.gcloud, name=vault_name).exists(self.storage_client)
 
-    def upload_to_cloud(self, blob_name, content):
-        blob = self.gcloud.blob(blob_name)
+    def upload_to_cloud(self, vault_name, content):
+        blob = self.gcloud.blob(vault_name)
         blob.upload_from_string(content)
 
-    def download_text_from_cloud(self, blob_name):
-        blob = self.gcloud.blob(blob_name)
+    def download_text_from_cloud(self, vault_name):
+        blob = self.gcloud.blob(vault_name)
         return blob.download_as_text()
 
-    def upload_temp_file(self, temp_file_path, blob_name):
-        blob = self.gcloud.blob(blob_name)
+    def upload_temp_file(self, temp_file_path, vault_name):
+        blob = self.gcloud.blob(vault_name)
         blob.upload_from_filename(temp_file_path)
         os.remove(temp_file_path)
 
-    def download_to_temp_file(self, blob_name):
+    def download_to_temp_file(self, vault_name):
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            blob = self.gcloud.blob(blob_name)
+            blob = self.gcloud.blob(vault_name)
             blob.download_to_filename(temp_file.name) 
             return temp_file.name
 

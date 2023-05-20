@@ -1,0 +1,6 @@
+numpy
+openai
+annoy
+google-cloud-storage
+requests
+bs4

@@ -178,3 +178,106 @@ for item in vault_response['context']['results']:
     print("\n\n", f"item {item['metadata']['item_index']}")
     print(item['data'])
 ```
+
+
+### Real world usage:
+```
+user_input = input("What's your question?")
+
+# Get response from Language model
+vault_response = vault.get_chat(user_input, get_context=True, return_context=True)
+
+answer = vault_response['response']
+print("Question:", user_input, "\n\nAnswer:", answer)
+
+# show the context used to generate the answer
+for item in vault_response['context']['results']:
+    print("\n\n", f"item {item['metadata']['item_index']}")
+    print(item['data'])
+
+```
+
+- 
+
+```
+user_input2 = input("What's your next question?")
+
+history = user_input + answer
+
+# Get response from Language model
+vault_response = vault.get_chat(user_input2, history=history, get_context=True, model='gpt-4')
+
+print("Question:", user_input2, "\n\nAnswer:", vault_response2)
+```
+
+> Question: 
+> What is a token broker? 
+
+> Answer: 
+>> A token broker is a service that generates downscoped access tokens for token
+consumers to access or modify specific Google Cloud Storage resources with
+restricted access. It instantiates downscoped credentials instances that can be
+used to generate short-lived downscoped access tokens, which are passed to the
+token consumer. These downscoped access tokens can be injected by the consumer
+into google.oauth2.Credentials to initialize a storage client instance for
+accessing Google Cloud Storage resources. Essentially, a token broker acts as a
+mediator between the token consumers and Google Cloud Storage resources,
+ensuring that tokens in flight always have the least privileges, adhering to the
+Principle of Least Privilege.
+>>
+
+ item 33
+Various workloads (token consumers) in the same network will send authenticated
+requests to that broker for downscoped tokens to access or modify specific google
+cloud storage buckets.
+ The broker will instantiate downscoped credentials instances that can be used to
+generate short lived downscoped access tokens that can be passed to the token
+consumer.  These downscoped access tokens can be injected by the consumer into
+google.oauth2.Credentials and used to initialize a storage client instance to
+access Google Cloud Storage resources with restricted access.
+ Token Consumer
+import google.oauth2
+from google.auth.transport import requests
+from google.cloud import storage
+# Downscoped token retrieved from token broker.
+ # The `get_token_from_broker` callable requests a token and an expiry
+# from the token broker.
+ downscoped_token, expiry = get_token_from_broker(
+requests.Request(),
+scopes=['https://www.googleapis.com/auth/cloud-platform'])
+# Create the OAuth credentials from the downscoped token and pass a
+# refresh handler to handle token expiration. 
+
+
+ item 34
+Passing the original
+# downscoped token or the expiry here is optional, as the refresh_handler
+# will generate the downscoped token on demand.
+ credentials = google.oauth2.credentials.Credentials(
+downscoped_token,
+expiry=expiry,
+scopes=['https://www.googleapis.com/auth/cloud-platform'],
+refresh_handler=get_token_from_broker)
+# Initialize a storage client with the oauth2 credentials.
+ storage_client = storage.Client(
+project='my_project_id', credentials=credentials)
+# Call GCS APIs.
+ # The token broker has readonly access to objects starting with "customer-a"
+# in bucket "bucket-123".
+ bucket = storage_client.bucket('bucket-123')
+blob = bucket.blob('customer-a-data.txt')
+print(blob.download_as_bytes().decode("utf-8"))
+Another reason to use downscoped credentials is to ensure tokens in flight
+always have the least privileges, e.g.  Principle of Least Privilege.
+ # Create the downscoped credentials.
+ downscoped_credentials = downscoped.Credentials(
+# source_credentials have elevated access but only a subset of
+# these permissions are needed here.
+
+
+
+ item 37
+The following is an
+example
+import google.oauth2.id_token
+import google.auth.transport.requests

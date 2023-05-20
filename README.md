@@ -83,7 +83,7 @@ vault.add(insanely_large_text_data)
 vault.get_vectors() 
 vault.save() 
 ```
-^ these three lines execute fast and can be called as often as you like. For example: `add`, `get_vectors`, and `save` can be used mid conversation to add every message to the vault one at a time as it comes in.
+^ these three lines execute fast and can be called as often as you like. For example: `add`, `get_vectors`, and `save` can be used mid conversation to add every message to the vault one at a time as they comes in.
 
 
 <br>

@@ -182,7 +182,7 @@ for item in vault_response['context']['results']:
 -
 -
 
-### Real world usage:
+## Real world usage:
 ```
 user_input = input("What's your question?")
 

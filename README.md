@@ -262,6 +262,7 @@ You can use it by...
 
 <br>
 <br>
+
 # Build an AI Cusomter Service Chat Bot
 In the following code, we will add all the customer conversations that a support team has ever had to a vault. (Assumes you have all the past conversations downloaded to a single text file). Then we we will take cusotmer requests, search the database for similar questions and answers. After that, we will instruct ChatGPT to use the previous answers the support team has given to answer this new question. (NOTE: This will also work if you have a large text file based on a customer FAQ, or customer support response templates).
 

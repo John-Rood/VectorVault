@@ -1,6 +1,6 @@
-VectorVault is designed to simplify the process of working with vector databases. It allows users to vectorize datasets efficiently, and access them seamlessly from the cloud. It's scalable and suitable for both small and large scale projects. VectorVault has been designed with a user-friendly interface to make the process of working with vector databases easy and let you focus on what matters. Furthermore, it simplifies complex workflows, ensures secure and isolated data handling, and enables users to create and interact vector databases - aka "vaults" - in a straightforward and efficient manner.
+VectorVault is designed to simplify the process of working with vector databases. It allows users to vectorize datasets efficiently, and access them seamlessly from the cloud. It's scalable and suitable for both small and large scale projects. VectorVault has been designed with a user-friendly interface to make the process of working with vector databases easy and let you focus on what matters. It simplifies complex workflows, ensures secure and isolated data handling, and enables users to create and interact vector databases - aka "vaults" - in a straightforward and efficient manner.
 
-VectorVault was built with the goal of making complex work flows, that utilize vector databases for generative ai, simple and easy. By combining similarity vector search with generative ai chat, new possibilities for conversation and communication emerge. For example, product information can be added to a vault, and when a customer asks a product question, the right product information can be instantly retreived and seamlessly used in conversation by chatgpt for an accurate response. This capability allows for informed conversation and the possibilites range from ai automated customer support, to new ways to get news, to ai code reviews that reference source documentation, to creating ai domain experts for specific knowledges, and much more.
+VectorVault was built with the goal of making generative ai work flows simple and easy. By combining vector similarity search with generative ai chat, new possibilities for conversation and communication emerge. For example, product information can be added to a vault, and when a customer asks a product question, the right product information can be instantly retreived and seamlessly used in conversation by chatgpt for an accurate response. This capability allows for informed conversation and the possibilites range from ai automated customer support, to new ways to get news, to ai code reviews that reference source documentation, to creating ai domain experts for specific knowledges, and much more.
 
 VectorVault uses a proprietary Inception Architecture, allowing you to create any number of vaults, and vaults within a vaults. Each vault is it's own database, and automatically integrates data storage in the cloud. You will need a VectorVault account in order to get your user id and api key for cloud access. If you don't already have one, you can sign up free at [VectorVault.io](https://vectorvault.io)
 
@@ -257,4 +257,41 @@ How do I use it?
  
 >>Answer: 
 You can use it by...
->>
+
+
+
+<br>
+<br>
+# Build an AI Cusomter Service Chat Bot
+In the following code, we will add all the customer conversations that a support team has ever had to a vault. (Assumes you have all the past conversations downloaded to a single text file). Then we we will take cusotmer requests, search the database for similar questions and answers. After that, we will instruct ChatGPT to use the previous answers the support team has given to answer this new question. (NOTE: This will also work if you have a large text file based on a customer FAQ, or customer support response templates).
+
+<br>
+
+### Create the Customer Service Vault
+```
+from vector_vault import Vault
+
+os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
+
+vault = Vault(user='your_user_id', api_key='your_api_key', vault='Customer Service')
+
+with open('customer_service.txt', 'r') as f:
+    vault.add(f.write())
+
+vault.get_vectors()
+
+vault.save()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

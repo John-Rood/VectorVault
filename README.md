@@ -287,7 +287,7 @@ vault.save()
 
 <br>
 
-And just like that, in a only a few lines of code we created a customer service vault based on all customer support messages. Now whenever you want to use it in the wild, just connect to that vault, and use the `get_chat()` function with `get_context=True`. `get_chat(text, get_context=True)` will take the customer's question, search the vault, find the most similar questions and answers, then have ChatGPT reply to the customer using that information.
+And just like that, in a only a few lines of code we created a customer service vault based on all customer support messages. Now whenever you want to use it in the wild, just connect to that vault, and use the `get_chat()` function with `get_context=True`. The call `get_chat(text, get_context=True)` will take the customer's question, search the vault, find the most similar questions and answers, then have ChatGPT reply to the customer using that information.
 
 ```
 response = vault.get_chat('customer input text', get_context=True)

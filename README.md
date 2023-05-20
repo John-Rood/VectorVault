@@ -143,3 +143,38 @@ lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='scie
 
 
 
+# get_chat()
+Chat get response from OpenAI's ChatGPT. 
+Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
+Enter your text, add optional chat history, and optionally choose a summary response (default: summmary = False)
+
+Example Signle Usage: 
+`response = vault.get_chat(text)`
+
+Example Chat: 
+`response = vault.get_chat(text, chat_history)`
+
+Example Summary: 
+`summary = vault.get_chat(text, summary=True)`
+
+Example Context-Based Response:
+`vault_response = vault.get_chat(text, get_context = True)`
+
+Example Context-Based Response w/ Chat History:
+`vault_response = vault.get_chat(text, chat_history, get_context = True)`
+
+Example Context-Response with Context Samples Returned:
+`vault_response = vault.get_chat(text, get_context = True, return_context = True)`
+
+Response is a string, unless return_context == True, then response will be a dictionary 
+
+Example to print dictionary results:
+```
+# print response:
+print(vault_response['response'])` 
+
+# print context:
+for item in vault_response['context']['results']:
+    print("\n\n", f"item {item['metadata']['item_index']}")
+    print(item['data'])
+```

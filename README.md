@@ -31,7 +31,7 @@ This python library allows you to interact with VectorVault using its Python-bas
 <br>
 <br>
 
-Basic usage:
+## Basic usage:
 ```
 from vector_vault import Vault
 
@@ -88,7 +88,7 @@ vault.save()
 <br>
 <br>
 
-## When you want to use the vault later:
+## Use the vault later:
 ```
 similar_data = vault.get_similar(text_input) # returns a list with 4 results
 similar_data = vault.get_similar(text_input, n = 10) # returns 10 results

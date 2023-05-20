@@ -283,15 +283,28 @@ vault.get_vectors()
 vault.save()
 ```
 
+<br>
+
+And just like that, in a only a few lines of code we created a customer service vault based on all customer support messages. Now whenever you want to use it in the wild, just connect to that vault, and use the `get_chat()` function with `get_context=True`. `get_chat(text, get_context=True)` will take the customer's question, search the vault, find the most similar questions and answers, then have ChatGPT reply to the customer using that information.
+
+```
+from vector_vault import Vault
+os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
+vault = Vault(user='your_user_id', api_key='your_api_key', vault='Customer Service')
+
+customer_question = 'customer input text'
+
+response = vault.get_chat(customer_question, get_context=True)
+```
+
+<br>
+
+That's it! That's all it takes to create an ai customer service chatbot that responds to your customers as well as any support rep, and based on all the past replied.
 
 
+<br>
 
+If have any questions, leave a comment. Open the "examples" folder and try out the Google Colab tutorials we have.
 
-
-
-
-
-
-
-
+Happy coding.
 

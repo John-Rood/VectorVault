@@ -9,7 +9,7 @@ setup(
     description="VectorVault: Simplified vector database management in the cloud for machine learning and generative ai workflows.",
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
-    url="http://github.com/John-Rood/vectorvault",
+    url="https://github.com/John-Rood/VectorVault",
     classifiers=[
         "License :: OSI Approved :: GNU Affero General Public License v3",
         "Programming Language :: Python",

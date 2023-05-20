@@ -9,23 +9,23 @@ This python library allows you to interact with Vector Vault using its Python-ba
 
 # Interact with your Vault:
 
-`add` : Add item to the Vault, with automatic text splitting and processing for long texts. Main way to add to vault.
+`add` : Add item to the Vault, with automatic text splitting and processing for long texts. Main way to add to vault
 <br>
 `add_item` : Add item to the Vault
 <br>
 `add_item_with_vector` : Add item to the Vault with vector provided - only accepts vectors of 1536 dimensions
 <br>
-`save` : Saves the vectors to the Vault and uploads any metadata.
+`save` : Saves the vectors to the Vault and uploads any metadata
 <br>
-`delete` : Deletes the current Vault.
+`delete` : Deletes the current Vault
 <br>
 `get_vaults` : Retrieves a list of vaults in the current vault 
 <br>
-`get_similar` : Retrieves similar vectors for a given input text.
+`get_similar` : Retrieves similar vectors for a given input text
 <br>
-`get_vectors` : Retrieves the vectors for all items in the Vault.
+`get_vectors` : Retrieves the vectors for all items in the Vault
 <br>
-`get_chat` : Retrieves a response from OpenAI's ChatGPT for a given input text, with support for handling conversation history, summarizing responses, and retrieving context-based responses by accessing similar references in the vault.
+`get_chat` : Retrieves a response from OpenAI's ChatGPT for a given input text, with support for handling conversation history, summarizing responses, and retrieving context-based responses by accessing similar references in the vault
 
 
 <br>
@@ -55,8 +55,8 @@ vault.get_vectors()
 vault.save()
 ```
 
-
-
+<br>
+<br>
 Now that you have saved some data to the vault, you can add more at anytime, and your vault will automatically handle the adding process. These three lines execute very fast.
 ```
 # Add more data to the Vault
@@ -70,8 +70,10 @@ vault.save()
 ```
 
 
-
-vault.add() is cool. You can add any length of text, even a full book...and it will be all automatically split, processed, and added.
+<br>
+<br>
+vault.add() is cool. You can add any length of text, even a full book...and it will be all automatically split and processed.
+vault.get_vectors() is also cool, because you can vault.add() as much as you want, then when you're done, process all the vectors at once with a vault.get_vectors() - Internally batch processes vector embeddings with OpenAI's text embeddings ada 002, and comes with auto rate-limiting and concurrent requests for maximum speed
 ```
 vault.add(insanely_large_text_data)
 vault.get_vectors() 
@@ -80,8 +82,8 @@ vault.save()
 
 
 
-
-
+<br>
+<br>
 ## When you want to use the vault later:
 ```
 similar_data = vault.get_similar(text_input) # returns 4 results
@@ -93,6 +95,7 @@ for result in similar_data:
 ```
 
 
+<br>
 ## Use the get_chat() function to get a response from chatgpt
 The following searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the context
 ```
@@ -104,8 +107,10 @@ print(answer)
 # The following line will just send chatgpt the user_input and not interact with the vault in any way
 answer = vault.get_chat(user_input) 
 ```
--
 
+
+<br>
+<br>
 # Change Vault
 In this example science vault, we will print a list of vaults in the current vault directory
 ```
@@ -140,9 +145,10 @@ print(chemistry_vault.get_vaults())
 ```
 lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry/lab notes')
 ```
--
 
 
+<br>
+<br>
 # get_chat()
 Chat get response from OpenAI's ChatGPT. 
 Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
@@ -179,9 +185,10 @@ for item in vault_response['context']['results']:
     print(item['data'])
 ```
 
--
--
 
+<br>
+<br>
+<br>
 ## Real world usage:
 ```
 user_input = input("What's your question?")
@@ -231,7 +238,8 @@ Another reason to use downscoped credentials is to ensure tokens in flight...
 The following is an...
 >>
 
-- 
+
+<br>
 
 ```
 user_input2 = input("What's your next question?")

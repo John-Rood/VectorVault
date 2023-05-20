@@ -22,92 +22,98 @@ These methods collectively allow you to create and access your vector databases 
 
 
 Basic usage:
-`from vector_vault import Vault`
+```
+from vector_vault import Vault
 
 # Create an instance of the Vault class - a new vault will be created if name does not exist
-`vault = Vault(user='your_user_id', api_key='your_api_key', vault='name_of_your_vault)`
+vault = Vault(user='your_user_id', api_key='your_api_key', vault='name_of_your_vault)
 
 # Some text data we want to store
-`text_data = 'some data'`
+text_data = 'some data'
 
 # Add the data to the Vault
-`vault.add(text_data)`
+vault.add(text_data)
 
 # add your openai key to environment variable
-`os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'`
+os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 
 # Get vecctor embeddings for text_data 
 # Internally calls openai with automatic rate limiting built in. Large inputs are batched, and concurrently processed for fastest possible embed time.
-`vault.get_vectors()`
+vault.get_vectors()
 
 # Save the vectors and data to the Vault 
-`vault.save()`
-
+vault.save()
+```
 
 
 
 Now that you have saved some data to the vault, you can add more at anytime, and your vault will automatically handle the adding process. These three lines execute very fast.
+```
 # Add more data to the Vault
-`vault.add(more_text_data)`
+vault.add(more_text_data)
 
 # Get embeddings for it - requires an openai api key set as an environvment variable
-`vault.get_vectors()`
+vault.get_vectors()
 
 # Save to the Vault
-`vault.save()`
+vault.save()
+```
 
 
 
-
-vault.add() is cool. You can add any length of text, even a full book,
-`vault.add(insanely_large_text_data)`
-`vault.get_vectors()` 
-`vault.save()` 
+vault.add() is cool. You can add any length of text, even a full book...
+```
+vault.add(insanely_large_text_data)
+vault.get_vectors() 
+vault.save() 
+```
 and it will be all automatically split, batch processed, and added.
 
 
 
 
 When you want to use the vault later:
+```
 # Get similar items
-`similar_data = vault.get_similar(text_input)` # returns 4 results
-`similar_data = vault.get_similar(text_input, n = 10)` # returns 10 results
+similar_data = vault.get_similar(text_input) # returns 4 results
+similar_data = vault.get_similar(text_input, n = 10) # returns 10 results
 
 # Print each similar item 
-```
+
 for result in similar_data:
     print(result['data'])
 ```
 
 
-
+```
 # Use the vault.get_chat() function to get a response from the openai's chatgpt model
 
-`user_input = "Is this question going to be used find contextually similar references in the vault?"`
+user_input = "Is this question going to be used find contextually similar references in the vault?"
 
 # The following searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the context
-`answer = vault.get_chat(user_input, get_context=True)`  
-`print(answer)`
+answer = vault.get_chat(user_input, get_context=True)  
+print(answer)
 
 # The following line will just send chatgpt the user_input and not interact with the vault in any way
-`answer = vault.get_chat(user_input)` 
+answer = vault.get_chat(user_input) 
+```
 
-
-
+```
 # Change vault directory
-`science_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science')`
+science_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science')
 
 # Print a list of vaults in the current vault directory
-`print(science_vault.get_vaults())`
+print(science_vault.get_vaults())
 >> ['biology', 'physics', 'chemistry']
 
 # Vault within vault
-`biology_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/biology')`
+biology_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/biology')
 
 # Vault within vault
-`chemistry_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry')`
-`print(chemistry_vault.get_vaults())`
+chemistry_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry')
+print(chemistry_vault.get_vaults())
 >> ['reactions', 'formulas', 'lab notes']
 
 # Vault within vault
-`lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry/lab vaults')`
+lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry/lab notes')
+```

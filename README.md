@@ -160,27 +160,27 @@ Chat get response from OpenAI's ChatGPT.
 Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
 Enter your text, add optional chat history, and optionally choose a summary response (default: summmary = False)
 
-Example Signle Usage: 
+- Example Signle Usage: 
 `response = vault.get_chat(text)`
 
-Example Chat: 
+- Example Chat: 
 `response = vault.get_chat(text, chat_history)`
 
-Example Summary: 
+- Example Summary: 
 `summary = vault.get_chat(text, summary=True)`
 
-Example Context-Based Response:
+- Example Context-Based Response:
 `vault_response = vault.get_chat(text, get_context = True)`
 
-Example Context-Based Response w/ Chat History:
+- Example Context-Based Response w/ Chat History:
 `vault_response = vault.get_chat(text, chat_history, get_context = True)`
 
-Example Context-Response with Context Samples Returned:
+- Example Context-Response with Context Samples Returned:
 `vault_response = vault.get_chat(text, get_context = True, return_context = True)`
 
 Response is a string, unless return_context == True, then response will be a dictionary 
 
-Example to print dictionary results:
+- Example to print dictionary results:
 ```
 # print response:
 print(vault_response['response'])` 

@@ -13,7 +13,7 @@ This python library allows you to interact with Vector Vault using its Python-ba
 <br>
 `add_item` : Add item to the Vault
 <br>
-`add_item_with_vector` : Add item to the Vault with vector externally provided, although it only accepts vectors of 1536 dimensions
+`add_item_with_vector` : Add item to the Vault with vector provided; - only accepts vectors of 1536 dimensions
 <br>
 `save` : Saves the vectors to the Vault and uploads any metadata.
 <br>

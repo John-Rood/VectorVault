@@ -57,8 +57,10 @@ vault.save()
 
 <br>
 <br>
+
 Now that you have saved some data to the vault, you can add more at anytime, and your vault will automatically handle the adding process. These three lines execute very fast.
 
+<br>
 
 ```
 # Add more data to the Vault

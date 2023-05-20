@@ -213,7 +213,7 @@ print("Question:", user_input2, "\n\nAnswer:", vault_response2)
 >> Question: 
 What is a token broker? 
  
-Answer: 
+>>Answer: 
 A token broker is a service that generates downscoped access tokens for token
 consumers to access or modify specific Google Cloud Storage resources with
 restricted access. It instantiates downscoped credentials instances that can be
@@ -234,48 +234,20 @@ cloud storage buckets.
 generate short lived downscoped access tokens that can be passed to the token
 consumer.  These downscoped access tokens can be injected by the consumer into
 google.oauth2.Credentials and used to initialize a storage client instance to
-access Google Cloud Storage resources with restricted access.
- Token Consumer
-import google.oauth2
-from google.auth.transport import requests
-from google.cloud import storage
->> # Downscoped token retrieved from token broker.
- # The `get_token_from_broker` callable requests a token and an expiry
->> # from the token broker.
- downscoped_token, expiry = get_token_from_broker(
-requests.Request(),
-scopes=['https://www.googleapis.com/auth/cloud-platform'])
-# Create the OAuth credentials from the downscoped token and pass a
-# refresh handler to handle token expiration. 
-
-
- item 34
-Passing the original
-# downscoped token or the expiry here is optional, as the refresh_handler
-# will generate the downscoped token on demand.
- credentials = google.oauth2.credentials.Credentials(
-downscoped_token,
-expiry=expiry,
-scopes=['https://www.googleapis.com/auth/cloud-platform'],
+access Google Cloud Storage resources with restricted access...
+>>
+ item 4
 refresh_handler=get_token_from_broker)
-# Initialize a storage client with the oauth2 credentials.
  storage_client = storage.Client(
 project='my_project_id', credentials=credentials)
-# Call GCS APIs.
- # The token broker has readonly access to objects starting with "customer-a"
-# in bucket "bucket-123".
  bucket = storage_client.bucket('bucket-123')
 blob = bucket.blob('customer-a-data.txt')
 print(blob.download_as_bytes().decode("utf-8"))
-Another reason to use downscoped credentials is to ensure tokens in flight
-always have the least privileges, e.g.  Principle of Least Privilege.
- # Create the downscoped credentials.
- downscoped_credentials = downscoped.Credentials(
-# source_credentials have elevated access but only a subset of
-# these permissions are needed here.
+Another reason to use downscoped credentials is to ensure tokens in flight...
+>>
 
 
-
+>>
  item 37
 The following is an
 example

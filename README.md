@@ -9,11 +9,11 @@ This python library allows you to interact with Vector Vault using its Python-ba
 
 # Interact with your Vault:
 
-`add` : Add item to the Vault, with automatic text splitting and processing for long texts. Main function to add to the vault.
+`add` : Add item to the Vault, with automatic text splitting and processing for long texts. Main way to add to vault.
 <br>
 `add_item` : Add item to the Vault
 <br>
-`add_item_with_vector` : Add item to the Vault with vector provided; - only accepts vectors of 1536 dimensions
+`add_item_with_vector` : Add item to the Vault with vector provided - only accepts vectors of 1536 dimensions
 <br>
 `save` : Saves the vectors to the Vault and uploads any metadata.
 <br>

@@ -228,18 +228,9 @@ consumers to access or modify specific resources...
 >> item 33
 Various workloads (token consumers) in the same network will send authenticated
 requests to that broker for downscoped tokens to access or modify specific
-cloud storage buckets.
- The broker will instantiate downscoped credentials instances that can be used to
-generate short lived downscoped access tokens that can be passed to the token
-consumer.  These downscoped access tokens...
+cloud storage assets. These downscoped access tokens...
 >>
  >>item 4
-refresh_handler=get_token_from_broker)
- storage_client = storage.Client(
-project='my_project_id', credentials=credentials)
- bucket = storage_client.bucket('bucket-123')
-blob = bucket.blob('customer-a-data.txt')
-print(blob.download_as_bytes().decode("utf-8"))
 Another reason to use downscoped credentials is to ensure tokens in flight...
 >>
 

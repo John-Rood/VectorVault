@@ -129,6 +129,7 @@ biology_vault = Vault(user='your_user_id', api_key='your_api_key', vault='scienc
 - chemistry vault within science vault
 ```
 chemistry_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry')
+
 print(chemistry_vault.get_vaults())
 ```
 >> ['reactions', 'formulas', 'lab notes']

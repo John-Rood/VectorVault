@@ -6,7 +6,8 @@ Vector Vault uses a proprietary Inception Architecture, allowing you to create a
 
 This python library allows you to interact with Vector Vault using its Python-based API. It includes operations such as creating a vault, deleting the vault, adding data to the vault, getting vector embeddings for the data, saving data to the vault, interacting with OpenAI's ChatGPT model to get responses, and managing conversation history for more contextualized responses.
 
-There are several methods to interact with your Vault, such as:
+
+# Interact with your Vault:
 
 `add` : Add item to the Vault, with automatic text splitting and processing for long texts. Main function to add to the vault.
 
@@ -27,9 +28,7 @@ There are several methods to interact with your Vault, such as:
 `get_chat` : Retrieves a response from OpenAI's ChatGPT for a given input text, with support for handling conversation history, summarizing responses, and retrieving context-based responses by accessing similar references in the vault.
 
 
-
-These methods collectively allow you to create and access your vector databases aka "vaults", which are securely saved in cloud storage.
-
++
 
 Basic usage:
 ```

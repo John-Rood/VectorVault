@@ -177,10 +177,10 @@ Enter your text, add optional chat history, and optionally choose a summary resp
 
 - Example Context-Response with Context Samples Returned:
 `vault_response = vault.get_chat(text, get_context = True, return_context = True)`
+<br>
 
 Response is a string, unless return_context == True, then response will be a dictionary 
-
-- Example to print dictionary results:
+Example to print dictionary results:
 ```
 # print response:
 print(vault_response['response'])` 

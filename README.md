@@ -190,6 +190,12 @@ for item in vault_response['context']['results']:
     print(item['data'])
 ```
 
+## Summarize:
+You can summarize any text, no matter how large. Even an entire book. Long texts are split into the largest possible chunk sizes and a summary is generated for each chunk. When all summaries are finished, they are concatenated and returned as a whole summary.
+```
+summary = vault.get_chat(large_text_data, summary=True)
+```
+
 <br>
 <br>
 <br>

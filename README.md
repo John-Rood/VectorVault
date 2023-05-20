@@ -119,14 +119,14 @@ print(science_vault.get_vaults())
 biology_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/biology')
 ```
 
-### Vault within vault
+Vault within vault
 ```
 chemistry_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry')
 print(chemistry_vault.get_vaults())
 ```
 >> ['reactions', 'formulas', 'lab notes']
 
-### Vault within vault
+Vault within vault
 ```
 lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry/lab notes')
 ```

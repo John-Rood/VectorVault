@@ -104,13 +104,13 @@ for result in similar_data:
 ## Use the get_chat() function to get a response from chatgpt
 The following searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the context
 ```
-user_input = "This text is going to be used find contextually similar references in the vault"
+question = "This text is going to be used find contextually similar references in the vault"
 
-answer = vault.get_chat(user_input, get_context=True)  
+answer = vault.get_chat(question, get_context=True)  
 print(answer)
 
-# The following line will just send chatgpt the user_input and not interact with the vault in any way
-answer = vault.get_chat(user_input) 
+# The following line will send chatgpt the question for response and not interact with the vault in any way
+answer = vault.get_chat(question) 
 ```
 
 

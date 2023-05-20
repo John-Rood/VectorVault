@@ -82,7 +82,9 @@ and it will be all automatically split, batch processed, and added.
 
 
 
-When you want to use the vault later:
+# When you want to use the vault later:
+## When you want to use the vault later:
+### When you want to use the vault later:
 ```
 # Get similar items
 similar_data = vault.get_similar(text_input) # returns 4 results
@@ -95,9 +97,8 @@ for result in similar_data:
 ```
 
 
+## Use the vault.get_chat() function to get a response from the openai model
 ```
-# Use the vault.get_chat() function to get a response from the openai's chatgpt model
-
 user_input = "Is this question going to be used find contextually similar references in the vault?"
 
 # The following searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the context

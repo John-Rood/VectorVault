@@ -71,37 +71,33 @@ vault.save()
 
 
 
-vault.add() is cool. You can add any length of text, even a full book...
+vault.add() is cool. You can add any length of text, even a full book...and it will be all automatically split, processed, and added.
 ```
 vault.add(insanely_large_text_data)
 vault.get_vectors() 
 vault.save() 
 ```
-and it will be all automatically split, batch processed, and added.
 
 
 
 
-# When you want to use the vault later:
-## When you want to use the vault later:
+
 ### When you want to use the vault later:
 ```
-# Get similar items
 similar_data = vault.get_similar(text_input) # returns 4 results
 similar_data = vault.get_similar(text_input, n = 10) # returns 10 results
 
 # Print each similar item 
-
 for result in similar_data:
     print(result['data'])
 ```
 
 
-## Use the vault.get_chat() function to get a response from the openai model
+## Use the get_chat() function to get a response from chatgpt
+The following searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the context
 ```
 user_input = "Is this question going to be used find contextually similar references in the vault?"
 
-# The following searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the context
 answer = vault.get_chat(user_input, get_context=True)  
 print(answer)
 
@@ -109,22 +105,28 @@ print(answer)
 answer = vault.get_chat(user_input) 
 ```
 
+## Change vault directory
 ```
-# Change vault directory
 science_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science')
 
 # Print a list of vaults in the current vault directory
 print(science_vault.get_vaults())
+```
 >> ['biology', 'physics', 'chemistry']
 
-# Vault within vault
+### Vault within vault
+```
 biology_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/biology')
+```
 
-# Vault within vault
+### Vault within vault
+```
 chemistry_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry')
 print(chemistry_vault.get_vaults())
+```
 >> ['reactions', 'formulas', 'lab notes']
 
-# Vault within vault
+### Vault within vault
+```
 lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry/lab notes')
 ```

@@ -82,7 +82,7 @@ vault.add(insanely_large_text_data)
 vault.get_vectors() 
 vault.save() 
 ```
-
+^ these three lines execute fast and can be called as often as you like.
 
 
 <br>

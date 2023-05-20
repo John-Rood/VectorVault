@@ -59,9 +59,6 @@ vault.save()
 <br>
 
 Now that you have saved some data to the vault, you can add more at anytime, and your vault will automatically handle the adding process. These three lines execute very fast.
-
-<br>
-
 ```
 # Add more data to the Vault
 vault.add(more_text_data)
@@ -73,11 +70,13 @@ vault.get_vectors()
 vault.save()
 ```
 
+<br>
+<br>
 
-<br>
-<br>
 vault.add() is cool. You can add any length of text, even a full book...and it will be all automatically split and processed.
 vault.get_vectors() is also cool, because you can vault.add() as much as you want, then when you're done, process all the vectors at once with a vault.get_vectors() - Internally batch processes vector embeddings with OpenAI's text embeddings ada 002, and comes with auto rate-limiting and concurrent requests for maximum speed
+
+
 ```
 vault.add(insanely_large_text_data)
 vault.get_vectors() 
@@ -88,6 +87,7 @@ vault.save()
 
 <br>
 <br>
+
 ## When you want to use the vault later:
 ```
 similar_data = vault.get_similar(text_input) # returns 4 results
@@ -100,6 +100,7 @@ for result in similar_data:
 
 
 <br>
+
 ## Use the get_chat() function to get a response from chatgpt
 The following searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the context
 ```
@@ -115,6 +116,7 @@ answer = vault.get_chat(user_input)
 
 <br>
 <br>
+
 # Change Vault
 In this example science vault, we will print a list of vaults in the current vault directory
 ```
@@ -150,9 +152,9 @@ print(chemistry_vault.get_vaults())
 lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry/lab notes')
 ```
 
+<br>
+<br>
 
-<br>
-<br>
 # get_chat()
 Chat get response from OpenAI's ChatGPT. 
 Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
@@ -189,10 +191,10 @@ for item in vault_response['context']['results']:
     print(item['data'])
 ```
 
+<br>
+<br>
+<br>
 
-<br>
-<br>
-<br>
 ## Real world usage:
 ```
 user_input = input("What's your question?")

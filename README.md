@@ -104,9 +104,9 @@ print(answer)
 # The following line will just send chatgpt the user_input and not interact with the vault in any way
 answer = vault.get_chat(user_input) 
 ```
+-
 
-
-## Change vault directory
+# Change Vault
 In this example science vault, we will print a list of vaults in the current vault directory
 ```
 science_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science')
@@ -140,7 +140,7 @@ print(chemistry_vault.get_vaults())
 ```
 lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry/lab notes')
 ```
-
+-
 
 
 # get_chat()

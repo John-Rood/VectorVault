@@ -106,16 +106,17 @@ answer = vault.get_chat(user_input)
 ```
 
 ## Change vault directory
-### Example:
+In this example science vault, we will print a list of vaults in the current vault directory
 ```
 science_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science')
 
-# Print a list of vaults in the current vault directory
 print(science_vault.get_vaults())
 ```
 >> ['biology', 'physics', 'chemistry']
 
 ## Access vaults within vaults
+
+biology vault within science vault
 ```
 biology_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/biology')
 ```

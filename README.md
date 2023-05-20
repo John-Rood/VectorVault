@@ -28,7 +28,7 @@ This python library allows you to interact with Vector Vault using its Python-ba
 `get_chat` : Retrieves a response from OpenAI's ChatGPT for a given input text, with support for handling conversation history, summarizing responses, and retrieving context-based responses by accessing similar references in the vault.
 
 
-+
+<br>
 
 Basic usage:
 ```

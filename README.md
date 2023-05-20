@@ -20,14 +20,15 @@ This python library allows you to interact with Vector Vault using its Python-ba
 `delete` : Deletes the current Vault.
 
 `get_vaults` : Retrieves a list of vaults in the current vault 
-
+<br>
 `get_similar` : Retrieves similar vectors for a given input text.
-
+<br>
 `get_vectors` : Retrieves the vectors for all items in the Vault.
-
+<br>
 `get_chat` : Retrieves a response from OpenAI's ChatGPT for a given input text, with support for handling conversation history, summarizing responses, and retrieving context-based responses by accessing similar references in the vault.
 
 
+<br>
 <br>
 
 Basic usage:

@@ -179,6 +179,8 @@ for item in vault_response['context']['results']:
     print(item['data'])
 ```
 
+-
+-
 
 ### Real world usage:
 ```

@@ -1,0 +1,15 @@
+LICENSE
+README.md
+setup.py
+VectorVault.egg-info/PKG-INFO
+VectorVault.egg-info/SOURCES.txt
+VectorVault.egg-info/dependency_links.txt
+VectorVault.egg-info/requires.txt
+VectorVault.egg-info/top_level.txt
+vectorvault/__init__.py
+vectorvault/closedai.py
+vectorvault/cloudmanager.py
+vectorvault/creds.py
+vectorvault/download.py
+vectorvault/vault.py
+vectorvault/wrap.py

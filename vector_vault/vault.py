@@ -383,10 +383,10 @@ class Vault:
             `summary = vault.get_chat(text, summary=True)`
 
             Example Context-Based Response:
-            `vault_response = vault.get_chat(text, get_context = True)`
+            `response = vault.get_chat(text, get_context = True)`
 
             Example Context-Based Response w/ Chat History:
-            `vault_response = vault.get_chat(text, chat_history, get_context = True)`
+            `response = vault.get_chat(text, chat_history, get_context = True)`
 
             Example Context-Response with Context Samples Returned:
             `vault_response = vault.get_chat(text, get_context = True, return_context = True)`

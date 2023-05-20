@@ -90,7 +90,7 @@ vault.save()
 
 ## When you want to use the vault later:
 ```
-similar_data = vault.get_similar(text_input) # returns 4 results
+similar_data = vault.get_similar(text_input) # returns a list with 4 results
 similar_data = vault.get_similar(text_input, n = 10) # returns 10 results
 
 # Print each similar item 
@@ -170,24 +170,23 @@ Enter your text, add optional chat history, and optionally choose a summary resp
 `summary = vault.get_chat(text, summary=True)`
 
 - Example Context-Based Response:
-`vault_response = vault.get_chat(text, get_context = True)`
+`response = vault.get_chat(text, get_context = True)`
 
 - Example Context-Based Response w/ Chat History:
-`vault_response = vault.get_chat(text, chat_history, get_context = True)`
+`response = vault.get_chat(text, chat_history, get_context = True)`
 
 - Example Context-Response with Context Samples Returned:
 `vault_response = vault.get_chat(text, get_context = True, return_context = True)`
 <br>
 
-Response is a string, unless return_context == True, then response will be a dictionary 
-Example to print dictionary results:
+Response is a string, unless `return_context = True` is passed, then response will be a dictionary containing the results from the vault as well as the response:
 ```
 # print response:
 print(vault_response['response'])` 
 
 # print context:
 for item in vault_response['context']['results']:
-    print("\n\n", f"item {item['metadata']['item_index']}")
+    print("\n\n", f"item {item['metadata']['item_id']}")
     print(item['data'])
 ```
 

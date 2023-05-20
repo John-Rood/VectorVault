@@ -210,11 +210,11 @@ vault_response = vault.get_chat(user_input2, history=history, get_context=True, 
 print("Question:", user_input2, "\n\nAnswer:", vault_response2)
 ```
 
-> Question: 
-> What is a token broker? 
-
-> Answer: 
->> A token broker is a service that generates downscoped access tokens for token
+>> Question: 
+What is a token broker? 
+ 
+Answer: 
+A token broker is a service that generates downscoped access tokens for token
 consumers to access or modify specific Google Cloud Storage resources with
 restricted access. It instantiates downscoped credentials instances that can be
 used to generate short-lived downscoped access tokens, which are passed to the
@@ -224,7 +224,7 @@ accessing Google Cloud Storage resources. Essentially, a token broker acts as a
 mediator between the token consumers and Google Cloud Storage resources,
 ensuring that tokens in flight always have the least privileges, adhering to the
 Principle of Least Privilege.
->>
+
 
  item 33
 Various workloads (token consumers) in the same network will send authenticated
@@ -280,4 +280,5 @@ always have the least privileges, e.g.  Principle of Least Privilege.
 The following is an
 example
 import google.oauth2.id_token
-import google.auth.transport.requests
+import google.auth.transport.requests...
+>>

@@ -197,19 +197,6 @@ for item in vault_response['context']['results']:
 
 ```
 
-- 
-
-```
-user_input2 = input("What's your next question?")
-
-history = user_input + answer
-
-# Get response from Language model
-vault_response = vault.get_chat(user_input2, history=history, get_context=True, model='gpt-4')
-
-print("Question:", user_input2, "\n\nAnswer:", vault_response2)
-```
-
 >> Question: 
 What is a token broker? 
  
@@ -240,4 +227,23 @@ Another reason to use downscoped credentials is to ensure tokens in flight...
 >>
 >> item 37
 The following is an...
+>>
+
+- 
+
+```
+user_input2 = input("What's your next question?")
+
+history = user_input + answer
+
+# Get response from Language model
+vault_response = vault.get_chat(user_input2, history=history, get_context=True, model='gpt-4')
+
+print("Question:", user_input2, "\n\nAnswer:", vault_response2)
+```
+>> Question: 
+How do I use it? 
+ 
+>>Answer: 
+You can use it by...
 >>

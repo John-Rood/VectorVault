@@ -226,7 +226,7 @@ cloud storage buckets.
 generate short lived downscoped access tokens that can be passed to the token
 consumer.  These downscoped access tokens...
 >>
- item 4
+ >>item 4
 refresh_handler=get_token_from_broker)
  storage_client = storage.Client(
 project='my_project_id', credentials=credentials)

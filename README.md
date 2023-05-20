@@ -224,9 +224,9 @@ accessing Google Cloud Storage resources. Essentially, a token broker acts as a
 mediator between the token consumers and Google Cloud Storage resources,
 ensuring that tokens in flight always have the least privileges, adhering to the
 Principle of Least Privilege.
+>>
 
-
- item 33
+>> item 33
 Various workloads (token consumers) in the same network will send authenticated
 requests to that broker for downscoped tokens to access or modify specific google
 cloud storage buckets.
@@ -239,9 +239,9 @@ access Google Cloud Storage resources with restricted access.
 import google.oauth2
 from google.auth.transport import requests
 from google.cloud import storage
-# Downscoped token retrieved from token broker.
+>> # Downscoped token retrieved from token broker.
  # The `get_token_from_broker` callable requests a token and an expiry
-# from the token broker.
+>> # from the token broker.
  downscoped_token, expiry = get_token_from_broker(
 requests.Request(),
 scopes=['https://www.googleapis.com/auth/cloud-platform'])

@@ -119,14 +119,14 @@ print(science_vault.get_vaults())
 
 ## Access vaults within vaults
 
-biology vault within science vault
+- biology vault within science vault
 ```
 biology_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/biology')
 ```
 
 
 
-chemistry vault within science vault
+- chemistry vault within science vault
 ```
 chemistry_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry')
 print(chemistry_vault.get_vaults())
@@ -135,7 +135,10 @@ print(chemistry_vault.get_vaults())
 
 
 
-lab notes vault within chemistry vault
+- lab notes vault within chemistry vault
 ```
 lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry/lab notes')
 ```
+
+
+

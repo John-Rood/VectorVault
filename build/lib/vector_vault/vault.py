@@ -422,7 +422,7 @@ class Vault:
 
         if len(text) > 15000:
             if summary:
-                inputs = self.split_text(text, 14000)
+                inputs = self.split_text(text, 14500)
             else:
                 inputs = self.split_text(text)
         else:

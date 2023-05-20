@@ -215,26 +215,16 @@ What is a token broker?
  
 >>Answer: 
 A token broker is a service that generates downscoped access tokens for token
-consumers to access or modify specific Google Cloud Storage resources with
-restricted access. It instantiates downscoped credentials instances that can be
-used to generate short-lived downscoped access tokens, which are passed to the
-token consumer. These downscoped access tokens can be injected by the consumer
-into google.oauth2.Credentials to initialize a storage client instance for
-accessing Google Cloud Storage resources. Essentially, a token broker acts as a
-mediator between the token consumers and Google Cloud Storage resources,
-ensuring that tokens in flight always have the least privileges, adhering to the
-Principle of Least Privilege.
+consumers to access or modify specific resources...
 >>
 
 >> item 33
 Various workloads (token consumers) in the same network will send authenticated
-requests to that broker for downscoped tokens to access or modify specific google
+requests to that broker for downscoped tokens to access or modify specific
 cloud storage buckets.
  The broker will instantiate downscoped credentials instances that can be used to
 generate short lived downscoped access tokens that can be passed to the token
-consumer.  These downscoped access tokens can be injected by the consumer into
-google.oauth2.Credentials and used to initialize a storage client instance to
-access Google Cloud Storage resources with restricted access...
+consumer.  These downscoped access tokens...
 >>
  item 4
 refresh_handler=get_token_from_broker)
@@ -249,8 +239,5 @@ Another reason to use downscoped credentials is to ensure tokens in flight...
 
 >>
  item 37
-The following is an
-example
-import google.oauth2.id_token
-import google.auth.transport.requests...
+The following is an...
 >>

@@ -1,7 +1,7 @@
 Metadata-Version: 2.1
-Name: VectorVault
-Version: 0.1
-Summary: VectorVault: Simplified vector database management in the cloud for machine learning and generative ai workflows.
+Name: vector-vault
+Version: 0.1.6
+Summary: VectorVault: Simplified vector database management in the cloud for machine learning and generative ai workflows
 Home-page: https://github.com/John-Rood/VectorVault
 Author: VectorVault.io
 Author-email: john@johnrood.com
@@ -17,14 +17,15 @@ Classifier: Programming Language :: Python :: 3.9
 Description-Content-Type: text/markdown
 License-File: LICENSE
 
-VectorVault is designed to simplify the process of working with vector databases. It allows users to vectorize datasets efficiently, and access them seamlessly from the cloud. It's scalable and suitable for both small and large scale projects. VectorVault has been designed with a user-friendly interface to make the process of working with vector databases easy and let you focus on what matters. Furthermore, it simplifies complex workflows, ensures secure and isolated data handling, and enables users to create and interact vector databases - aka "vaults" - in a straightforward and efficient manner.
+VectorVault is designed to simplify the process of working with vector databases. It allows users to vectorize datasets efficiently, and access them seamlessly from the cloud. It's scalable and suitable for both small and large scale projects. VectorVault has been designed with a user-friendly interface to make the process of working with vector databases easy and let you focus on what matters. It simplifies complex workflows, ensures secure and isolated data handling, and enables users to create and interact vector databases - aka "vaults" 
 
-VectorVault was built with the goal of making complex work flows, that utilize vector databases for generative ai, simple and easy. By combining similarity vector search with generative ai chat, new possibilities for conversation and communication emerge. For example, product information can be added to a vault, and when a customer asks a product question, the right product information can be instantly retreived and seamlessly used in conversation by chatgpt for an accurate response. This capability allows for informed conversation and the possibilites range from ai automated customer support, to new ways to get news, to ai code reviews that reference source documentation, to creating ai domain experts for specific knowledges, and much more.
+VectorVault was built with the goal of making generative ai work flows simple and easy. By combining vector similarity search with generative ai chat, new possibilities for conversation and communication emerge. For example, product information can be added to a vault, and when a customer asks a product question, the right product information can be instantly retreived and seamlessly used in conversation by chatgpt for an accurate response. This capability allows for informed conversation and the possibilites range from ai automated customer support, to new ways to get news, to ai code reviews that reference source documentation, to ai domain experts for specific knowledges, and much more.
 
 VectorVault uses a proprietary Inception Architecture, allowing you to create any number of vaults, and vaults within a vaults. Each vault is it's own database, and automatically integrates data storage in the cloud. You will need a VectorVault account in order to get your user id and api key for cloud access. If you don't already have one, you can sign up free at [VectorVault.io](https://vectorvault.io)
 
 This python library allows you to interact with VectorVault using its Python-based API. It includes operations such as creating a vault, deleting the vault, adding data to the vault, getting vector embeddings for the data, saving data to the vault, interacting with OpenAI's ChatGPT model to get responses, and managing conversation history for more contextualized responses.
 
+<br>
 
 # Interact with your Vault:
 
@@ -50,7 +51,7 @@ This python library allows you to interact with VectorVault using its Python-bas
 <br>
 <br>
 
-Basic usage:
+## Basic usage:
 ```
 from vector_vault import Vault
 
@@ -93,7 +94,7 @@ vault.save()
 <br>
 
 vault.add() is cool. You can add any length of text, even a full book...and it will be all automatically split and processed.
-vault.get_vectors() is also cool, because you can vault.add() as much as you want, then when you're done, process all the vectors at once with a vault.get_vectors() - Internally batch processes vector embeddings with OpenAI's text embeddings ada 002, and comes with auto rate-limiting and concurrent requests for maximum speed
+vault.get_vectors() is also cool, because you can vault.add() as much as you want, then when you're done, process all the vectors at once with a vault.get_vectors() - Internally batches vector embeddings with OpenAI's text embeddings ada 002, and comes with auto rate-limiting and concurrent requests for maximum processing speed
 
 
 ```
@@ -101,13 +102,13 @@ vault.add(insanely_large_text_data)
 vault.get_vectors() 
 vault.save() 
 ```
-^ these three lines execute fast and can be called as often as you like.
+^ these three lines execute fast and can be called as often as you like. For example: `add`, `get_vectors`, and `save` can be used mid conversation to add every message to the vault one at a time as they comes in.
 
 
 <br>
 <br>
 
-## When you want to use the vault later:
+## Use the vault later:
 ```
 similar_data = vault.get_similar(text_input) # returns a list with 4 results
 similar_data = vault.get_similar(text_input, n = 10) # returns 10 results
@@ -123,13 +124,13 @@ for result in similar_data:
 ## Use the get_chat() function to get a response from chatgpt
 The following searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the context
 ```
-user_input = "This text is going to be used find contextually similar references in the vault"
+question = "This text is going to be used find contextually similar references in the vault"
 
-answer = vault.get_chat(user_input, get_context=True)  
+answer = vault.get_chat(question, get_context=True)  
 print(answer)
 
-# The following line will just send chatgpt the user_input and not interact with the vault in any way
-answer = vault.get_chat(user_input) 
+# The following line will send chatgpt the question for response and not interact with the vault in any way
+answer = vault.get_chat(question) 
 ```
 
 
@@ -209,7 +210,7 @@ for item in vault_response['context']['results']:
     print(item['data'])
 ```
 
-## Summarize:
+# Summarize Anything:
 You can summarize any text, no matter how large - even an entire book all at once. Long texts are split into the largest possible chunk sizes and a summary is generated for each chunk. When all summaries are finished, they are concatenated and returned as one.
 ```
 summary = vault.get_chat(text, summary=True)
@@ -276,5 +277,53 @@ How do I use it?
  
 >>Answer: 
 You can use it by...
->>
+
+
+
+<br>
+<br>
+<br>
+
+# Build an AI Cusomter Service Chat Bot
+In the following code, we will add all the customer conversations that a support team has ever had to a vault. (Assumes you have all the past conversations downloaded to a single text file). Then we we will take cusotmer requests, search the database for similar questions and answers. After that, we will instruct ChatGPT to use the previous answers the support team has given to answer this new question. (NOTE: This will also work based on a customer FAQ, or customer support response templates).
+
+<br>
+
+### Create the Customer Service Vault
+```
+from vector_vault import Vault
+
+os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
+
+vault = Vault(user='your_user_id', api_key='your_api_key', vault='Customer Service')
+
+with open('customer_service.txt', 'r') as f:
+    vault.add(f.read())
+
+vault.get_vectors()
+
+vault.save()
+```
+
+<br>
+
+And just like that, in a only a few lines of code we created a customer service vault based on all customer support messages. Now whenever you want to use it in the wild, just connect to that vault, and use the `get_chat()` function with `get_context=True`. The call `get_chat(text, get_context=True)` will take the customer's question, search the vault, find the most similar questions and answers, then have ChatGPT reply to the customer using that information.
+
+```
+question = 'customer question text string'
+
+answer = vault.get_chat(question, get_context=True)
+```
+
+That's all it takes to create an ai customer service chatbot that responds to your customers as well as any support rep!
+
+
+<br>
+<br>
+
+If have any questions, leave a comment. Open the "examples" folder and try out the Google Colab tutorials we have.
+
+Happy coding.
+
+
 

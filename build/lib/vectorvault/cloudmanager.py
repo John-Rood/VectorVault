@@ -33,6 +33,7 @@ class CloudManager:
         # Instantiates a client with the OAuth2 credentials
         self.storage_client = storage.Client(project='vectorvault-361ab', credentials=credentials)
         self.gcloud = self.storage_client.bucket(self.user)
+        print(f'Connected to Vault: {self.vault}')
 
     def vault_exists(self, vault_name):
         return storage.Blob(bucket=self.gcloud, name=vault_name).exists(self.storage_client)

@@ -1,11 +1,11 @@
 LICENSE
 README.md
 setup.py
-VectorVault.egg-info/PKG-INFO
-VectorVault.egg-info/SOURCES.txt
-VectorVault.egg-info/dependency_links.txt
-VectorVault.egg-info/requires.txt
-VectorVault.egg-info/top_level.txt
+vector_vault.egg-info/PKG-INFO
+vector_vault.egg-info/SOURCES.txt
+vector_vault.egg-info/dependency_links.txt
+vector_vault.egg-info/requires.txt
+vector_vault.egg-info/top_level.txt
 vectorvault/__init__.py
 vectorvault/closedai.py
 vectorvault/cloudmanager.py

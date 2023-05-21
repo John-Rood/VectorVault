@@ -16,7 +16,7 @@
 import tempfile
 import os
 import json
-from creds import CustomCredentials
+from .creds import CustomCredentials
 from google.cloud import storage
 from concurrent.futures import ThreadPoolExecutor, as_completed
 

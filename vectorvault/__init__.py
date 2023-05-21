@@ -13,6 +13,6 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Vector Vault.
 
-from .vault import Vault
-from .download import download_url
-from .wrap import wrap
+from vault import Vault
+from download import download_url
+from wrap import wrap

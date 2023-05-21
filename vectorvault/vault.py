@@ -106,7 +106,8 @@ class Vault:
 
 
     def delete(self):
-        print('Deleting started. Note: this can take a while for large datasets')
+        if self.verbose == True:
+                print('Deleting started. Note: this can take a while for large datasets')
         # Clear the local vector data
         self.vectors = AnnoyIndex(self.dims, 'angular')
         self.items.clear()
@@ -234,7 +235,8 @@ class Vault:
         """
 
         if len(text) > 14000:
-            print('Text length too long. Using the built-in "split_text()" function to get a list of text segments') 
+            if self.verbose == True:
+                print('Text length too long. Using the built-in "split_text()" function to get a list of text segments') 
             texts = self.split_text(text) # returns list of text segments
         else:
             texts = [text]
@@ -336,13 +338,15 @@ class Vault:
             req_min = 60 / trip_time # 1 min (60) / time between requests (trip_time)
             projected_chars_per_min = req_min * text_len
             rate_ratio = projected_chars_per_min / 350000
-            print(f'Projected Characters per min:{projected_chars_per_min} | Rate Limit Ratio: {rate_ratio} | Text Length: {text_len}')
+            if self.verbose == True:
+                print(f'Projected Characters per min:{projected_chars_per_min} | Rate Limit Ratio: {rate_ratio} | Text Length: {text_len}')
             # 1 min divided by the cap per min and the total we are sending now and factor in the last trip time
             self.needed_sleep_time = 60 / (350000 / text_len) - trip_time 
             if self.needed_sleep_time < 0:
                 self.needed_sleep_time = 0
 
-            print(f'Time calc to sleep: {self.needed_sleep_time}')
+            if self.verbose == True:
+                print(f'Time calc to sleep: {self.needed_sleep_time}')
             if req_min > 3500:
                 time.sleep(1)
 
@@ -435,12 +439,14 @@ class Vault:
             req_min = 60 / trip_time # 1 min (60) / time between requests (trip_time)
             projected_chars_per_min = req_min * seg_len
             rate_ratio = projected_chars_per_min / 90000
-            print(f'Projected Characters per min:{projected_chars_per_min} | Rate Limit Ratio: {rate_ratio} | Text Length: {seg_len}')
+            if self.verbose == True:
+                print(f'Projected Characters per min:{projected_chars_per_min} | Rate Limit Ratio: {rate_ratio} | Text Length: {seg_len}')
             # 1 min divided by the cap per min and the total we are sending now and factor in the last trip time
             self.needed_sleep_time = 60 / (90000 / seg_len) - trip_time 
             if self.needed_sleep_time < 0:
                 self.needed_sleep_time = 0
-            print(f'Time calc to sleep: {self.needed_sleep_time}')
+            if self.verbose == True:
+                print(f'Time calc to sleep: {self.needed_sleep_time}')
 
             if expansion:
                 iq = f"be direct and short. Question: {segment} \n The intent of this question is to: "

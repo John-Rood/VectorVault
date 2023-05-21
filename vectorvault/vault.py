@@ -23,8 +23,8 @@ import re
 import openai
 from annoy import AnnoyIndex
 from concurrent.futures import ThreadPoolExecutor
-from cloudmanager import CloudManager
-from closedai import ClosedAI
+from .cloudmanager import CloudManager
+from .closedai import ClosedAI
 
 
 class Vault:

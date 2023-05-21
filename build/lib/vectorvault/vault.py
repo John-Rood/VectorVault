@@ -320,7 +320,7 @@ class Vault:
         text_len = 0
         for item in self.items:
             text = item['text']
-            text_len += len(text)
+            text_len += self.closedai.get_tokens(text)
             texts.append(text)
         num_batches = int(np.ceil(len(texts) / batch_size))
 
@@ -331,15 +331,14 @@ class Vault:
         ]
         
         # max 350,000 tokens per minute - max requests per minute = 3500
-        # 1 token ~= 4 char - aka 1,400,000 char per min
         if self.first_run == False:
             trip_time = float(start_time - self.last_time)
             req_min = 60 / trip_time # 1 min (60) / time between requests (trip_time)
             projected_chars_per_min = req_min * text_len
-            rate_ratio = projected_chars_per_min / 1500000
+            rate_ratio = projected_chars_per_min / 350000
             print(f'Projected Characters per min:{projected_chars_per_min} | Rate Limit Ratio: {rate_ratio} | Text Length: {text_len}')
             # 1 min divided by the cap per min and the total we are sending now and factor in the last trip time
-            self.needed_sleep_time = 60 / (1500000 / text_len) - trip_time 
+            self.needed_sleep_time = 60 / (350000 / text_len) - trip_time 
             if self.needed_sleep_time < 0:
                 self.needed_sleep_time = 0
 
@@ -420,7 +419,7 @@ class Vault:
         
         time.sleep(self.needed_sleep_time)
 
-        if len(text) > 15000:
+        if self.closedai.get_tokens(text) > 4000:
             if summary:
                 inputs = self.split_text(text, 14500)
             else:
@@ -430,16 +429,15 @@ class Vault:
         response = ''
         for segment in inputs:
             start_time = time.time()
-            seg_len = len(segment)
+            seg_len = self.closedai.get_tokens(segment)
             # max 90,000 tokens per minute | max requests per minute = 3500
-            # 1 token ~= 4 char - aka 360,000 char per min
             trip_time = float(start_time - self.last_chat_time)
             req_min = 60 / trip_time # 1 min (60) / time between requests (trip_time)
             projected_chars_per_min = req_min * seg_len
-            rate_ratio = projected_chars_per_min / 360000
+            rate_ratio = projected_chars_per_min / 90000
             print(f'Projected Characters per min:{projected_chars_per_min} | Rate Limit Ratio: {rate_ratio} | Text Length: {seg_len}')
             # 1 min divided by the cap per min and the total we are sending now and factor in the last trip time
-            self.needed_sleep_time = 60 / (360000 / seg_len) - trip_time 
+            self.needed_sleep_time = 60 / (90000 / seg_len) - trip_time 
             if self.needed_sleep_time < 0:
                 self.needed_sleep_time = 0
             print(f'Time calc to sleep: {self.needed_sleep_time}')
@@ -459,7 +457,9 @@ class Vault:
                         response += self.closedai.summarize(segment, model=model)
                     elif get_context and not summary:
                         user_input = segment + history if history_search else segment
-                        if len(user_input) > 15000:
+                        if self.closedai.get_tokens(user_input) > 4000:
+                            user_input = user_input[-16000:]
+                        if self.closedai.get_tokens(user_input) > 4000:
                             user_input = user_input[-15000:]
                         context = self.get_similar(user_input, n=n_context)
                         response = self.closedai.llm_w_context(segment, context, history, model=model)

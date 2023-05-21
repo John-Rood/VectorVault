@@ -14,6 +14,7 @@
 # from Vector Vault.
 
 import openai
+import tiktoken
 
 class ClosedAI:
     def __init__(self) -> None:
@@ -88,3 +89,8 @@ class ClosedAI:
         # The API responds with a 'choices' array containing the 'message' object.
         return response['choices'][0]['message']['content']
 
+    def get_tokens(string: str, encoding_name: str = "cl100k_base") -> int:
+        """Returns the number of tokens in a text string."""
+        encoding = tiktoken.get_encoding(encoding_name)
+        num_tokens = len(encoding.encode(string))
+        return num_tokens

@@ -182,14 +182,14 @@ class Vault:
         }
 
         if self.verbose == True:
-            print(f"get {num_items} items back --- %s seconds ---" % (time.time() - start_time))
+            print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
 
         return return_dict
     
 
-    def get_similar(self, text, num_items: int = 4):
+    def get_similar(self, text, n: int = 4):
         vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
-        return self.get_items_by_vector(vector, num_items)
+        return self.get_items_by_vector(vector, n)
 
 
     def add_item(self, text: str, meta: dict = None, name: str = None):
@@ -461,7 +461,7 @@ class Vault:
                         user_input = segment + history if history_search else segment
                         if len(user_input) > 15000:
                             user_input = user_input[-15000:]
-                        context = self.get_similar(user_input, n_context)
+                        context = self.get_similar(user_input, n=n_context)
                         response = self.closedai.llm_w_context(segment, context, history, model=model)
                     else:
                         response = self.closedai.llm(segment, history, model=model)

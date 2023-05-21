@@ -336,10 +336,10 @@ class Vault:
         if self.first_run == False:
             trip_time = float(start_time - self.last_time)
             req_min = 60 / trip_time # 1 min (60) / time between requests (trip_time)
-            projected_chars_per_min = req_min * text_len
-            rate_ratio = projected_chars_per_min / 350000
+            projected_tokens_per_min = req_min * text_len
+            rate_ratio = projected_tokens_per_min / 350000
             if self.verbose == True:
-                print(f'Projected Characters per min:{projected_chars_per_min} | Rate Limit Ratio: {rate_ratio} | Text Length: {text_len}')
+                print(f'Projected Tokens per min:{projected_tokens_per_min} | Rate Limit Ratio: {rate_ratio} | Text Length: {text_len}')
             # 1 min divided by the cap per min and the total we are sending now and factor in the last trip time
             self.needed_sleep_time = 60 / (350000 / text_len) - trip_time 
             if self.needed_sleep_time < 0:
@@ -437,10 +437,10 @@ class Vault:
             # max 90,000 tokens per minute | max requests per minute = 3500
             trip_time = float(start_time - self.last_chat_time)
             req_min = 60 / trip_time # 1 min (60) / time between requests (trip_time)
-            projected_chars_per_min = req_min * seg_len
-            rate_ratio = projected_chars_per_min / 90000
+            projected_tokens_per_min = req_min * seg_len
+            rate_ratio = projected_tokens_per_min / 90000
             if self.verbose == True:
-                print(f'Projected Characters per min:{projected_chars_per_min} | Rate Limit Ratio: {rate_ratio} | Text Length: {seg_len}')
+                print(f'Projected Tokens per min:{projected_tokens_per_min} | Rate Limit Ratio: {rate_ratio} | Text Length: {seg_len}')
             # 1 min divided by the cap per min and the total we are sending now and factor in the last trip time
             self.needed_sleep_time = 60 / (90000 / seg_len) - trip_time 
             if self.needed_sleep_time < 0:

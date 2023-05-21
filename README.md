@@ -34,7 +34,7 @@ This python library allows you to interact with VectorVault using its Python-bas
 
 ## Basic usage:
 ```
-from vector_vault import Vault
+from vectorvault import Vault
 
 # Create an instance of the Vault class - a new vault will be created if name does not exist
 vault = Vault(user='your_user_id', api_key='your_api_key', vault='name_of_your_vault)
@@ -213,7 +213,7 @@ print("Question:", user_input, "\n\nAnswer:", answer)
 
 # show the context used to generate the answer
 for item in vault_response['context']['results']:
-    print("\n\n", f"item {item['metadata']['item_index']}")
+    print("\n\n", f"item {item['metadata']['item_id']}")
     print(item['data'])
 
 ```
@@ -272,7 +272,7 @@ In the following code, we will add all the customer conversations that a support
 
 ### Create the Customer Service Vault
 ```
-from vector_vault import Vault
+from vectorvault import Vault
 
 os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 

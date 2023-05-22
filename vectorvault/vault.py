@@ -25,6 +25,7 @@ from annoy import AnnoyIndex
 from concurrent.futures import ThreadPoolExecutor
 from .cloudmanager import CloudManager
 from .closedai import ClosedAI
+from .itemize import itemize, name, name_vecs, get_item, build_return
 
 
 class Vault:
@@ -46,8 +47,7 @@ class Vault:
 
     def check_index(self):
         start_time = time.time()
-        if self.cloud_manager.vault_exists(f'{self.vault}.ann'):
-            print('vault exists')
+        if self.cloud_manager.vault_exists(name_vecs(self.vault)):
             self.load_vectors()
             num_existing_items = self.vectors.get_n_items()
             new_index = AnnoyIndex(self.dims, 'angular')
@@ -67,7 +67,7 @@ class Vault:
     def load_vectors(self):
         start_time = time.time()
         # Download the .ann file from google cloud storage to a temporary file
-        temp_file_path = self.cloud_manager.download_to_temp_file(f'{self.vault}.ann')
+        temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(self.vault))
 
         # Load the AnnoyIndex object from the temporary file, then delete the temp file
         self.vectors.load(temp_file_path)
@@ -78,7 +78,7 @@ class Vault:
     
     def get_vaults(self, vault: str = None):
         vault = self.vault if vault is None else vault
-        return self.cloud_manager.get_vaults(vault=f'{vault}')
+        return self.cloud_manager.get_vaults(vault)
 
 
     def get_total_vectors(self):
@@ -91,12 +91,12 @@ class Vault:
 
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             self.vectors.save(temp_file.name)
-            self.cloud_manager.upload_temp_file(temp_file.name, f'{self.vault}.ann')
+            self.cloud_manager.upload_temp_file(temp_file.name, name_vecs(self.vault))
 
         total_saved_items = 0
         for item in self.items:
-            item_id = item["meta"]["item_id"]
-            self.cloud_manager.upload(item_id, item["text"], item["meta"])
+            item_text, item_id, item_meta = get_item(item)
+            self.cloud_manager.upload(item_id, item_text, item_meta)
             total_saved_items += 1
 
         self.items.clear()
@@ -157,26 +157,15 @@ class Vault:
         self.load_vectors()
         start_time = time.time()
 
-        # Create an empty list to store the results
         results = []
-        indexes = self.vectors.get_nns_by_vector(vector, n)
-        print(indexes)
-        for index in indexes:
+        vecs = self.vectors.get_nns_by_vector(vector, n)
+        for vec in vecs:
             # Retrieve the item
-            item_data = self.cloud_manager.download_text_from_cloud(f'{self.vault}/{index}/item')
-
+            item_data = self.cloud_manager.download_text_from_cloud(name(self.vault, vec, item=True))
             # Retrieve the metadata
-            meta_data = self.cloud_manager.download_text_from_cloud(f'{self.vault}/{index}/meta')
+            meta_data = self.cloud_manager.download_text_from_cloud(name(self.vault, vec, meta=True))
             meta = json.loads(meta_data)
-
-            # Create a dictionary with data and metadata
-            result = {
-                "data": item_data,
-                "metadata": meta
-            }
-
-            # Append the result to the list
-            results.append(result)
+            build_return(results, item_data, meta)
 
         # Create a return dictionary
         return_dict = {
@@ -203,29 +192,8 @@ class Vault:
             self.check_index()
         else: 
             pass
-        
-        # set value if none exist
-        meta = {} if meta is None else meta
 
-        if 'name' not in meta and name is None:
-            name = f'{self.vault}-{self.x}'
-        elif name is not None:
-            name = name
-        meta['name'] = name
-        meta['item_id'] = self.x  # Store the item index in the metadata
-
-        if 'created_at' not in meta:
-            meta['created_at'] = datetime.datetime.utcnow().isoformat()
-        if 'updated_at' not in meta:
-            meta['updated_at'] = datetime.datetime.utcnow().isoformat()
-
-        # Add item and its metadata to the items list
-        item = {
-            "text": text,
-            "meta": meta
-        }
-        self.items.append(item)
-
+        self.items.append(itemize(self.vault, self.x, meta, text, name))
         self.x += 1
 
 
@@ -260,30 +228,9 @@ class Vault:
         if len(text) > 36000:
             raise 'Text length too long. Use the "split_text() function to get a list of text segments'
 
-        # set value if none exist
-        meta = {} if meta is None else meta
-
-        if 'name' not in meta and name is None:
-            name = f'{self.vault}-{self.x}'
-        elif name is not None:
-            name = name
-        meta['name'] = name
-        meta['item_id'] = self.x  # Store the item index in the metadata
-
-        if 'created_at' not in meta:
-            meta['created_at'] = datetime.datetime.utcnow().isoformat()
-        if 'updated_at' not in meta:
-            meta['updated_at'] = datetime.datetime.utcnow().isoformat()
-
         # Add vector to vectorspace
         self.vectors.add_item(self.x, vector)
-
-        # Add item and its metadata to the items list
-        item = {
-            "text": text,
-            "meta": meta
-        }
-        self.items.append(item)
+        self.items.append(itemize(self.vault, self.x, meta, text, name))
 
         self.x += 1
 

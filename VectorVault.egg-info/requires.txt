@@ -1,0 +1,7 @@
+numpy
+requests
+bs4
+google-cloud-storage
+annoy
+openai
+tiktoken

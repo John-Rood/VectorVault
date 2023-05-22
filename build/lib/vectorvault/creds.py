@@ -34,7 +34,7 @@ class CustomCredentials(Credentials):
             return False
         return datetime.datetime.now() < self.expiry
 
-    def refresh(self, request):
+    def refresh(self):
         if not self.valid:
             data = {
                 "user_id": self.user,
@@ -46,7 +46,7 @@ class CustomCredentials(Credentials):
             self.token = response_data['access_token']
             self.expiry = datetime.datetime.fromisoformat(response_data['expiry'])
 
-    def before_request(self, request, method, url, headers):
+    def before_request(self, headers):
         self.apply(headers)
 
     def __getstate__(self):

@@ -7,7 +7,7 @@ vector_vault.egg-info/dependency_links.txt
 vector_vault.egg-info/requires.txt
 vector_vault.egg-info/top_level.txt
 vectorvault/__init__.py
-vectorvault/closedai.py
+vectorvault/ai.py
 vectorvault/cloudmanager.py
 vectorvault/creds.py
 vectorvault/download.py

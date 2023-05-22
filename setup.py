@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="vector_vault",
-    version="0.2.1",
+    version="0.2.4",
     packages=find_packages(),
     author="VectorVault.io",
     author_email="john@johnrood.com",

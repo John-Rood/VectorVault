@@ -100,6 +100,7 @@ class Vault:
             total_saved_items += 1
 
         self.items.clear()
+        self.x_checked = False
 
         if self.verbose:
             print("save vectors time --- %s seconds ---" % (time.time() - start_time))

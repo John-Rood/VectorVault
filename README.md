@@ -37,6 +37,7 @@ Install VectorVault:
 ```
 pip install vector-vault
 ```
+Use VectorVault:
 ```
 from vectorvault import Vault
 

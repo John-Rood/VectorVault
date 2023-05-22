@@ -17,6 +17,7 @@ import tempfile
 import os
 import json
 from .creds import CustomCredentials
+from .itemize import name
 from google.cloud import storage
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -26,48 +27,46 @@ class CloudManager:
         self.user = user
         self.api = api_key
         self.vault = vault
-
-        # Create the OAuth credentials
+        # Creates the credentials
         credentials = CustomCredentials(self.user, self.api)
-
-        # Instantiates a client with the OAuth2 credentials
+        # Instantiates the client 
         self.storage_client = storage.Client(project='vectorvault-361ab', credentials=credentials)
-        self.gcloud = self.storage_client.bucket(self.user)
+        self.cloud = self.storage_client.bucket(self.user)
         print(f'Connected to Vault: {self.vault}')
 
     def vault_exists(self, vault_name):
-        return storage.Blob(bucket=self.gcloud, name=vault_name).exists(self.storage_client)
+        return storage.Blob(bucket=self.cloud, name=vault_name).exists(self.storage_client)
 
     def upload_to_cloud(self, vault_name, content):
-        blob = self.gcloud.blob(vault_name)
+        blob = self.cloud.blob(vault_name)
         blob.upload_from_string(content)
 
     def download_text_from_cloud(self, vault_name):
-        blob = self.gcloud.blob(vault_name)
+        blob = self.cloud.blob(vault_name)
         return blob.download_as_text()
 
     def upload_temp_file(self, temp_file_path, vault_name):
-        blob = self.gcloud.blob(vault_name)
+        blob = self.cloud.blob(vault_name)
         blob.upload_from_filename(temp_file_path)
         os.remove(temp_file_path)
 
     def download_to_temp_file(self, vault_name):
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            blob = self.gcloud.blob(vault_name)
+            blob = self.cloud.blob(vault_name)
             blob.download_to_filename(temp_file.name) 
             return temp_file.name
 
     def upload(self, item, text, meta):
         with ThreadPoolExecutor() as executor:
-            executor.submit(self.upload_to_cloud, f'{self.vault}/{item}/item', text)
-            executor.submit(self.upload_to_cloud, f'{self.vault}/{item}/meta', json.dumps(meta))
+            executor.submit(self.upload_to_cloud, name(self.vault, item, item=True), text)
+            executor.submit(self.upload_to_cloud, name(self.vault, item, meta=True), json.dumps(meta))
     
     def delete_blob(self, blob):
         blob.delete()
 
     def delete(self):
         # Get all objects
-        blobs = self.gcloud.list_blobs(prefix=self.vault)
+        blobs = self.cloud.list_blobs(prefix=self.vault)
         
         # Delete each object concurrently
         with ThreadPoolExecutor() as executor:
@@ -81,7 +80,7 @@ class CloudManager:
         
     def get_vaults(self, vault: str = None):
         vault = self.vault if vault is None else vault
-        blobs = self.gcloud.list_blobs(prefix=f'{vault}')
+        blobs = self.cloud.list_blobs(prefix=f'{vault}')
     
         directories = set()
         for blob in blobs:

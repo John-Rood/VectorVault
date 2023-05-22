@@ -1,4 +1,5 @@
 import datetime 
+from annoy import AnnoyIndex
 
 def itemize(vault, x, meta=None, text=None, name=None):
     meta = {} if meta is None else meta
@@ -25,8 +26,8 @@ def package(text, meta):
     }
     return item
 
-def build_base_path(vault, x):
-    return f'{vault}/{x}'
+def build_base_path(v, x):
+    return f'{v}/{x}'
 
 def append_path_suffix(base_path, is_item, is_meta):
     if is_item:
@@ -37,13 +38,16 @@ def append_path_suffix(base_path, is_item, is_meta):
         suffix = ''
     return f'{base_path}/{suffix}'
 
-def name(vault, x, item=False, meta=False):
-    base_path = build_base_path(vault, x)
+def name(v, x, item=False, meta=False):
+    base_path = build_base_path(v, x)
     final_path = append_path_suffix(base_path, item, meta)
     return final_path
 
 def name_vecs(vault):
     return f'{vault}.ann'
+
+def get_vectors(dims):
+    return AnnoyIndex(dims, 'angular')
 
 def get_item(item):
     item_id = item["meta"]["item_id"]

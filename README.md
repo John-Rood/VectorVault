@@ -33,6 +33,10 @@ This python library allows you to interact with VectorVault using its Python-bas
 <br>
 
 ## Basic usage:
+Install VectorVault:
+```
+pip install vector-vault
+```
 ```
 from vectorvault import Vault
 

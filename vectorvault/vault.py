@@ -16,22 +16,20 @@
 import numpy as np
 import tempfile
 import os
-import datetime
 import time
 import json
 import re
 import openai
-from annoy import AnnoyIndex
 from concurrent.futures import ThreadPoolExecutor
 from .cloudmanager import CloudManager
-from .closedai import ClosedAI
-from .itemize import itemize, name, name_vecs, get_item, build_return
+from .ai import AI
+from .itemize import itemize, name, name_vecs, get_item, build_return, get_vectors
 
 
 class Vault:
     def __init__(self, user: str, api_key: str, vault: str = None, dims: int = 1536, verbose: bool = False):
         self.vault = vault.strip() if vault else 'home'
-        self.vectors = AnnoyIndex(dims, 'angular')
+        self.vectors = get_vectors(dims)
         self.dims = dims
         self.cloud_manager = CloudManager(user, api_key, self.vault)
         self.x = 0
@@ -42,7 +40,7 @@ class Vault:
         self.last_chat_time = None
         self.first_run = True
         self.needed_sleep_time = None
-        self.closedai = ClosedAI()
+        self.ai = AI()
 
 
     def check_index(self):
@@ -50,11 +48,11 @@ class Vault:
         if self.cloud_manager.vault_exists(name_vecs(self.vault)):
             self.load_vectors()
             num_existing_items = self.vectors.get_n_items()
-            new_index = AnnoyIndex(self.dims, 'angular')
+            new_index = get_vectors(self.dims)
             for i in range(num_existing_items):
                 vector = self.vectors.get_item_vector(i)
                 new_index.add_item(i, vector)
-                self.x = i
+            self.x = i + 1
             self.vectors = new_index
         else:
             pass
@@ -108,9 +106,9 @@ class Vault:
 
     def delete(self):
         if self.verbose == True:
-                print('Deleting started. Note: this can take a while for large datasets')
+            print('Deleting started. Note: this can take a while for large datasets')
         # Clear the local vector data
-        self.vectors = AnnoyIndex(self.dims, 'angular')
+        self.vectors = get_vectors(self.dims)
         self.items.clear()
         self.x = 0
         self.cloud_manager.delete()
@@ -199,11 +197,11 @@ class Vault:
 
     def add(self, text: str, meta: dict = None, name: str = None):
         """
-            If your text length lenght is greater than 15000 characters, Vault.split_text(your_text)  
+            If your text length lenght is greater than 4000 tokens, Vault.split_text(your_text)  
             will automatically be added
         """
 
-        if len(text) > 14000:
+        if self.ai.get_tokens(text) > 4000:
             if self.verbose == True:
                 print('Text length too long. Using the built-in "split_text()" function to get a list of text segments') 
             texts = self.split_text(text) # returns list of text segments
@@ -211,7 +209,7 @@ class Vault:
             texts = [text]
 
         for text in texts:
-            self.add_item(text)
+            self.add_item(text, meta, name)
 
     
     def add_item_with_vector(self, text: str, vector: list, meta: dict = None, name: str = None):
@@ -270,7 +268,7 @@ class Vault:
         text_len = 0
         for item in self.items:
             text = item['text']
-            text_len += self.closedai.get_tokens(text)
+            text_len += self.ai.get_tokens(text)
             texts.append(text)
         num_batches = int(np.ceil(len(texts) / batch_size))
 
@@ -294,7 +292,7 @@ class Vault:
                 self.needed_sleep_time = 0
 
             if self.verbose == True:
-                print(f'Time calc to sleep: {self.needed_sleep_time}')
+                print(f"Time calc'd to sleep: {self.needed_sleep_time}")
             if req_min > 3500:
                 time.sleep(1)
 
@@ -371,7 +369,7 @@ class Vault:
         
         time.sleep(self.needed_sleep_time)
 
-        if self.closedai.get_tokens(text) > 4000:
+        if self.ai.get_tokens(text) > 4000:
             if summary:
                 inputs = self.split_text(text, 14500)
             else:
@@ -381,7 +379,7 @@ class Vault:
         response = ''
         for segment in inputs:
             start_time = time.time()
-            seg_len = self.closedai.get_tokens(segment)
+            seg_len = self.ai.get_tokens(segment)
             # max 90,000 tokens per minute | max requests per minute = 3500
             trip_time = float(start_time - self.last_chat_time)
             req_min = 60 / trip_time # 1 min (60) / time between requests (trip_time)
@@ -394,31 +392,30 @@ class Vault:
             if self.needed_sleep_time < 0:
                 self.needed_sleep_time = 0
             if self.verbose == True:
-                print(f'Time calc to sleep: {self.needed_sleep_time}')
+                print(f"Time calc'd to sleep: {self.needed_sleep_time}")
 
             if expansion:
                 iq = f"be direct and short. Question: {segment} \n The intent of this question is to: "
-                intent_expansion = self.closedai.llm(iq)
+                intent_expansion = self.ai.llm(iq)
                 kq = f"be general, direct, and short. Don't give an answer, only topics this question falls under to this question: {segment}"
-                knowledge_expansion = self.closedai.llm(kq)
+                knowledge_expansion = self.ai.llm(kq)
                 segment = f'question_intent: {intent_expansion} | {knowledge_expansion}\n\
                 Question: {segment}'
-                print(segment)
 
             while True:
                 try:
                     if summary and not get_context:
-                        response += self.closedai.summarize(segment, model=model)
+                        response += self.ai.summarize(segment, model=model)
                     elif get_context and not summary:
                         user_input = segment + history if history_search else segment
-                        if self.closedai.get_tokens(user_input) > 4000:
+                        if self.ai.get_tokens(user_input) > 4000:
                             user_input = user_input[-16000:]
-                        if self.closedai.get_tokens(user_input) > 4000:
+                        if self.ai.get_tokens(user_input) > 4000:
                             user_input = user_input[-15000:]
                         context = self.get_similar(user_input, n=n_context)
-                        response = self.closedai.llm_w_context(segment, context, history, model=model)
+                        response = self.ai.llm_w_context(segment, context, history, model=model)
                     else:
-                        response = self.closedai.llm(segment, history, model=model)
+                        response = self.ai.llm(segment, history, model=model)
                     break
                 except Exception as e:
                     print(f"API Error: {e}. Sleeping 15 seconds")

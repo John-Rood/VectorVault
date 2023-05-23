@@ -1,3 +1,5 @@
 /build
 /dist
 /vectorvault/__pycache__
+setup.py
+vector_vault.egg-info/PKG-INFO

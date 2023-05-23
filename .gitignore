@@ -2,5 +2,5 @@
 /dist
 /vectorvault/__pycache__
 setup.py
-vector_vault.egg-info
+vector_vault.egg-info/
 build/lib/vectorvault

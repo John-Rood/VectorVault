@@ -13,7 +13,6 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Vector Vault.
 
-
 import openai
 import tiktoken
 
@@ -51,7 +50,7 @@ class AI:
     def llm_w_context(self, user_input, context, history=None, model='gpt-3.5-turbo'):
         prompt_template = """
         Use the following pieces of context to answer the question at the end. 
-        Answer as if you were the modern voice of the context. Make sure to not just repeat what is referenced. Don't preface, and at the end, don't give any warnings.
+        Answer as if you were the modern voice of the context. Make sure to not just repeat what is referenced. Don't preface, and don't give any warnings at the end.
 
         {context}
 

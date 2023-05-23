@@ -1,4 +1,4 @@
-/build
+build/
 /dist
 /vectorvault/__pycache__
 setup.py

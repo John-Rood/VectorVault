@@ -80,13 +80,10 @@ vault.save()
 
 Now that you have saved some data to the vault, you can add more at anytime, and your vault will automatically handle the adding process. These three lines execute very fast.
 ```
-# Add more data to the Vault
 vault.add(more_text_data)
 
-# Get embeddings for it - requires an openai api key set as an environvment variable
 vault.get_vectors()
 
-# Save to the Vault
 vault.save()
 ```
 

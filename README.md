@@ -96,16 +96,14 @@ vault.save()
 <br>
 
 `vault.add()` is very versitile. You can add any length of text, even a full book...and it will be all automatically split and processed.
-`vault.get_vectors()` is also extremely flexible, because you can `vault.add()` as much as you want, then when you're done, process all the vectors at once with a `vault.get_vectors()` call - Which internally batches vector embeddings with OpenAI's text-embeddings-ada-002, and comes with auto rate-limiting and concurrent requests for maximum processing speed. Small jobs are finished quickly. Long jobs are finished after a while. 
->> A test was done adding 37 books at once. The `get_vectors()` function took 8 minutes and 56 seconds. 
-
-
+`vault.get_vectors()` is also extremely flexible, because you can `vault.add()` as much as you want, then when you're done, process all the vectors at once with a `vault.get_vectors()` call - Which internally batches vector embeddings with OpenAI's text-embeddings-ada-002, and comes with auto rate-limiting and concurrent requests for maximum processing speed. 
 ```
 vault.add(insanely_large_text_data)
 vault.get_vectors() 
 vault.save() 
 ```
-^ these three lines execute fast and can be called as often as you like. For example: `add`, `get_vectors`, and `save` can be used mid conversation to add every message to the vault one at a time as they comes in.
+^ these three lines execute fast and can be called as often as you like. For example: `add`, `get_vectors`, and `save` can be used mid conversation to add every message to the vault one at a time as they comes in. Small jobs are usually finished in under a second. Long jobs are depend on total data size. 
+>> A test was done adding the full text of 37 books at once. The `get_vectors()` function took 8 minutes and 56 seconds. For comparison, processing one at a time via openai's embedding function would take roughly two days.
 
 
 <br>

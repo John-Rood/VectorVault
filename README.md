@@ -121,7 +121,7 @@ similar_data = vault.get_similar("Your text input")
 for result in similar_data:
     print(result['data'])
 ```
-^ this prints each similar item that was retieved. The `get_similar()` function retrieves items from the vault using vector cosine similarity search as the algorithm to find results. Default returns a list with 4 results. 
+^ this prints each similar item that was retieved. The `get_similar()` function retrieves items from the vault using the vector cosine similarity search algorithm to find results. Default returns a list with 4 results. 
 `similar_data = vault.get_similar(text_input, n = 10)` returns 10 results instead of 4.
 
 

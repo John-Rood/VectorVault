@@ -122,7 +122,7 @@ for result in similar_data:
 
 <br>
 
-## Use the get_chat() function to get a response from chatgpt
+## Use the `get_chat()` function to get a response from chatgpt
 The following searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the context
 ```
 question = "This text is going to be used find contextually similar references in the vault"
@@ -176,7 +176,7 @@ lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='scie
 <br>
 <br>
 
-# get_chat()
+# `get_chat()`
 Chat get response from OpenAI's ChatGPT. 
 Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
 Enter your text, add optional chat history, and optionally choose a summary response (default: summmary = False)

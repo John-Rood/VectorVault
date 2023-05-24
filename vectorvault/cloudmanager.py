@@ -24,11 +24,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class CloudManager:
     def __init__(self, user: str, api_key: str, vault: str):
-        self.user = user
+        self.user = self.get_user_id(user)
         self.api = api_key
         self.vault = vault
         # Creates the credentials
-        credentials = CustomCredentials(self.user, self.api)
+        credentials = CustomCredentials(user, self.api)
         # Instantiates the client 
         self.storage_client = storage.Client(project='vectorvault-361ab', credentials=credentials)
         self.cloud = self.storage_client.bucket(self.user)
@@ -63,6 +63,9 @@ class CloudManager:
     
     def delete_blob(self, blob):
         blob.delete()
+     
+    def get_user_id(self, input_string):
+        return input_string.replace("@", "_at_").replace(".", "_dot_") + '_vvclient'
 
     def delete(self):
         # Get all objects

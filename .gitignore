@@ -1,5 +1,7 @@
 /build
 /dist
 /vectorvault/__pycache__
+/vectorvault/ask_any_website copy.ipynb 
 setup.py
 /vector_vault.egg-info
+/tests

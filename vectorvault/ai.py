@@ -59,15 +59,34 @@ class AI:
         (answer the question directly. Most importantly, make your answer interesting, engaging, and helpful) 
         Answer:"""
 
-        inchar = len(user_input)
-        conchar = len(context)
-        histchar = len(history) if history else 0
-        if inchar + conchar + histchar > 16000:
-            char_left = 16000 - inchar
-            if history:
+        intokes = self.get_tokens(user_input)
+        contokes = self.get_tokens(context)
+        history = history if history else ""
+        histokes = self.get_tokens(history)
+
+        if intokes + contokes + histokes > 4000:
+            tokes_left = 4000 - intokes
+            if len(history) > 1:
+                print('history is triggered')
+                tokes_left = 2000 - intokes 
+                char_left = tokes_left * 4
                 history = history[-char_left:]
+                tokes_left_after_hist = 4000 - self.get_tokens(user_input + history)
+                char_left_after_hist = tokes_left_after_hist * 4
+                context = context[-char_left_after_hist:]
+                double_check = self.get_tokens(user_input+history+context)
+                if double_check > 4096: 
+                    remainder = double_check - 4096
+                    char_to_take_away = remainder * 5
+                    context = context[-char_to_take_away:] 
             else:
+                char_left = tokes_left * 4 
                 context = context[-char_left:]
+                double_check = self.get_tokens(user_input + context)
+                if double_check > 4096:
+                    remainder = double_check - 4096
+                    char_to_take_away = remainder * 5
+                    context = context[char_to_take_away:]
 
         # Format the prompt
         user_input = history + user_input

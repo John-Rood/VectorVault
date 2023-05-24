@@ -37,6 +37,12 @@ Install VectorVault:
 ```
 pip install vector-vault
 ```
+Sign Up to Vector Vault for Free:
+```
+from vectorvault import register
+
+register(first_name='John', last_name='Smith', email='john@smith.com', password='password')
+```
 Use VectorVault:
 ```
 from vectorvault import Vault

@@ -23,7 +23,7 @@ class CustomCredentials(Credentials):
         self.api = api
         self.token = None
         self.expiry = None
-        self.refresh(requests.Request())
+        self.refresh()
 
     def apply(self, headers, token=None):
         headers["Authorization"] = f"Bearer {self.token}"
@@ -46,8 +46,8 @@ class CustomCredentials(Credentials):
             self.token = response_data['access_token']
             self.expiry = datetime.datetime.fromisoformat(response_data['expiry'])
 
-    def before_request(self, headers):
-        self.apply(headers)
+    def before_request(self, auth_request, method, url, request_headers):
+        self.apply(request_headers)
 
     def __getstate__(self):
         return self.__dict__.copy()

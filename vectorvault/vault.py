@@ -316,7 +316,7 @@ class Vault:
             print("get vectors time --- %s seconds ---" % (time.time() - start_time))
 
 
-    def get_chat(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, expansion = False, history_search = False, model='gpt-3.5-turbo'):
+    def get_chat(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, expansion = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False):
         '''
             Chat get response from OpenAI's ChatGPT. 
             Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
@@ -388,6 +388,8 @@ class Vault:
             if self.verbose == True:
                 print(f'Projected Tokens per min:{projected_tokens_per_min} | Rate Limit Ratio: {rate_ratio} | Text Length: {seg_len}')
             # 1 min divided by the cap per min and the total we are sending now and factor in the last trip time
+            if seg_len == 0:
+                raise('No input. Add text input to continue')
             self.needed_sleep_time = 60 / (90000 / seg_len) - trip_time 
             if self.needed_sleep_time < 0:
                 self.needed_sleep_time = 0
@@ -412,7 +414,13 @@ class Vault:
                             user_input = user_input[-16000:]
                         if self.ai.get_tokens(user_input) > 4000:
                             user_input = user_input[-15000:]
-                        context = self.get_similar(user_input, n=n_context)
+                        if include_context_meta:
+                            context = str(self.get_similar(user_input, n=n_context))
+                        else:
+                            contexts = self.get_similar(user_input, n=n_context)
+                            context = ''
+                            for text in contexts['results']:
+                                context += text['data']
                         response = self.ai.llm_w_context(segment, context, history, model=model)
                     else:
                         response = self.ai.llm(segment, history, model=model)

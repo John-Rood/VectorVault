@@ -67,7 +67,6 @@ class AI:
         if intokes + contokes + histokes > 4000:
             tokes_left = 4000 - intokes
             if len(history) > 1:
-                print('history is triggered')
                 tokes_left = 2000 - intokes 
                 char_left = tokes_left * 4
                 history = history[-char_left:]

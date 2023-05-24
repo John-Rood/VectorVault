@@ -231,7 +231,7 @@ lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='scie
 # `get_chat()`
 Chat get response from OpenAI's ChatGPT. 
 Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
-Enter your text, add optional chat history, and optionally choose a summary response (default: summmary = False)
+Enter your text, add optional chat history, and optionally choose a summary response (default: summmary=False)
 
 - Example Signle Usage: 
 `response = vault.get_chat(text)`
@@ -243,23 +243,23 @@ Enter your text, add optional chat history, and optionally choose a summary resp
 `summary = vault.get_chat(text, summary=True)`
 
 - Example Context-Based Response:
-`response = vault.get_chat(text, get_context = True)`
+`response = vault.get_chat(text, get_context=True)`
 
 - Example Context-Based Response w/ Chat History:
-`response = vault.get_chat(text, chat_history, get_context = True)`
+`response = vault.get_chat(text, chat_history, get_context=True)`
 
 - Example Context-Response with Context Samples Returned:
-`vault_response = vault.get_chat(text, get_context = True, return_context = True)`
+`vault_response = vault.get_chat(text, get_context=True, return_context=True)`
 <br>
 
-Response is a string, unless `return_context = True` is passed, then response will be a dictionary containing the results from the vault as well as the response:
+Response is a string, unless `return_context=True` is passed, then response will be a dictionary containing the results from the vault as well as the response:
 ```
 # print response:
-print(vault_response['response'])` 
+print(vault_response['response'])
 
 # print context:
-for item in vault_response['context']['results']:
-    print("\n\n", f"item {item['metadata']['item_id']}")
+for item in vault_response['context']:
+    print("\n\n", f"item {item['metadata']['name']}")
     print(item['data'])
 ```
 
@@ -284,8 +284,8 @@ answer = vault_response['response']
 print("Question:", user_input, "\n\nAnswer:", answer)
 
 # show the context used to generate the answer
-for item in vault_response['context']['results']:
-    print("\n\n", f"item {item['metadata']['item_id']}")
+for item in vault_response['context']:
+    print("\n\n", f"item {item['metadata']['name']}")
     print(item['data'])
 
 ```

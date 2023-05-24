@@ -63,7 +63,7 @@ os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 1. Create a Vault instance - (a new vault will be created if name does not exist)
 2. Gather some text data we want to store
 3. Add the data to the Vault
-4. Get vectors embeddings
+4. Get vectors embeddings - (Automatic rate limiting built in. Auto batched and concurrently processed for fastest possible embed time)
 5. Save to the cloud vault
 
 ```
@@ -75,7 +75,6 @@ text_data = 'some data'
 
 vault.add(text_data)
 
-# Automatic rate limiting built in. Auto batched and concurrently processed for fastest possible embed time.
 vault.get_vectors()
 
 vault.save()

@@ -42,7 +42,7 @@ Get Your Vector Vault API Key:
 ```
 from vectorvault import register
 
-register(first_name='Your first', last_name='Your last', email='your@email.com', password='make_a_password')
+register(first_name='John', last_name='Smith', email='john@smith.com', password='make_a_password')
 
 # You will receive the api key to your email
 ```

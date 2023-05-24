@@ -42,8 +42,8 @@ Get Your Vector Vault API Key:
 ```
 from vectorvault import register
 
-# Sign up to the Vector Vault cloud platform:
 register(first_name='John', last_name='Smith', email='john@smith.com', password='make_a_password')
+
 # You will receive the api key to your email
 ```
 <br>

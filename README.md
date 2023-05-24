@@ -53,7 +53,7 @@ register(first_name='John', last_name='Smith', email='john@smith.com', password=
 
 Use VectorVault:
 
-First, add your openai key (the vectors are processed through openai)
+Set your openai key as an envorionment variable to use get_vectors() or get_chat().
 ```
 os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 ```

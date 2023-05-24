@@ -116,7 +116,7 @@ vault.save()
 
 After you've added some data and want to reference it later, you can call it like this:
 ```
-similar_data = vault.get_similar(text_input) 
+similar_data = vault.get_similar("Your text input") 
 
 for result in similar_data:
     print(result['data'])

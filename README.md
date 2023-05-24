@@ -51,7 +51,7 @@ register(first_name='John', last_name='Smith', email='john@smith.com', password=
 ```
 <br>
 
-Use VectorVault:
+# Use Vector Vault:
 
 Set your openai key as an envorionment variable
 ```

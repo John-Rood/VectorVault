@@ -60,7 +60,7 @@ Set your openai key as an envorionment variable
 os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 ```
 
-1. Create a Vault instance - a new vault will be created if name does not exist 
+1. Create a Vault instance - (a new vault will be created if name does not exist)
 2. Gather some text data we want to store
 3. Add the data to the Vault
 4. Get vectors embeddings

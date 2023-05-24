@@ -410,13 +410,14 @@ class Vault:
                         if self.ai.get_tokens(user_input) > 4000:
                             user_input = user_input[-15000:]
                         if include_context_meta:
-                            context = str(self.get_similar(user_input, n=n_context))
+                            context = self.get_similar(user_input, n=n_context)
+                            input = str(context)
                         else:
-                            contexts = self.get_similar(user_input, n=n_context)
-                            context = ''
-                            for text in contexts:
-                                context += text['data']
-                        response = self.ai.llm_w_context(segment, context, history, model=model)
+                            context = self.get_similar(user_input, n=n_context)
+                            input = ''
+                            for text in context:
+                                input += text['data']
+                        response = self.ai.llm_w_context(segment, input, history, model=model)
                     else:
                         response = self.ai.llm(segment, history, model=model)
                     break

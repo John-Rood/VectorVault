@@ -12,7 +12,7 @@ This python library allows you to interact with Vector Vault using its Python-ba
 
 # Interact with your Vault:
 <p align="center">
-  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/000a11f9-c091-4c04-a22d-f262bc5c30dc/Vault+small.png" />
+  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/e0879dac-e135-4f4e-bc76-7559c84fade0/wisdomandwealth_Envision_a_grand_stage_awash_in_our_brand_color_54fbbe0b-d3ab-40ab-949c-89fae422feb5.png?content-type=image%2Fpng" width="500" height="500" />
 </p>
 
 `add` : Add item to the Vault, with automatic text splitting and processing for long texts. Main way to add to vault
@@ -113,7 +113,7 @@ vault.save()
 
 # Reference Your Vault:
 <p align="center">
-  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/348a9190-0670-4b97-bf58-78a560565100/Vector+Vault+Vault+small.jpeg" />
+  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/5ae905b0-43d0-4b86-a965-5b447ee8c7de/Vector+Vault+Vault.jpg?content-type=image%2Fjpeg" width="500" height="500" />
 </p>
 
 After you've added some data and want to reference it later, you can call it like this:

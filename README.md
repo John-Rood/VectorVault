@@ -66,8 +66,7 @@ vault.add(text_data)
 # add your openai key to environment variable
 os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 
-# Get vecctor embeddings for text_data 
-# Internally calls openai with automatic rate limiting built in. Large inputs are batched, and concurrently processed for fastest possible embed time.
+# Get vecctor embeddings - automatic rate limiting built in + auto batched and concurrently processed for fastest possible embed time.
 vault.get_vectors()
 
 # Save the vectors and data to the Vault 

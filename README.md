@@ -129,8 +129,9 @@ question = "This text is going to be used find contextually similar references i
 
 answer = vault.get_chat(question, get_context=True)  
 print(answer)
-
-# The following line will send chatgpt the question for response and not interact with the vault in any way
+```
+The following line will send chatgpt the question for response and not interact with the vault in any way
+```
 answer = vault.get_chat(question) 
 ```
 

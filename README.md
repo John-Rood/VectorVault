@@ -53,7 +53,7 @@ register(first_name='John', last_name='Smith', email='john@smith.com', password=
 
 Use VectorVault:
 
-First, add your openai key to environment variable (the vectors are processed through openai)
+First, add your openai key (the vectors are processed through openai)
 ```
 os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 ```

@@ -102,7 +102,7 @@ vault.add(insanely_large_text_data)
 vault.get_vectors() 
 vault.save() 
 ```
-^ these three lines execute fast and can be called as often as you like. For example: you can use `add`, `get_vectors`, and `save` mid conversation to save every message to the vault as soon as they comes in. Small loads are usually finished in less than a second. Large loads depend on total data size. 
+^ these three lines execute fast and can be called as often as you like. For example: you can use `add()`, `get_vectors()`, and `save()` mid conversation to save every message to the vault as soon as they comes in. Small loads are usually finished in less than a second. Large loads depend on total data size. 
 >> A test was done adding the full text of 37 books at once. The `get_vectors()` function took 8 minutes and 56 seconds. (For comparison, processing one at a time via openai's embedding function would take roughly two days)
 
 
@@ -124,6 +124,52 @@ for result in similar_data:
 ^ this prints each similar item that was retieved. The `get_similar()` function retrieves items from the vault using vector cosine similarity search algorithm to find results. Default returns a list with 4 results. 
 `similar_data = vault.get_similar(text_input, n = 10)` returns 10 results instead of 4.
 
+<br>
+
+Print the metadata:
+```
+similar_data = vault.get_similar("Your text input") 
+
+for result in similar_data:
+    print(result['data'])
+    print(result['metadata'])
+```
+
+<br>
+
+To add meta data to your vault, just include it as a parameter in `add()`. Meta is always a dict, and you can add any fields you want. (If you don't add a 'name' field, a generic one will automatically be generated, so there is always a name field in the metadata)
+```
+metadata = {
+    'name': 'Lifestyle in LA',
+    'country': 'United State',
+    'city': 'LA' 
+}
+
+vault.add(more_text_data, metadata)
+
+vault.get_vectors()
+
+vault.save()
+```
+
+<br>
+
+To add just the 'name' field to the metadata, call the `name` param in `add()` like this:
+```
+vault.add(more_text_data, name='Lifestyle in LA')
+
+vault.get_vectors()
+
+vault.save()
+```
+
+Find the name later:
+```
+similar_data = vault.get_similar("Your text input") 
+
+for result in similar_data:
+    print(result['metadata']['name'])
+```
 
 <br>
 

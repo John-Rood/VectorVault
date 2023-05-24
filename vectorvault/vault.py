@@ -165,15 +165,10 @@ class Vault:
             meta = json.loads(meta_data)
             build_return(results, item_data, meta)
 
-        # Create a return dictionary
-        return_dict = {
-            "results": results
-        }
-
         if self.verbose == True:
             print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
 
-        return return_dict
+        return results
     
 
     def get_similar(self, text, n: int = 4):
@@ -223,7 +218,7 @@ class Vault:
             pass
         start_time = time.time()
 
-        if len(text) > 36000:
+        if self.ai.get_tokens(text) > 4000:
             raise 'Text length too long. Use the "split_text() function to get a list of text segments'
 
         # Add vector to vectorspace
@@ -419,7 +414,7 @@ class Vault:
                         else:
                             contexts = self.get_similar(user_input, n=n_context)
                             context = ''
-                            for text in contexts['results']:
+                            for text in contexts:
                                 context += text['data']
                         response = self.ai.llm_w_context(segment, context, history, model=model)
                     else:

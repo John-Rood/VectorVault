@@ -102,7 +102,7 @@ vault.add(insanely_large_text_data)
 vault.get_vectors() 
 vault.save() 
 ```
-^ these three lines execute fast and can be called as often as you like. For example: `add`, `get_vectors`, and `save` can be used mid conversation to add every message to the vault one at a time as they comes in. Small jobs are usually finished in under a second. Long jobs are depend on total data size. 
+^ these three lines execute fast and can be called as often as you like. For example: you can use `add`, `get_vectors`, and `save` mid conversation to save every message to the vault as soon as they comes in. Small loads are usually finished in less than a second. Large loads depend on total data size. 
 >> A test was done adding the full text of 37 books at once. The `get_vectors()` function took 8 minutes and 56 seconds. (For comparison, processing one at a time via openai's embedding function would take roughly two days)
 
 

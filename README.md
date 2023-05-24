@@ -121,14 +121,14 @@ similar_data = vault.get_similar("Your text input")
 for result in similar_data:
     print(result['data'])
 ```
-^ this prints each similar item that was retieved. Default returns a list with 4 results. 
+^ this prints each similar item that was retieved. The `get_similar` function retrieves items from the vault using vector cosine similarity search as the algorithm to find results. Default returns a list with 4 results. 
 `similar_data = vault.get_similar(text_input, n = 10)` returns 10 results instead of 4.
 
 
 <br>
 
 ## Use the `get_chat()` function to get a response from chatgpt
-The following searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the context
+Retrieving items from the vault, or texts, is useful when using it supply context to a large language model, chatgpt for instance, to get a contextualized response. The follow example searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the vault data.
 ```
 question = "This text will be used find contextually similar references in the vault"
 

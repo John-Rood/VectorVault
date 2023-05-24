@@ -21,15 +21,15 @@ This python library allows you to interact with Vector Vault using its Python-ba
 <br>
 `add_item_with_vector` : Add item to the Vault with vector provided - only accepts vectors of 1536 dimensions
 <br>
-`save` : Saves the vectors to the Vault and uploads any metadata
+`save` : Saves the vectors embeddings and data to the Cloud Vault along with any metadata
 <br>
-`delete` : Deletes the current Vault
+`delete` : Deletes the current Vault and all contents
 <br>
 `get_vaults` : Retrieves a list of vaults in the current vault 
 <br>
-`get_similar` : Retrieves similar vectors for a given input text
+`get_similar` : Retrieves similar texts from the vault for a given input text, default = 4 items returned
 <br>
-`get_vectors` : Retrieves the vectors for all items in the Vault
+`get_vectors` : Retrieves vectors embeddings for all data that was added to the Vault
 <br>
 `get_chat` : Retrieves a response from OpenAI's ChatGPT for a given input text, with support for handling conversation history, summarizing responses, and retrieving context-based responses by accessing similar references in the vault
 
@@ -43,7 +43,7 @@ pip install vector-vault
 ```
 <br>
 
-Get Your Vector Vault API Key:
+### Get Your Vector Vault API Key:
 ```
 from vectorvault import register
 

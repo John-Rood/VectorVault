@@ -38,7 +38,7 @@ pip install vector-vault
 ```
 <br>
 
-Get Vector Vault API Key:
+Get Your Vector Vault API Key:
 ```
 from vectorvault import register
 

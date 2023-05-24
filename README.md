@@ -327,5 +327,6 @@ That's all it takes to create an ai customer service chatbot that responds to yo
 
 If have any questions, leave a comment. Open the "examples" folder and try out the Google Colab tutorials we have.
 
-Happy coding.
+Happy coding!
+![alt text](https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/7c514bd9-0c4c-4099-a5e3-363c0ac6e4b2/Looking+out+with+hope+vector+vault.png)
 

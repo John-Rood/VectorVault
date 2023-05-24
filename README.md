@@ -116,13 +116,13 @@ vault.save()
 
 After you've added some data and want to reference it later, you can call it like this:
 ```
-similar_data = vault.get_similar(text_input) # returns a list with 4 results
+similar_data = vault.get_similar(text_input) 
 
-# Print each similar item 
 for result in similar_data:
     print(result['data'])
 ```
-`similar_data = vault.get_similar(text_input, n = 10)` returns 10 results instead of the default of 4.
+^ this prints each similar item that was retieved. Default returns a list with 4 results. 
+`similar_data = vault.get_similar(text_input, n = 10)` returns 10 results instead of 4.
 
 
 <br>

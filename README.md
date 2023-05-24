@@ -378,6 +378,6 @@ If have any questions, leave a comment. Open the "examples" folder and try out t
 
 Happy coding!
 <p align="center">
-  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/8ba5c4eb-e880-426a-94e7-16c750e1bfe7/Looking+out+with+hope+vector+vault+small.png" />
+  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/7d1a596b-7560-446b-aa69-1827819d198b/Looking+out+with+hope+vector+vault.png" width="60%" height="60%" />
 </p>
 

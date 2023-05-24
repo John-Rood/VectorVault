@@ -69,7 +69,7 @@ vault.add(text_data)
 
 os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 
-# Get vecctor embeddings - automatic rate limiting built in + auto batched and concurrently processed for fastest possible embed time.
+# Automatic rate limiting built in. Auto batched and concurrently processed for fastest possible embed time.
 vault.get_vectors()
 
 vault.save()

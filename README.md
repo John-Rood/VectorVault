@@ -30,18 +30,17 @@ This python library allows you to interact with VectorVault using its Python-bas
 
 
 <br>
-<br>
 
 ## Basic usage:
 Install VectorVault:
 ```
 pip install vector-vault
 ```
-Sign Up to Vector Vault for Free:
+Get Vector Vault API Key:
 ```
 from vectorvault import register
 
-register(first_name='John', last_name='Smith', email='john@smith.com', password='password')
+register(first_name='John', last_name='Smith', email='john@smith.com', password='make_a_password')
 ```
 Use VectorVault:
 ```

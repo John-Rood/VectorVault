@@ -95,8 +95,9 @@ vault.save()
 <br>
 <br>
 
-`vault.add()` is cool. You can add any length of text, even a full book...and it will be all automatically split and processed.
-`vault.get_vectors()` is also cool, because you can `vault.add()` as much as you want, then when you're done, process all the vectors at once with a `vault.get_vectors()` call - Which internally batches vector embeddings with OpenAI's text-embeddings-ada-002, and comes with auto rate-limiting and concurrent requests for maximum processing speed
+`vault.add()` is very versitile. You can add any length of text, even a full book...and it will be all automatically split and processed.
+`vault.get_vectors()` is also extremely flexible, because you can `vault.add()` as much as you want, then when you're done, process all the vectors at once with a `vault.get_vectors()` call - Which internally batches vector embeddings with OpenAI's text-embeddings-ada-002, and comes with auto rate-limiting and concurrent requests for maximum processing speed. Small jobs are finished quickly. Long jobs are finished after a while. 
+>> A test was done adding 37 books at once. The `get_vectors()` function took 8 minutes and 56 seconds. 
 
 
 ```

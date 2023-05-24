@@ -111,7 +111,11 @@ vault.save()
 <br>
 <br>
 
-## Use the vault later:
+# Reference Your Vault:
+<p align="center">
+  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/348a9190-0670-4b97-bf58-78a560565100/Vector+Vault+Vault+small.jpeg" />
+</p>
+After you've added some data and want to reference it later, you can call it like this:
 ```
 similar_data = vault.get_similar(text_input) # returns a list with 4 results
 similar_data = vault.get_similar(text_input, n = 10) # returns 10 results

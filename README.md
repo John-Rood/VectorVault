@@ -163,7 +163,9 @@ vault.get_vectors()
 vault.save()
 ```
 
-Find the name later:
+<br>
+
+To find the name later:
 ```
 similar_data = vault.get_similar("Your text input") 
 
@@ -171,6 +173,7 @@ for result in similar_data:
     print(result['metadata']['name'])
 ```
 
+<br>
 <br>
 
 ## Use the `get_chat()` function to get a response from chatgpt

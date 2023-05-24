@@ -52,22 +52,25 @@ register(first_name='John', last_name='Smith', email='john@smith.com', password=
 <br>
 
 Use VectorVault:
+Add your openai key to environment variable (the vectors are processed through openai)
+```
+os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
+```
+
 1. Create an instance of the Vault class - a new vault will be created if name does not exist 
 2. Gather some text data we want to store
 3. Add the data to the Vault
-4. Add your openai key to environment variable (vectors are processed through openai)
-5. Get vectors embeddings
-6. Save to the cloud vault
+4. Get vectors embeddings
+5. Save to the cloud vault
+
 ```
 from vectorvault import Vault
 
-vault = Vault(user='your_user_id', api_key='your_api_key', vault='name_of_your_vault)
+vault = Vault(user='your_email', api_key='your_api_key', vault='name_of_vault)
 
 text_data = 'some data'
 
 vault.add(text_data)
-
-os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 
 # Automatic rate limiting built in. Auto batched and concurrently processed for fastest possible embed time.
 vault.get_vectors()

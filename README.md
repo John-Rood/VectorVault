@@ -274,6 +274,16 @@ You can summarize any text, no matter how large - even an entire book all at onc
 ```
 summary = vault.get_chat(text, summary=True)
 ```
+<br>
+
+want to make a summary of a certain length?...
+```
+summary = vault.get_chat(text, summary=True)
+
+while len(summary) > 1000:
+    summary = vault.get_chat(summary, summary=True)
+```
+^ in the above example, we make a summary, then we enter while loop that continues until the summary recieved back is a certain lenght. You could use this to summarize a 1000 page book to less than a thousand characters of text. 
 
 <br>
 <br>

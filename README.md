@@ -20,6 +20,7 @@ The `vectorvault` package allows you to interact with your Cloud Vaults using it
 `get_vectors` : Retrieves vectors embeddings for all prepared data 
 
 >> utilizes openai embeddings api and internally batches vector embeddings with OpenAI's text-embeddings-ada-002, and comes with auto rate-limiting and concurrent requests for maximum processing speed
+
 <br>
 `save` : Saves the data with embeddings to the Vault (cloud), along with any metadata
 <br>

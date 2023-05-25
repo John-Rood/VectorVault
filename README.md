@@ -15,6 +15,8 @@ The `vectorvault` package allows you to interact with your Cloud Vaults using it
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/3a6c60a3-79ac-467c-b640-c434499ca76d/Vector+Vault+Vault+2000.jpg" width="60%" height="60%" />
 </p>
 
+Basic Interactions:
+
 `add()` : Prepares data to be added to the Vault, with automatic text splitting and processing for long texts. 
 <br>
 `get_vectors()` : Retrieves vectors embeddings for all prepared data 
@@ -25,11 +27,11 @@ The `vectorvault` package allows you to interact with your Cloud Vaults using it
 <br>
 `get_vaults()` : Retrieves a list of Vaults within the current Vault directory
 <br>
-`get_similar()` : Retrieves similar texts from the Vault for a given input text
+`get_similar()` : Retrieves similar texts from the Vault for a given input text 
 <br>
-`get_chat()` : Retrieves a response from OpenAI's ChatGPT for a given input text, with support for handling conversation history, summarizing responses, and retrieving context-based responses by accessing similar references in the vault
+`get_chat()` : Retrieves a response from ChatGPT, with support for handling conversation history, summarizing responses, and retrieving context-based responses by referencing similar data in the vault
 
->> `get_vectors()` utilizes openai embeddings api and internally batches vector embeddings with OpenAI's text-embeddings-ada-002, and comes with auto rate-limiting and concurrent requests for maximum processing speed
+>> `get_vectors()` utilizes openai embeddings api and internally batches vector embeddings with OpenAI's text-embeddings-ada-002 model, and comes with auto rate-limiting and concurrent requests for maximum processing speed
 
 
 <br>
@@ -58,10 +60,10 @@ Set your openai key as an envorionment variable
 os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 ```
 
-1. Create a Vault instance - (a new vault will be created if name does not exist)
+1. Create a Vault instance - (new vault will be created if name does not exist)
 2. Gather some text data we want to store
 3. Add the data to the Vault
-4. Get vectors embeddings - (Automatic rate limiting built in. Auto batched and concurrently processed for fastest possible embed time)
+4. Get vectors embeddings 
 5. Save to the cloud vault
 
 ```
@@ -198,7 +200,7 @@ science_vault = Vault(user='your_user_id', api_key='your_api_key', vault='scienc
 
 print(science_vault.get_vaults())
 ```
->> ['biology', 'physics', 'chemistry']
+>> Output: ['biology', 'physics', 'chemistry']
 
 
 
@@ -217,7 +219,7 @@ chemistry_vault = Vault(user='your_user_id', api_key='your_api_key', vault='scie
 
 print(chemistry_vault.get_vaults())
 ```
->> ['reactions', 'formulas', 'lab notes']
+>> Output: ['reactions', 'formulas', 'lab notes']
 
 
 
@@ -294,7 +296,7 @@ for item in vault_response['context']:
 
 ```
 
->> Question: 
+>> Output: Question: 
 What is a token broker? 
  
 >>Answer: 
@@ -329,7 +331,7 @@ vault_response = vault.get_chat(user_input2, history=history, get_context=True)
 
 print("Question:", user_input2, "\n\nAnswer:", vault_response2)
 ```
->> Question: 
+>> Output: Question: 
 How do I use it? 
  
 >>Answer: 
@@ -367,7 +369,7 @@ vault.save()
 
 <br>
 
-And just like that, in a only a few lines of code we created a customer service vault based on all customer support messages. Now whenever you want to use it in the wild, just connect to that vault, and use the `get_chat()` function with `get_context=True`. The call `get_chat(text, get_context=True)` will take the customer's question, search the vault, find the most similar questions and answers, then have ChatGPT reply to the customer using that information.
+And just like that, in a only a few lines of code we created a customer service vault based on all customer support messages. Now whenever you want to use it in the wild, just connect to that vault, and use the `get_chat()` with `get_context=True`. When you call `get_chat(text, get_context=True)` it will take the customer's question, search the vault to find the most similar questions and answers, then have ChatGPT reply to the customer using that information.
 
 ```
 question = 'customer question text string'
@@ -381,7 +383,11 @@ That's all it takes to create an ai customer service chatbot that responds to yo
 <br>
 <br>
 
-If have any questions, leave a comment. Open the "examples" folder and try out the Google Colab tutorials we have.
+If have any questions, leave a message/comment on github repo. 
+
+<br>
+
+Open the "examples" folder and try out the Google Colab tutorials we have.
 
 Happy coding!
 <p align="center">

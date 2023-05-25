@@ -1,12 +1,12 @@
 ![alt text](https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/297fde6c-f5b4-4076-83bc-81dcfdbffebe/Vector+Vault+Header+5000.jpg)
 
-Vector Vault is designed to simplify the process of working with vector databases. It allows users to vectorize datasets efficiently, and access them seamlessly from the cloud. It's scalable and suitable for both small and large scale projects. Vector Vault has been designed with a user-friendly interface to make the process of working with vector databases easy and let you focus on what matters. It simplifies complex workflows, ensures secure and isolated data handling, and enables users to create and interact vector databases - aka "vaults" 
+Vector Vault is a cloud vector database service that was built to make generative ai chat quick and easy. It allows users to vectorize data easily and access them seamlessly from the cloud. It's suitable for both small projects and large. Vector Vault has been designed with a user-friendly code interface to make the process of working with vector data easy and let you focus on what matters, results. Vector Vault ensures secure and isolated data handling and enables you to create and interact vector databases - aka "vaults" - in the cloud, at millisecond response times.
 
-Vector Vault was built with the goal of making generative ai work flows simple and easy. By combining vector similarity search with generative ai chat, new possibilities for conversation and communication emerge. For example, product information can be added to a vault, and when a customer asks a product question, the right product information can be instantly retreived and seamlessly used in conversation by chatgpt for an accurate response. This capability allows for informed conversation and the possibilites range from ai automated customer support, to new ways to get news, to ai code reviews that reference source documentation, to ai domain experts for specific knowledge sets, and much more.
+By combining vector similarity search with generative ai chat, new possibilities for conversation and communication emerge. For example, product information can be added to a vault, and when a customer asks a product question, the right product information can be instantly retreived and seamlessly used in conversation by chatgpt for an accurate response. This capability allows for informed conversation and the possibilites range from ai automated customer support, to new ways to get news, to ai code reviews that reference source documentation, to ai domain experts for specific knowledge sets, and much more.
 
 Vector Vault uses a proprietary architecture, called "Inception", allowing you to create any number of vaults, and vaults within a vaults. Each vault is it's own database, and automatically integrates data storage in the cloud. You will need a Vector Vault api key in order to access the cloud vaults. If you don't already have one, you can use the included `register()` function or sign up at [VectorVault.io](https://vectorvault.io)
 
-This python library allows you to interact with Vector Vault using its Python-based API. Each vault is a seperate vector database. The `vectorvault` package includes operations such as creating a vault, deleting a vault, adding data to a vault, getting vector embeddings for data, saving data with embeddings to the cloud, referencing cloud vault data, interacting with OpenAI's ChatGPT model to get responses, managing conversation history, and retrieving contextualized responses by automatically integrating referenced vault data as context.
+The `vectorvault` package allows you to interact with your Cloud Vaults using its Python-based API. Each vault is a seperate vector database. `vectorvault` includes operations such as creating a vault, deleting a vault, preparing data to add, getting vector embeddings for prepared data using OpenAI's text-embedding-ada-002, saving the data and embeddings to the cloud, referencing cloud vault data via vector search and retrieval, interacting with OpenAI's ChatGPT model to get responses, managing conversation history, and retrieving contextualized responses with reference vault data as context.
 
 <br>
 
@@ -15,21 +15,19 @@ This python library allows you to interact with Vector Vault using its Python-ba
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/3a6c60a3-79ac-467c-b640-c434499ca76d/Vector+Vault+Vault+2000.jpg" width="60%" height="60%" />
 </p>
 
-`add` : Add item to the Vault, with automatic text splitting and processing for long texts. Main way to add to vault
+`add` : Prepares data to be added to the Vault, with automatic text splitting and processing for long texts. 
 <br>
-`add_item` : Add item to the Vault
+`get_vectors` : Retrieves vectors embeddings for all prepared data 
+
+>> utilizes openai embeddings api and internally batches vector embeddings with OpenAI's text-embeddings-ada-002, and comes with auto rate-limiting and concurrent requests for maximum processing speed
 <br>
-`add_item_with_vector` : Add item to the Vault with vector provided - only accepts vectors of 1536 dimensions
-<br>
-`save` : Saves the vectors embeddings and data to the Cloud Vault along with any metadata
+`save` : Saves the data with embeddings to the Vault (cloud), along with any metadata
 <br>
 `delete` : Deletes the current Vault and all contents
 <br>
-`get_vaults` : Retrieves a list of vaults in the current vault 
+`get_vaults` : Retrieves a list of Vaults within the current Vault directory
 <br>
-`get_similar` : Retrieves similar texts from the vault for a given input text, default = 4 items returned
-<br>
-`get_vectors` : Retrieves vectors embeddings for all data that was added to the Vault
+`get_similar` : Retrieves similar texts from the Vault for a given input text
 <br>
 `get_chat` : Retrieves a response from OpenAI's ChatGPT for a given input text, with support for handling conversation history, summarizing responses, and retrieving context-based responses by accessing similar references in the vault
 

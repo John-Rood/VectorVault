@@ -235,6 +235,8 @@ lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='scie
 <p align="center">
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/74776e31-4bfd-4d6b-837b-674790ca4288/wisdomandwealth_Electric_Yellow_and_Dark_Blue_-_chat_messages_g_c81a4325-5347-44a7-879d-a58a6d115446.png" width="60%" height="60%" />
 </p>
+<br>
+
 Chat get response from OpenAI's ChatGPT. 
 Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
 Enter your text, add optional chat history, and optionally choose a summary response (default: summmary=False)
@@ -289,7 +291,7 @@ summary = vault.get_chat(text, summary=True)
 while len(summary) > 1000:
     summary = vault.get_chat(summary, summary=True)
 ```
-^ in the above example, we make a summary, then we enter while loop that continues until the summary recieved back is a certain lenght. You could use this to summarize a 1000 page book to less than a thousand characters of text. 
+^ in the above example, we make a summary, then we enter while loop that continues until the summary recieved back is a certain lenght. You could use this to summarize a 1000 page book to less than 1000 characters of text. 
 
 <br>
 <br>
@@ -307,7 +309,7 @@ print("Question:", user_input, "\n\nAnswer:", answer)
 
 # show the context used to generate the answer
 for item in vault_response['context']:
-    print("\n\n", f"item {item['metadata']['name']}")
+    print("\n\n", f"item {item['metadata']['item_id']}")
     print(item['data'])
 
 ```
@@ -363,6 +365,8 @@ You can use it by...
 <p align="center">
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/dceb5c7d-6ec6-4eda-82f2-b8848c7b519d/ai_chatbot_having_a_conversation.png" width="60%" height="60%" />
 </p>
+<br>
+
 In the following code, we will add all the customer conversations that a support team has ever had to a vault. (Assumes you have all the past conversations downloaded to a single text file). Then we we will take cusotmer requests, search the database for similar questions and answers. After that, we will instruct ChatGPT to use the previous answers the support team has given to answer this new question. (NOTE: This will also work based on a customer FAQ, or customer support response templates).
 
 <br>

@@ -31,7 +31,12 @@ class Vault:
         self.vault = vault.strip() if vault else 'home'
         self.vectors = get_vectors(dims)
         self.dims = dims
-        self.cloud_manager = CloudManager(user, api_key, self.vault)
+        try:
+            self.cloud_manager = CloudManager(user, api_key, self.vault)
+        except:
+            print('API KEY FAILED! Using vault without cloud access. `get_chat()` will still work')
+            # user can still use the get_chat() function without an api key
+            pass
         self.x = 0
         self.x_checked = False
         self.verbose = verbose

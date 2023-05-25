@@ -271,6 +271,7 @@ for item in vault_response['context']:
     print("\n\n", f"item {item['metadata']['name']}")
     print(item['data'])
 ```
+<br>
 
 # Summarize Anything:
 <p align="center">

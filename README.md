@@ -10,11 +10,6 @@ The `vectorvault` package allows you to interact with your Cloud Vaults using it
 
 <br>
 
-# Interact with your Vault:
-<p align="center">
-  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/3a6c60a3-79ac-467c-b640-c434499ca76d/Vector+Vault+Vault+2000.jpg" width="60%" height="60%" />
-</p>
-
 Basic Interactions:
 
 `add()` : Prepares data to be added to the Vault, with automatic text splitting and processing for long texts. 
@@ -36,7 +31,11 @@ Basic Interactions:
 
 <br>
 
-## Basic usage:
+# Interact with your Vault:
+<p align="center">
+  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/3a6c60a3-79ac-467c-b640-c434499ca76d/Vector+Vault+Vault+2000.jpg" width="60%" height="60%" />
+</p>
+
 Install Vector Vault:
 ```
 pip install vector-vault

@@ -232,6 +232,9 @@ lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='scie
 <br>
 
 # `get_chat()`
+<p align="center">
+  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/74776e31-4bfd-4d6b-837b-674790ca4288/wisdomandwealth_Electric_Yellow_and_Dark_Blue_-_chat_messages_g_c81a4325-5347-44a7-879d-a58a6d115446.png" width="60%" height="60%" />
+</p>
 Chat get response from OpenAI's ChatGPT. 
 Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
 Enter your text, add optional chat history, and optionally choose a summary response (default: summmary=False)

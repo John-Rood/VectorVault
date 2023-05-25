@@ -193,9 +193,6 @@ answer = vault.get_chat(question)
 <br>
 
 # Change Vaults
-<p align="center">
-  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/a409c008-abd0-4224-af35-a96554008526/wisdomandwealth_You_an_esteemed_developer_find_yourself_in_the__a0c50378-3252-4d84-a45e-20dd82776074.png" width="60%" height="60%" />
-</p>
 
 In this example science vault, we will print a list of vaults in the current vault directory
 ```

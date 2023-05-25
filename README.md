@@ -276,7 +276,7 @@ for item in vault_response['context']:
 
 # Summarize Anything:
 <p align="center">
-  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/e9f0560a-27be-44f7-8ddd-6668eaa8ab29/wisdomandwealth_summary_of_large_text._Summarizing_web_data_-_D_25a33219-a531-443a-b25e-0a802908de1e.png" width="60%" height="60%" />
+  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/e1ff4ca3-e18b-4c8f-b3c9-ff6ddcc907a1/wisdomandwealth_a_summary_being_created._A_bunch_of_texts_are_f_df58744a-13cb-46fd-b39d-3f090349bbb7.png" width="60%" height="60%" />
 </p>
 
 You can summarize any text, no matter how large - even an entire book all at once. Long texts are split into the largest possible chunk sizes and a summary is generated for each chunk. When all summaries are finished, they are concatenated and returned as one.

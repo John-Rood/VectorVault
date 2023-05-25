@@ -15,22 +15,21 @@ The `vectorvault` package allows you to interact with your Cloud Vaults using it
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/3a6c60a3-79ac-467c-b640-c434499ca76d/Vector+Vault+Vault+2000.jpg" width="60%" height="60%" />
 </p>
 
-`add` : Prepares data to be added to the Vault, with automatic text splitting and processing for long texts. 
+`add()` : Prepares data to be added to the Vault, with automatic text splitting and processing for long texts. 
 <br>
-`get_vectors` : Retrieves vectors embeddings for all prepared data 
+`get_vectors()` : Retrieves vectors embeddings for all prepared data 
+<br>
+`save()` : Saves the data with embeddings to the Vault (cloud), along with any metadata
+<br>
+`delete()` : Deletes the current Vault and all contents
+<br>
+`get_vaults()` : Retrieves a list of Vaults within the current Vault directory
+<br>
+`get_similar()` : Retrieves similar texts from the Vault for a given input text
+<br>
+`get_chat()` : Retrieves a response from OpenAI's ChatGPT for a given input text, with support for handling conversation history, summarizing responses, and retrieving context-based responses by accessing similar references in the vault
 
->> utilizes openai embeddings api and internally batches vector embeddings with OpenAI's text-embeddings-ada-002, and comes with auto rate-limiting and concurrent requests for maximum processing speed
-
-<br>
-`save` : Saves the data with embeddings to the Vault (cloud), along with any metadata
-<br>
-`delete` : Deletes the current Vault and all contents
-<br>
-`get_vaults` : Retrieves a list of Vaults within the current Vault directory
-<br>
-`get_similar` : Retrieves similar texts from the Vault for a given input text
-<br>
-`get_chat` : Retrieves a response from OpenAI's ChatGPT for a given input text, with support for handling conversation history, summarizing responses, and retrieving context-based responses by accessing similar references in the vault
+>> `get_vectors()` utilizes openai embeddings api and internally batches vector embeddings with OpenAI's text-embeddings-ada-002, and comes with auto rate-limiting and concurrent requests for maximum processing speed
 
 
 <br>

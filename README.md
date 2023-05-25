@@ -176,7 +176,7 @@ for result in similar_data:
 <br>
 <br>
 
-## Use `get_chat()` with `get_context=True` to get response from chatgpt referencing vault data
+### Use `get_chat()` with `get_context=True` to get response from chatgpt referencing vault data
 Retrieving items from the vault, or texts, is useful when using it supply context to a large language model, chatgpt for instance, to get a contextualized response. The follow example searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the vault data.
 ```
 question = "This text will be used find contextually similar references in the vault"

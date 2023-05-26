@@ -27,14 +27,14 @@ from .itemize import itemize, name, name_vecs, get_item, build_return, get_vecto
 
 
 class Vault:
-    def __init__(self, user: str, api_key: str, vault: str = None, dims: int = 1536, verbose: bool = False):
+    def __init__(self, user: str = None, api_key: str = None, vault: str = None, dims: int = 1536, verbose: bool = False):
         self.vault = vault.strip() if vault else 'home'
         self.vectors = get_vectors(dims)
         self.dims = dims
         try:
             self.cloud_manager = CloudManager(user, api_key, self.vault)
         except:
-            print('API KEY FAILED! Using vault without cloud access. `get_chat()` will still work')
+            print('API KEY NOT FOUND! Using Vault without cloud access. `get_chat()` will still work')
             # user can still use the get_chat() function without an api key
             pass
         self.x = 0

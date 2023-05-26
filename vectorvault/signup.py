@@ -25,10 +25,6 @@ def register(first_name: str, last_name: str, email: str, password: str) -> dict
     }
     response = requests.post(url, headers=headers, data=data)
 
-    # Always print the response status code and body
-    print(f"Response status code: {response.status_code}")
-    print(f"Response body: {response.text}")  # prints raw response content
-
     if response.status_code != 200:
         return {}
 

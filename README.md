@@ -137,7 +137,7 @@ for result in similar_data:
 <br>
 
 ## Metadata
-To add meta data to your vault, just include it as a parameter in `add()`. Meta is always a dict, and you can add any fields you want. (If you don't add a 'name' field, a generic one will automatically be generated, so there is always a name field in the metadata)
+To add meta data to your vault, just include the meta as a parameter in `add()`. Meta is always a dict, and you can add any fields you want. (If you don't add a 'name' field, a generic one will automatically be generated, so there is always a name field in the metadata)
 ```
 metadata = {
     'name': 'Lifestyle in LA',
@@ -172,6 +172,8 @@ similar_data = vault.get_similar("Your text input")
 for result in similar_data:
     print(result['metadata']['name'])
 ```
+<br>
+
 ### Add Any Meta Fields & Retrieve later
 ```
 metadata = {

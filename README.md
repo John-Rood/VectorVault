@@ -175,7 +175,7 @@ for result in similar_data:
 <br>
 
 ### Add Any Meta Fields & Retrieve later
-Here we open the popular book by George Orwell, '1984' from a .txt file. We read the file and save all the book's text to a variable called 'text'. Then we create a dictionary containing all the information about the book. Then we save all that to the vault. When we call later, we can reference any of the meta data. The vault reference will return sample text from the book, and if the vault has many books in it, you may want to know what exactly you're referencing. The metadata is how you will know.
+Here we open the popular book by George Orwell, "1984" from a .txt file. We read the file and save all the book's text to a variable called 'text'. Then we create a dictionary containing all the information about the book. Then we save all that to the vault. When we call later, we can reference any of the meta data. The vault reference will return sample text from the book, and if the vault has many books in it, you may want to know what exactly you're referencing. The metadata is how you will know.
 ```
 with open('1984.txt', 'r') as file:
     text = file.read()

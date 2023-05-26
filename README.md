@@ -136,6 +136,7 @@ for result in similar_data:
 
 <br>
 
+## Metadata
 To add meta data to your vault, just include it as a parameter in `add()`. Meta is always a dict, and you can add any fields you want. (If you don't add a 'name' field, a generic one will automatically be generated, so there is always a name field in the metadata)
 ```
 metadata = {
@@ -144,7 +145,42 @@ metadata = {
     'city': 'LA' 
 }
 
-vault.add(more_text_data, metadata)
+vault.add(text_data, metadata)
+
+vault.get_vectors()
+
+vault.save()
+```
+
+<br>
+
+To add just the 'name' field to the metadata, call the `name` param in `add()` like this:
+```
+vault.add(more_text_data, name='Lifestyle in LA')
+
+vault.get_vectors()
+
+vault.save()
+```
+
+<br>
+
+To find the name later:
+```
+similar_data = vault.get_similar("Your text input") 
+
+for result in similar_data:
+    print(result['metadata']['name'])
+```
+### Add Any Meta Fields & Retrieve later
+```
+metadata = {
+    'name': 'Lifestyle in LA',
+    'country': 'United State',
+    'city': 'LA' 
+}
+
+vault.add(text_data, metadata)
 
 vault.get_vectors()
 
@@ -231,7 +267,9 @@ lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='scie
 <br>
 <br>
 
-# `get_chat()`
+# Use ChatGPT
+## With `get_chat()` you can use chatgpt standalone or with vault data integrated
+
 <p align="center">
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/74776e31-4bfd-4d6b-837b-674790ca4288/wisdomandwealth_Electric_Yellow_and_Dark_Blue_-_chat_messages_g_c81a4325-5347-44a7-879d-a58a6d115446.png" width="60%" height="60%" />
 </p>

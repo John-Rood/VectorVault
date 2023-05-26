@@ -68,7 +68,7 @@ os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 ```
 from vectorvault import Vault
 
-vault = Vault(user='your_email', api_key='your_api_key', vault='name_of_vault)
+vault = Vault(user='your@email.com', api_key='your_api_key', vault='name_of_vault)
 
 text_data = 'some data'
 
@@ -175,14 +175,23 @@ for result in similar_data:
 <br>
 
 ### Add Any Meta Fields & Retrieve later
+Here we have the popular book by George Orwell, '1984' saved as a .txt file. We read the file and save all the book's text to a variable called 'text'. Then we create a dictionary containing all the information about the book. Then we save all that to the vault. When we call later, we can reference any of the meta data. The vault reference will return sample text from the book, and if the vault has many books in it, you may want to know what exactly you're referencing. The metadata is how you will know.
 ```
-metadata = {
-    'name': 'Lifestyle in LA',
-    'country': 'United State',
-    'city': 'LA' 
+with open('1984.txt', 'r') as file:
+    text = file.read()
+
+book_metadata = {
+    'title': '1984',
+    'author': 'George Orwell',
+    'genre': 'Dystopian',
+    'publication_year': 1949,
+    'publisher': 'Secker & Warburg',
+    'ISBN': '978-0451524935',
+    'language': 'English',
+    'page_count': 328
 }
 
-vault.add(text_data, metadata)
+vault.add(text, book_metadata)
 
 vault.get_vectors()
 
@@ -191,23 +200,21 @@ vault.save()
 
 <br>
 
-To add just the 'name' field to the metadata, call the `name` param in `add()` like this:
+To find the metadata later:
 ```
-vault.add(more_text_data, name='Lifestyle in LA')
-
-vault.get_vectors()
-
-vault.save()
-```
-
-<br>
-
-To find the name later:
-```
-similar_data = vault.get_similar("Your text input") 
+similar_data = vault.get_similar("How will the government control you in the future?") 
 
 for result in similar_data:
-    print(result['metadata']['name'])
+    print(result['metadata']['title'])
+    print(result['metadata']['author'])
+    print(result['metadata']['genre'])
+    # etc...
+```
+^ list is always returned. So you can break it down like this too...
+
+```
+similar_data = vault.get_similar("How will the government control you in the future?") 
+print(result[0]['metadata']['title'])
 ```
 
 <br>
@@ -241,35 +248,31 @@ print(science_vault.get_vaults())
 >> Output: ['biology', 'physics', 'chemistry']
 
 
-
 ## Access vaults within vaults
 
 - biology vault within science vault
 ```
-biology_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/biology')
+biology_vault = Vault(user='your@email.com', api_key='your_api_key', vault='science/biology')
 ```
-
-
 
 - chemistry vault within science vault
 ```
-chemistry_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry')
+chemistry_vault = Vault(user='your@email.com', api_key='your_api_key', vault='science/chemistry')
 
 print(chemistry_vault.get_vaults())
 ```
 >> Output: ['reactions', 'formulas', 'lab notes']
 
 
-
 - lab notes vault within chemistry vault
 ```
-lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science/chemistry/lab notes')
+lab_notes_vault = Vault(user='your@email.com', api_key='your_api_key', vault='science/chemistry/lab notes')
 ```
 
 <br>
 <br>
 
-# Use ChatGPT
+# ChatGPT
 ## With `get_chat()` you can use chatgpt standalone or with vault data integrated
 
 <p align="center">
@@ -277,9 +280,9 @@ lab_notes_vault = Vault(user='your_user_id', api_key='your_api_key', vault='scie
 </p>
 <br>
 
-Chat get response from OpenAI's ChatGPT. 
-Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
-Enter your text, add optional chat history, and optionally choose a summary response (default: summmary=False)
+Get chat response from OpenAI's ChatGPT. 
+Rate limiting, auto retries, and chat histroy slicing auto-built-in so you can create complex chat capability without getting complicated. 
+Enter your text, optionally add chat history, and optionally choose a summary response instead (default: summmary=False)
 
 - Example Signle Usage: 
 `response = vault.get_chat(text)`

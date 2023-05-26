@@ -175,7 +175,7 @@ for result in similar_data:
 <br>
 
 ### Add Any Meta Fields & Retrieve later
-Here we open the popular book by George Orwell, "1984", from a .txt file. We read the file and save all the book's text to a variable called "text". Then we create a dictionary containing all the information about the book. Then we save all that to the vault. When we call the vault later, we can reference any of the meta data. The vault reference will return sample text from the book, and if the vault has many books in it, you may want to know what exactly you're referencing. The metadata is how you will know.
+Here we open the popular book by George Orwell, "1984", from a .txt file. We read the file and save all the book's text to a variable called "text". Then we create a dictionary containing all the information about the book. Then we save all that to the vault. When you call the vault later, you can reference any of the metadata. When referencing the vault with `get_similar()` or `get_chat(text, get_context=True)` the vault will return sample texts from the book, and if the vault has many books in it, you may want to know where that sample is coming from. The metadata is how you will know.
 
 
 ```
@@ -212,7 +212,7 @@ for result in similar_data:
     print(result['metadata']['genre'])
     # etc...
 ```
-^ list is always returned. So you can break it down like this too...
+^ list is always returned. So you can break it down like above or like below...
 
 ```
 similar_data = vault.get_similar("How will the government control you in the future?") 
@@ -223,7 +223,7 @@ print(result[0]['metadata']['title'])
 <br>
 
 ### Use `get_chat()` with `get_context=True` to get response from chatgpt referencing vault data
-Retrieving items from the vault, or texts, is useful when using it supply context to a large language model, chatgpt for instance, to get a contextualized response. The follow example searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the vault data.
+Retrieving items from the vault, is useful when using it supply context to a large language model, like chatgpt for instance, to get a contextualized response. The follow example searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the vault data.
 ```
 question = "This text will be used find contextually similar references in the vault"
 

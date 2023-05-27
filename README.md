@@ -452,7 +452,7 @@ That's all it takes to create an AI customer service chatbot that responds as we
 <br>
 <br>
 
-If have any questions, drop a message on our Discord channel, happy to help.
+If have any questions, drop a message on our [Discord channel](https://discord.gg/AkMsP9Uq), happy to help.
 
 <br>
 

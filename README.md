@@ -139,13 +139,13 @@ for result in similar_data:
 ## Metadata
 To add meta data to your vault, just include the meta as a parameter in `add()`. Meta is always a dict, and you can add any fields you want. (If you don't add a 'name' field, a generic one will automatically be generated, so there is always a name field in the metadata)
 ```
-metadata = {
+meta = {
     'name': 'Lifestyle in LA',
     'country': 'United State',
     'city': 'LA' 
 }
 
-vault.add(text_data, metadata)
+vault.add(text_data, meta)
 
 vault.get_vectors()
 

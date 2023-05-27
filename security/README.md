@@ -1,6 +1,5 @@
 # Security 
 This is a seperate readme on our data handling procedures to keep it seperate from the docs.
-
 <br>
 
 ### Data Encryption: 

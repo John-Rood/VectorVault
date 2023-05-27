@@ -1,6 +1,6 @@
 # Security 
-This is a seperate readme on our data handling procedures to keep it seperate from the docs.
-<br>
+*This is a seperate readme on our data handling procedures to keep it seperate from the docs*
+
 
 ### Data Encryption: 
 We ensure your data is secured both in transit and at rest with industry-leading encryption standards. This means that your data is encrypted while it is being transferred to the cloud and also when it is stored in the cloud, providing end-to-end security.

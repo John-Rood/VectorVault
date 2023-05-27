@@ -216,7 +216,7 @@ for result in similar_data:
 
 ```
 similar_data = vault.get_similar("How will the government control you in the future?") 
-print(result[0]['metadata']['title'])
+print(similar_data[0]['metadata']['title'])
 ```
 
 <br>

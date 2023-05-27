@@ -442,13 +442,13 @@ question = 'customer question'
 answer = vault.get_chat(question, get_context=True)
 ```
 
-That's all it takes to create an ai customer service chatbot that responds to your customers as well as any support rep!
+That's all it takes to create an AI customer service chatbot that responds as well as any support rep!
 
 
 <br>
 <br>
 
-If have any questions, leave a message/comment on github repo. 
+If have any questions, drop a message on our Discord channel, happy to help.
 
 <br>
 

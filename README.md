@@ -412,7 +412,7 @@ You can use it by...
 </p>
 <br>
 
-In the following code, we will add all the customer conversations that a support team has ever had to a vault. (Assumes you have all the past conversations downloaded to a single text file). Then we we will take cusotmer requests, search the database for similar questions and answers. After that, we will instruct ChatGPT to use the previous answers the support team has given to answer this new question. (NOTE: This will also work based on a customer FAQ, or customer support response templates).
+In the following code, we will add all of a company's past support conversations to a vault. (The conversations are stored in a .txt file). As new people message in, we will search the vault for similar questions and answers. We take the past answers returned from the vault and instruct ChatGPT to use those previous answers to answer this new question. (NOTE: This will also work based on a customer FAQ, or customer support response templates).
 
 <br>
 
@@ -434,10 +434,10 @@ vault.save()
 
 <br>
 
-And just like that, in a only a few lines of code we created a customer service vault based on all customer support messages. Now whenever you want to use it in the wild, just connect to that vault, and use the `get_chat()` with `get_context=True`. When you call `get_chat(text, get_context=True)` it will take the customer's question, search the vault to find the most similar questions and answers, then have ChatGPT reply to the customer using that information.
+And just like that, in a only a few lines of code we created a customer service vault based on all customer support messages. Now whenever you want to use it in production, just connect to that vault, and use the `get_chat()` with `get_context=True`. When you call `get_chat(text, get_context=True)` it will take the customer's question, search the vault to find the most similar questions and answers, then have ChatGPT reply to the customer using that information.
 
 ```
-question = 'customer question text string'
+question = 'customer question'
 
 answer = vault.get_chat(question, get_context=True)
 ```

@@ -454,7 +454,7 @@ That's all it takes to create an AI customer service chatbot that responds as we
 
 
 
-## If have any questions, drop a message in our [Discord channel](https://discord.gg/AkMsP9Uq), happy to help.
+### If have any questions, drop a message in our [Discord channel](https://discord.gg/AkMsP9Uq), happy to help.
 
 Open the "examples" folder and try out the Google Colab tutorials we have! They will show you a lot, plus you can run them in Google Colab.
 

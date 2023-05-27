@@ -145,7 +145,7 @@ meta = {
     'city': 'LA' 
 }
 
-vault.add(text_data, meta)
+vault.add(text, meta)
 
 vault.get_vectors()
 
@@ -156,7 +156,7 @@ vault.save()
 
 To add just the 'name' field to the metadata, call the `name` param in `add()` like this:
 ```
-vault.add(more_text_data, name='Lifestyle in LA')
+vault.add(text, name='Lifestyle in LA')
 
 vault.get_vectors()
 

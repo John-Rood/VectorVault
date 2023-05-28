@@ -17,10 +17,10 @@ import tempfile
 import os
 import json
 from .creds import CustomCredentials
-from .itemize import name
+from .vecreq import call_proj
+from .itemize import cloud_name
 from google.cloud import storage
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
 
 class CloudManager:
     def __init__(self, user: str, api_key: str, vault: str):
@@ -30,7 +30,7 @@ class CloudManager:
         # Creates the credentials
         credentials = CustomCredentials(user, self.api)
         # Instantiates the client 
-        self.storage_client = storage.Client(project='vectorvault-361ab', credentials=credentials)
+        self.storage_client = storage.Client(project=call_proj(), credentials=credentials)
         self.cloud = self.storage_client.bucket(self.user)
         print(f'Connected to Vault: {self.vault}')
 
@@ -58,8 +58,8 @@ class CloudManager:
 
     def upload(self, item, text, meta):
         with ThreadPoolExecutor() as executor:
-            executor.submit(self.upload_to_cloud, name(self.vault, item, item=True), text)
-            executor.submit(self.upload_to_cloud, name(self.vault, item, meta=True), json.dumps(meta))
+            executor.submit(self.upload_to_cloud, cloud_name(self.vault, item, self.user, text, self.api, item=True), text)
+            executor.submit(self.upload_to_cloud, cloud_name(self.vault, item, self.user, meta, self.api, meta=True), json.dumps(meta))
     
     def delete_blob(self, blob):
         blob.delete()
@@ -81,14 +81,3 @@ class CloudManager:
                 except Exception as e:
                     print(f"Failed to delete blob: {e}")
         
-    def get_vaults(self, vault: str = None):
-        vault = self.vault if vault is None else vault
-        blobs = self.cloud.list_blobs(prefix=f'{vault}')
-    
-        directories = set()
-        for blob in blobs:
-            parts = blob.name.split('/')
-            if len(parts) > 2 and not parts[1][0].isdigit():
-                directories.add(parts[1])
-
-        return list(directories)

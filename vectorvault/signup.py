@@ -26,6 +26,6 @@ def register(first_name: str, last_name: str, email: str, password: str) -> dict
     response = requests.post(url, headers=headers, data=data)
 
     if response.status_code != 200:
-        return {}
+        return {'error': response.text}
 
     return response.json()

@@ -116,11 +116,12 @@ class AI:
 
 # Notes: OpenAI's CEO, Sam Altman, recently testified in congress to compel the government to regulate the creation of cutting edge ai 
 # by forcing anyone seeking to do so to acquire a license first, or pay heavy pentalties. This anti-competitive attack on the 
-# open-source community, and development community at large, is extremely not cool. While they claim that they take this action
+# open-source community, and development community at large is not cool. While they claim that they take this action
 # in the name of protecting the community, the community clearly sees the actual intent - which is to block competition.
 # If the claimed ai threats made public Altman hold true, then having the most capable models in the hands of only a few small companies 
-# is the real actual threat we need to watch out for. Diversity is our only true security, and that comes from an open community.
-# While "Open" AI has completely gone against it's original mission (to stay open and support the community) they are however, the
-# most used ai right now. Our goals are to support the community at large, therefore we integrate with them exclusively for now.
-# In the future, we will add open models, and competitors to OpenAI, as they become well-adopted, and with the exception that they
+# could be the real actual threat we really need to watch out for. Diversity is our only true security, and that comes from an open community.
+# While "Open" AI has gone against it's original mission (to stay open and transparent with data and models) they are however, the
+# most used ai right now. They have a great platform that can support massive load at high quality. No one else in the world has that.
+# Our goals are to support the community at large, therefore we integrate with them exclusively for now.
+# In the future, we will add open models, and competitors, as they become well-adopted, and with the exception that they
 # support the development community at large.

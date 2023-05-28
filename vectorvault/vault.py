@@ -17,19 +17,20 @@ import numpy as np
 import tempfile
 import os
 import time
-import json
 import re
 import openai
 from concurrent.futures import ThreadPoolExecutor
 from .cloudmanager import CloudManager
 from .ai import AI
-from .itemize import itemize, name, name_vecs, get_item, build_return, get_vectors
+from .itemize import itemize, name_vecs, get_item, get_vectors
+from .vecreq import call_items_by_vector, call_get_total_vectors, call_get_vaults
 
 
 class Vault:
     def __init__(self, user: str = None, api_key: str = None, vault: str = None, dims: int = 1536, verbose: bool = False):
         self.vault = vault.strip() if vault else 'home'
         self.vectors = get_vectors(dims)
+        self.api = api_key
         self.dims = dims
         try:
             self.cloud_manager = CloudManager(user, api_key, self.vault)
@@ -37,8 +38,10 @@ class Vault:
             print('API KEY NOT FOUND! Using Vault without cloud access. `get_chat()` will still work')
             # user can still use the get_chat() function without an api key
             pass
+        self.user = self.cloud_manager.user
         self.x = 0
         self.x_checked = False
+        self.vecs_loaded = False
         self.verbose = verbose
         self.items = []
         self.last_time = None
@@ -47,11 +50,55 @@ class Vault:
         self.needed_sleep_time = None
         self.ai = AI()
 
+    def get_vaults(self, vault: str = None):
+        vault = self.vault if vault is None else vault
+        return call_get_vaults(self.user, self.api, vault)
+
+    def get_total_vectors(self):
+        return call_get_total_vectors(self.user, self.vault, self.api)
+    
+    def save(self, trees=16):
+        start_time = time.time()
+        self.vectors.build(trees)
+
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            self.vectors.save(temp_file.name)
+            bytesize = os.path.getsize(temp_file.name)
+            self.cloud_manager.upload_temp_file(temp_file.name, name_vecs(self.vault, self.user, self.api, bytesize))
+
+        total_saved_items = 0
+        for item in self.items:
+            item_text, item_id, item_meta = get_item(item)
+            self.cloud_manager.upload(item_id, item_text, item_meta)
+            total_saved_items += 1
+
+        self.items.clear()
+        self.x_checked = False
+        self.vecs_loaded = False
+
+        if self.verbose:
+            print("save vectors time --- %s seconds ---" % (time.time() - start_time))
+
+    def clear_cache(self):
+        self.items.clear()
+        self.x_checked = False
+        self.vecs_loaded = False
+
+    def delete(self):
+        if self.verbose == True:
+            print('Deleting started. Note: this can take a while for large datasets')
+        # Clear the local vector data
+        self.vectors = get_vectors(self.dims)
+        self.items.clear()
+        self.x = 0
+        self.cloud_manager.delete()
+        print('Vault deleted')
 
     def check_index(self):
         start_time = time.time()
-        if self.cloud_manager.vault_exists(name_vecs(self.vault)):
-            self.load_vectors()
+        if self.cloud_manager.vault_exists(name_vecs(self.vault, self.user, self.api)):
+            if self.vecs_loaded == False:
+                self.load_vectors()
             num_existing_items = self.vectors.get_n_items()
             new_index = get_vectors(self.dims)
             for i in range(num_existing_items):
@@ -66,59 +113,14 @@ class Vault:
         if self.verbose == True:
             print("initialize index --- %s seconds ---" % (time.time() - start_time))
         
-
     def load_vectors(self):
         start_time = time.time()
-        # Download the .ann file from google cloud storage to a temporary file
-        temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(self.vault))
-
-        # Load the AnnoyIndex object from the temporary file, then delete the temp file
+        temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(self.vault, self.user, self.api))
         self.vectors.load(temp_file_path)
         os.remove(temp_file_path)
+        self.vecs_loaded = True
         if self.verbose:
             print("get load vectors --- %s seconds ---" % (time.time() - start_time))
-
-    
-    def get_vaults(self, vault: str = None):
-        vault = self.vault if vault is None else vault
-        return self.cloud_manager.get_vaults(vault)
-
-
-    def get_total_vectors(self):
-        return self.vectors.get_n_items()
-    
-
-    def save(self, trees=16):
-        start_time = time.time()
-        self.vectors.build(trees)
-
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            self.vectors.save(temp_file.name)
-            self.cloud_manager.upload_temp_file(temp_file.name, name_vecs(self.vault))
-
-        total_saved_items = 0
-        for item in self.items:
-            item_text, item_id, item_meta = get_item(item)
-            self.cloud_manager.upload(item_id, item_text, item_meta)
-            total_saved_items += 1
-
-        self.items.clear()
-        self.x_checked = False
-
-        if self.verbose:
-            print("save vectors time --- %s seconds ---" % (time.time() - start_time))
-
-
-    def delete(self):
-        if self.verbose == True:
-            print('Deleting started. Note: this can take a while for large datasets')
-        # Clear the local vector data
-        self.vectors = get_vectors(self.dims)
-        self.items.clear()
-        self.x = 0
-        self.cloud_manager.delete()
-        print('Vault deleted')
-    
 
     def split_text(self, text, min_threshold=1000, max_threshold=16000):
         segments = []
@@ -154,32 +156,10 @@ class Vault:
             segments.append(" ".join(current_segment))
 
         return segments
-
-
-    def get_items_by_vector(self, vector, n: int = 4):
-        self.load_vectors()
-        start_time = time.time()
-
-        results = []
-        vecs = self.vectors.get_nns_by_vector(vector, n)
-        for vec in vecs:
-            # Retrieve the item
-            item_data = self.cloud_manager.download_text_from_cloud(name(self.vault, vec, item=True))
-            # Retrieve the metadata
-            meta_data = self.cloud_manager.download_text_from_cloud(name(self.vault, vec, meta=True))
-            meta = json.loads(meta_data)
-            build_return(results, item_data, meta)
-
-        if self.verbose == True:
-            print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
-
-        return results
     
-
     def get_similar(self, text, n: int = 4):
         vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
-        return self.get_items_by_vector(vector, n)
-
+        return call_items_by_vector(self.user, self.vault, vector, self.api, n)
 
     def add_item(self, text: str, meta: dict = None, name: str = None):
         """
@@ -193,7 +173,6 @@ class Vault:
 
         self.items.append(itemize(self.vault, self.x, meta, text, name))
         self.x += 1
-
 
     def add(self, text: str, meta: dict = None, name: str = None):
         """
@@ -211,7 +190,6 @@ class Vault:
         for text in texts:
             self.add_item(text, meta, name)
 
-    
     def add_item_with_vector(self, text: str, vector: list, meta: dict = None, name: str = None):
         """
             If your text length lenght is greater than 15000 characters, you should use Vault.split_text(your_text) to 
@@ -235,7 +213,6 @@ class Vault:
         if self.verbose == True:
             print("add item time --- %s seconds ---" % (time.time() - start_time))
 
-
     def process_batch(self, batch_text_chunks, never_stop, loop_timeout):
         loop_start_time = time.time()
         while True:
@@ -252,7 +229,6 @@ class Vault:
                     except Exception as e:
                         raise TimeoutError("Loop timed out")
         return [record['embedding'] for record in res['data']]
-
 
     def get_vectors(self, batch_size: int = 32, never_stop: bool = False, loop_timeout: int = 180):
         start_time = time.time()
@@ -301,8 +277,6 @@ class Vault:
             process_batch_with_params = lambda batch_text_chunks: self.process_batch(batch_text_chunks, never_stop, loop_timeout)
             batch_embeddings_list = list(executor.map(process_batch_with_params, batches_text_chunks))
 
-
-        # Add the embeddings to the AnnoyIndex using the index from the metadata
         current_item_index = 0
         for batch_embeddings in batch_embeddings_list:
             for embedding in batch_embeddings:
@@ -427,8 +401,8 @@ class Vault:
                         response = self.ai.llm(segment, history, model=model)
                     break
                 except Exception as e:
-                    print(f"API Error: {e}. Sleeping 15 seconds")
-                    time.sleep(15)
+                    print(f"API Error: {e}. Sleeping 5 seconds")
+                    time.sleep(5)
                     
             self.last_chat_time = start_time
 

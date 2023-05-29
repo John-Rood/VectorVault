@@ -238,8 +238,8 @@ while len(summary) > 1000:
 
 # Metadata
 
-<p align="left">
-  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/9d9bae20-e358-4545-9e3b-32f782314541/add+all+the+metadata.png?" width="30%" height="30%" />
+<p align="center">
+  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/9d9bae20-e358-4545-9e3b-32f782314541/add+all+the+metadata.png?" width="40%" height="40%" />
 </p>
 
 To add meta data to your vault, just include the meta as a parameter in `add()`. Meta is always a dict, and you can add any fields you want. (If you don't add a 'name' field, a generic one will automatically be generated, so there is always a name field in the metadata)

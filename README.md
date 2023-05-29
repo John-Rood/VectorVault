@@ -22,9 +22,9 @@ Basic Interactions:
 <br>
 `get_vaults()` : Retrieves a list of Vaults within the current Vault directory
 <br>
-`get_similar()` : Retrieves similar texts from the Vault for a given input text - local vectors
+`get_similar()` : Retrieves similar texts from the Vault for a given input text - Vector Vault processes vectors in the cloud
 <br>
-`get_similar_cloud()` : Retrieves similar texts from the Vault for a given input text - cloud vectors
+`get_similar_local()` : Retrieves similar texts from the Vault for a given input text - You process vectors locally
 <br>
 `get_chat()` : Retrieves a response from ChatGPT, with support for handling conversation history, summarizing responses, and retrieving context-based responses by referencing similar data in the vault
 
@@ -33,7 +33,7 @@ Basic Interactions:
 
 <br>
 
-# Interact with your Vault:
+# Build Your Vault:
 <p align="center">
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/2acebcaa-f5dd-44c9-8bba-c10723bc7064/Vector+Vault+Vault+2000.png" width="60%" height="60%" />
 </p>
@@ -110,12 +110,24 @@ vault.save()
 <br>
 <br>
 
-# Reference Your Vault:
+# Call Your Vault:
 <p align="center">
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/5ae905b0-43d0-4b86-a965-5b447ee8c7de/Vector+Vault+Vault.jpg?content-type=image%2Fjpeg" width="60%" height="60%" />
 </p>
 
-After you've added some data and want to reference it later, you can call it like this:
+Making a call to your vault is really easy. You can even do it by command line:
+```
+curl -X POST "https://api.vectorvault.io/get_similar" \
+     -H "Content-Type: application/json" \
+     -d '{
+        "user": "your_username",
+        "api_key": "your_api_key",
+        "vault": "your_vault_name",
+        "text": "your_text"
+     }'
+```
+    
+This is the same exact call, but in Python:
 ```
 similar_data = vault.get_similar("Your text input") 
 
@@ -137,8 +149,99 @@ for result in similar_data:
 ```
 
 <br>
+<br>
 
-## Metadata
+### Use `get_chat()` with `get_context=True` to get response from chatgpt referencing vault data
+Retrieving items from the vault, is useful when using it supply context to a large language model, like chatgpt for instance, to get a contextualized response. The follow example searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the vault data.
+```
+question = "This text will be used find contextually similar references in the vault"
+
+answer = vault.get_chat(question, get_context=True)  
+print(answer)
+```
+The following line will send chatgpt the question for response and not interact with the vault in any way
+```
+answer = vault.get_chat(question) 
+```
+
+
+<br>
+<br>
+
+# ChatGPT
+## With `get_chat()` you can use ChatGPT standalone or with Vault data integrated
+
+<p align="center">
+  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/74776e31-4bfd-4d6b-837b-674790ca4288/wisdomandwealth_Electric_Yellow_and_Dark_Blue_-_chat_messages_g_c81a4325-5347-44a7-879d-a58a6d115446.png" width="60%" height="60%" />
+</p>
+<br>
+
+Get chat response from OpenAI's ChatGPT. 
+Rate limiting, auto retries, and chat histroy slicing auto-built-in so you can create complex chat capability without getting complicated. 
+Enter your text, optionally add chat history, and optionally choose a summary response instead (default: summmary=False)
+
+- Example Signle Usage: 
+`response = vault.get_chat(text)`
+
+- Example Chat: 
+`response = vault.get_chat(text, chat_history)`
+
+- Example Summary: 
+`summary = vault.get_chat(text, summary=True)`
+
+- Example Context-Based Response:
+`response = vault.get_chat(text, get_context=True)`
+
+- Example Context-Based Response w/ Chat History:
+`response = vault.get_chat(text, chat_history, get_context=True)`
+
+- Example Context-Response with Context Samples Returned:
+`vault_response = vault.get_chat(text, get_context=True, return_context=True)`
+<br>
+
+Response is a string, unless `return_context=True` is passed, then response will be a dictionary containing the results from the vault as well as the response:
+```
+# print response:
+print(vault_response['response'])
+
+# print context:
+for item in vault_response['context']:
+    print("\n\n", f"item {item['metadata']['name']}")
+    print(item['data'])
+```
+<br>
+<br>
+
+# Summarize Anything:
+<p align="center">
+  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/e1ff4ca3-e18b-4c8f-b3c9-ff6ddcc907a1/wisdomandwealth_a_summary_being_created._A_bunch_of_texts_are_f_df58744a-13cb-46fd-b39d-3f090349bbb7.png" width="60%" height="60%" />
+</p>
+
+You can summarize any text, no matter how large - even an entire book all at once. Long texts are split into the largest possible chunk sizes and a summary is generated for each chunk. When all summaries are finished, they are concatenated and returned as one.
+```
+summary = vault.get_chat(text, summary=True)
+```
+<br>
+
+want to make a summary of a certain length?...
+```
+summary = vault.get_chat(text, summary=True)
+
+while len(summary) > 1000:
+    summary = vault.get_chat(summary, summary=True)
+```
+^ in the above example, we make a summary, then we enter while loop that continues until the summary recieved back is a certain lenght. You could use this to summarize a 1000 page book to less than 1000 characters of text. 
+
+<br>
+<br>
+<br>
+
+# Metadata
+
+<p align="left">
+  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/9d9bae20-e358-4545-9e3b-32f782314541/add+all+the+metadata.png?" width="30%" height="30%" />
+</p>
+
 To add meta data to your vault, just include the meta as a parameter in `add()`. Meta is always a dict, and you can add any fields you want. (If you don't add a 'name' field, a generic one will automatically be generated, so there is always a name field in the metadata)
 ```
 meta = {
@@ -224,23 +327,6 @@ print(similar_data[0]['metadata']['title'])
 <br>
 <br>
 
-### Use `get_chat()` with `get_context=True` to get response from chatgpt referencing vault data
-Retrieving items from the vault, is useful when using it supply context to a large language model, like chatgpt for instance, to get a contextualized response. The follow example searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the vault data.
-```
-question = "This text will be used find contextually similar references in the vault"
-
-answer = vault.get_chat(question, get_context=True)  
-print(answer)
-```
-The following line will send chatgpt the question for response and not interact with the vault in any way
-```
-answer = vault.get_chat(question) 
-```
-
-
-<br>
-<br>
-
 # Change Vaults
 
 In this example science vault, we will print a list of vaults in the current vault directory
@@ -273,75 +359,7 @@ print(chemistry_vault.get_vaults())
 lab_notes_vault = Vault(user='your@email.com', api_key='your_api_key', vault='science/chemistry/lab notes')
 ```
 
-<br>
-<br>
 
-# ChatGPT
-## With `get_chat()` you can use ChatGPT standalone or with Vault data integrated
-
-<p align="center">
-  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/74776e31-4bfd-4d6b-837b-674790ca4288/wisdomandwealth_Electric_Yellow_and_Dark_Blue_-_chat_messages_g_c81a4325-5347-44a7-879d-a58a6d115446.png" width="60%" height="60%" />
-</p>
-<br>
-
-Get chat response from OpenAI's ChatGPT. 
-Rate limiting, auto retries, and chat histroy slicing auto-built-in so you can create complex chat capability without getting complicated. 
-Enter your text, optionally add chat history, and optionally choose a summary response instead (default: summmary=False)
-
-- Example Signle Usage: 
-`response = vault.get_chat(text)`
-
-- Example Chat: 
-`response = vault.get_chat(text, chat_history)`
-
-- Example Summary: 
-`summary = vault.get_chat(text, summary=True)`
-
-- Example Context-Based Response:
-`response = vault.get_chat(text, get_context=True)`
-
-- Example Context-Based Response w/ Chat History:
-`response = vault.get_chat(text, chat_history, get_context=True)`
-
-- Example Context-Response with Context Samples Returned:
-`vault_response = vault.get_chat(text, get_context=True, return_context=True)`
-<br>
-
-Response is a string, unless `return_context=True` is passed, then response will be a dictionary containing the results from the vault as well as the response:
-```
-# print response:
-print(vault_response['response'])
-
-# print context:
-for item in vault_response['context']:
-    print("\n\n", f"item {item['metadata']['name']}")
-    print(item['data'])
-```
-<br>
-<br>
-
-# Summarize Anything:
-<p align="center">
-  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/e1ff4ca3-e18b-4c8f-b3c9-ff6ddcc907a1/wisdomandwealth_a_summary_being_created._A_bunch_of_texts_are_f_df58744a-13cb-46fd-b39d-3f090349bbb7.png" width="60%" height="60%" />
-</p>
-
-You can summarize any text, no matter how large - even an entire book all at once. Long texts are split into the largest possible chunk sizes and a summary is generated for each chunk. When all summaries are finished, they are concatenated and returned as one.
-```
-summary = vault.get_chat(text, summary=True)
-```
-<br>
-
-want to make a summary of a certain length?...
-```
-summary = vault.get_chat(text, summary=True)
-
-while len(summary) > 1000:
-    summary = vault.get_chat(summary, summary=True)
-```
-^ in the above example, we make a summary, then we enter while loop that continues until the summary recieved back is a certain lenght. You could use this to summarize a 1000 page book to less than 1000 characters of text. 
-
-<br>
-<br>
 <br>
 
 ## Real world usage:

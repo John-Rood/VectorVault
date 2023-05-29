@@ -22,7 +22,9 @@ Basic Interactions:
 <br>
 `get_vaults()` : Retrieves a list of Vaults within the current Vault directory
 <br>
-`get_similar()` : Retrieves similar texts from the Vault for a given input text 
+`get_similar()` : Retrieves similar texts from the Vault for a given input text - local vectors
+<br>
+`get_similar_cloud()` : Retrieves similar texts from the Vault for a given input text - cloud vectors
 <br>
 `get_chat()` : Retrieves a response from ChatGPT, with support for handling conversation history, summarizing responses, and retrieving context-based responses by referencing similar data in the vault
 

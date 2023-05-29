@@ -48,6 +48,7 @@ class Vault:
         self.last_chat_time = None
         self.first_run = True
         self.needed_sleep_time = None
+        self.saved_already = False
         self.ai = AI()
 
     def get_vaults(self, vault: str = None):
@@ -58,6 +59,10 @@ class Vault:
         return call_get_total_vectors(self.user, self.vault, self.api)
     
     def save(self, trees=16):
+        if self.saved_already == True:
+            self.clear_cache()
+            raise "The last save was aborted before the build finished. The cache was cleared and Save is empty now."
+        self.saved_already = True
         start_time = time.time()
         self.vectors.build(trees)
 
@@ -72,17 +77,16 @@ class Vault:
             self.cloud_manager.upload(item_id, item_text, item_meta)
             total_saved_items += 1
 
-        self.items.clear()
-        self.x_checked = False
-        self.vecs_loaded = False
+        self.clear_cache()
 
         if self.verbose:
             print("save vectors time --- %s seconds ---" % (time.time() - start_time))
-
+        
     def clear_cache(self):
         self.items.clear()
         self.x_checked = False
         self.vecs_loaded = False
+        self.saved_already = False
 
     def delete(self):
         if self.verbose == True:
@@ -157,11 +161,11 @@ class Vault:
 
         return segments
     
-    def get_similar(self, text, n: int = 4):
+    def get_similar_local(self, text, n: int = 4):
         vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
         return call_items_by_vector(self.user, self.vault, self.api, vector, n)
     
-    def get_similar_cloud(self, text, n: int = 4):
+    def get_similar(self, text, n: int = 4):
         return call_get_similar(self.user, self.vault, self.api, text, n)
 
     def add_item(self, text: str, meta: dict = None, name: str = None):

@@ -239,10 +239,10 @@ while len(summary) > 1000:
 # Metadata
 
 <p align="center">
-  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/9d9bae20-e358-4545-9e3b-32f782314541/add+all+the+metadata.png?" width="40%" height="40%" />
+  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/9d9bae20-e358-4545-9e3b-32f782314541/add+all+the+metadata.png?" width="30%" height="30%" />
 </p>
 
-Metadata is really useful later, when you want to know the deets about the data you've added. To add metadata to your vault, just include the meta as a parameter in `add()`. Meta is always a dict, and you can add any fields you want. (If you don't add a 'name' field, a generic one will automatically be generated, so there is always a name field in the metadata)
+Metadata is really useful later, when you want to know the deets about the data you've added. To add metadata to your vault, just include the meta as a parameter in `add()`. Meta is always a dict, and you can add any fields you want. (If you don't add a 'name' field, a generic one will automatically be generated, so the name field in the metadata always exists)
 ```
 meta = {
     'name': 'Lifestyle in LA',
@@ -494,7 +494,7 @@ Vaults within vaults is the optimal structure for segmenting data. If a vault gr
 
 
 ### What if I'm a large company with very large data
-If you need to store large amounts of data in single vaults for whatever reason, let us know and we can set you up with Custom cloud plan. In our Custom plan, we create a persistent storage pod that is always active. With a Custom plan, a billion vectors search will respond in under one second. For reference, the full text of 3.7 million books would be around 1.1 - 1.5 billion vectors, and take up about 8 terabytes of storage. If this is what you're looking for, just reach out to us by email at support at vectorvault.io.
+If you need to store large amounts of data in single vaults for whatever reason, let us know and we can set you up with Enterprise Cloud Plan. In our Enterprise plan, we create a persistent storage pod with as much memory as you need, that is always active. With an Enterprise plan, a billion vectors search will respond in one second. For reference, the full text of 3.7 million books would be ~1.1 billion vectors, and take up about 8 terabytes of storage. If this is what you're looking for, just reach out to us by email at support at vectorvault.io.
 
 <br>
 

@@ -24,14 +24,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class CloudManager:
     def __init__(self, user: str, api_key: str, vault: str):
-        self.user = self.get_user_id(user)
+        self.user = user
         self.api = api_key
         self.vault = vault
         # Creates the credentials
         credentials = CustomCredentials(user, self.api)
         # Instantiates the client 
         self.storage_client = storage.Client(project=call_proj(), credentials=credentials)
-        self.cloud = self.storage_client.bucket(self.user)
+        self.cloud = self.storage_client.bucket(self.get_bkt(self.user))
         print(f'Connected to Vault: {self.vault}')
 
     def vault_exists(self, vault_name):
@@ -64,7 +64,7 @@ class CloudManager:
     def delete_blob(self, blob):
         blob.delete()
      
-    def get_user_id(self, input_string):
+    def get_bkt(self, input_string):
         return input_string.replace("@", "_at_").replace(".", "_dot_") + '_vvclient'
 
     def delete(self):

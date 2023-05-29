@@ -23,7 +23,7 @@ from concurrent.futures import ThreadPoolExecutor
 from .cloudmanager import CloudManager
 from .ai import AI
 from .itemize import itemize, name_vecs, get_item, get_vectors
-from .vecreq import call_items_by_vector, call_get_total_vectors, call_get_vaults
+from .vecreq import call_items_by_vector, call_get_total_vectors, call_get_vaults, call_get_similar, call_get_chat
 
 
 class Vault:
@@ -34,11 +34,11 @@ class Vault:
         self.dims = dims
         try:
             self.cloud_manager = CloudManager(user, api_key, self.vault)
-        except:
+        except Exception as e:
             print('API KEY NOT FOUND! Using Vault without cloud access. `get_chat()` will still work')
             # user can still use the get_chat() function without an api key
             pass
-        self.user = self.cloud_manager.user
+        self.user = user
         self.x = 0
         self.x_checked = False
         self.vecs_loaded = False
@@ -159,7 +159,10 @@ class Vault:
     
     def get_similar(self, text, n: int = 4):
         vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
-        return call_items_by_vector(self.user, self.vault, vector, self.api, n)
+        return call_items_by_vector(self.user, self.vault, self.api, vector, n)
+    
+    def get_similar_cloud(self, text, n: int = 4):
+        return call_get_similar(self.user, self.vault, self.api, text, n)
 
     def add_item(self, text: str, meta: dict = None, name: str = None):
         """
@@ -220,8 +223,8 @@ class Vault:
                 res = openai.Embedding.create(input=batch_text_chunks, engine="text-embedding-ada-002")
                 break
             except Exception as e:
-                print(f"API Error: {e}. Sleeping 15 seconds")
-                time.sleep(15)
+                print(f"API Error: {e}. Sleeping 5 seconds")
+                time.sleep(5)
                 if not never_stop or (time.time() - loop_start_time) > loop_timeout:
                     try:
                         res = openai.Embedding.create(input=batch_text_chunks, engine="text-embedding-ada-002")
@@ -289,7 +292,9 @@ class Vault:
         if self.verbose == True:
             print("get vectors time --- %s seconds ---" % (time.time() - start_time))
 
-
+    def get_chat_cloud(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, expansion = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False):
+        return call_get_chat(self.user, self.vault, self.api, text, history, summary, get_context, n_context, return_context, expansion, history_search, model, include_context_meta)
+    
     def get_chat(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, expansion = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False):
         '''
             Chat get response from OpenAI's ChatGPT. 

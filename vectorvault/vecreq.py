@@ -2,7 +2,7 @@ import requests
 import json
 
 def call_name_vecs(vault, user_id, api_key, bytesize=None):
-    url = f'{base1}/name_vecs'
+    url = f'https://api.vectorvault.io/name_vecs'
     headers = {'Content-Type': 'application/json'}
     if bytesize:
         data = {
@@ -21,14 +21,9 @@ def call_name_vecs(vault, user_id, api_key, bytesize=None):
     response = requests.post(url, headers=headers, data=json.dumps(data))
     return json.loads(response.text)['result']
 
-base1 = "https://get-vecs-etrszydrna-uc.a.run.app"
-base2 = "https://get-loc-etrszydrna-uc.a.run.app"
-
 def call_buildpath(v, x, user_id, api_key, bytesize=None):
-    url = f'{base1}/buildpath'
+    url = f'https://api.vectorvault.io/buildpath'
     headers = {'Content-Type': 'application/json'}
-    print(user_id)
-    print(api_key)
     data = {
         "v": v,
         "x": x,
@@ -42,20 +37,8 @@ def call_buildpath(v, x, user_id, api_key, bytesize=None):
 def call_proj():
     return 'vectorvault-361ab'
 
-def call_vec(api_key):
-    url = f'{base1}/85848'
-    params = {"api_key": api_key}
-    response = requests.get(url, params=params)
-    return json.loads(response.text)['result']
-
-def call_vecid(api_key):
-    url = f'{base1}/94993838'
-    params = {"api_key": api_key}
-    response = requests.get(url, params=params)
-    return json.loads(response.text)['result']
-
 def call_get_vaults(user, api_key, vault=None):
-    url = f"{base2}/vaults"
+    url = f"https://api.vectorvault.io/vaults"
     params = {
         'user': user,
         'vault': vault,
@@ -65,7 +48,7 @@ def call_get_vaults(user, api_key, vault=None):
     return response.json()['vaults']
 
 def call_get_total_vectors(user, vault, api_key):
-    url = f"{base2}/total_vectors"
+    url = f"https://api.vectorvault.io/total_vectors"
     params = {
         'user': user,
         'vault': vault,
@@ -74,8 +57,8 @@ def call_get_total_vectors(user, vault, api_key):
     response = requests.get(url, params=params)
     return response.json()['total_vectors']
 
-def call_items_by_vector(user, vault, vector, api_key, num_items=4):
-    url = f"{base2}/items_by_vector"
+def call_items_by_vector(user, vault, api_key, vector, num_items=4):
+    url = f"https://api.vectorvault.io/items_by_vector"
     payload = {
         'user': user,
         'vault': vault,
@@ -86,3 +69,46 @@ def call_items_by_vector(user, vault, vector, api_key, num_items=4):
     response = requests.post(url, json=payload)
     return response.json()['results']
 
+def call_get_similar(user, vault, api_key, text, num_items=4):
+    url = f"https://api.vectorvault.io/get_similar"
+    payload = {
+        'user': user,
+        'vault': vault,
+        'api_key': api_key,
+        'text': text,
+        'num_items': num_items
+    }
+    response = requests.post(url, json=payload)
+    return response.json()['results']
+
+
+def call_get_chat(user, vault, api_key, text, history=None, summary=False, get_context=False, n_context=4, return_context=False, expansion=False, history_search=False, model='gpt-3.5-turbo', include_context_meta=False):
+    url = "https://api.vectorvault.io/get_chat"
+
+    # Define the data payload
+    data = {
+        'user': user,
+        'vault': vault,
+        'api_key': api_key,
+        "text": text,
+        "history": history,
+        "summary": summary,
+        "get_context": get_context,
+        "n_context": n_context,
+        "return_context": return_context,
+        "expansion": expansion,
+        "history_search": history_search,
+        "model": model,
+        "include_context_meta": include_context_meta
+    }
+
+    # Make the POST request
+    response = requests.post(url, json=data)
+
+    # Check the request was successful
+    if response.status_code == 200:
+        # Parse the response JSON
+        data = response.json()
+        return data
+    else:
+        raise Exception(f"Request failed with status {response.status_code}")

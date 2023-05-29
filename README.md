@@ -238,7 +238,7 @@ while len(summary) > 1000:
 
 # Metadata
 
-<p align="center">
+<p align="left">
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/9d9bae20-e358-4545-9e3b-32f782314541/add+all+the+metadata.png?" width="30%" height="30%" />
 </p>
 

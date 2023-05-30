@@ -32,6 +32,7 @@ class CloudManager:
         # Instantiates the client 
         self.storage_client = storage.Client(project=call_proj(), credentials=credentials)
         self.cloud = self.storage_client.bucket(self.get_bkt(self.user))
+        self.cloud_name = cloud_name
         print(f'Connected to Vault: {self.vault}')
 
     def vault_exists(self, vault_name):
@@ -58,8 +59,8 @@ class CloudManager:
 
     def upload(self, item, text, meta):
         with ThreadPoolExecutor() as executor:
-            executor.submit(self.upload_to_cloud, cloud_name(self.vault, item, self.user, text, self.api, item=True), text)
-            executor.submit(self.upload_to_cloud, cloud_name(self.vault, item, self.user, meta, self.api, meta=True), json.dumps(meta))
+            executor.submit(self.upload_to_cloud, self.cloud_name(self.vault, item, self.user, text, self.api, item=True), text)
+            executor.submit(self.upload_to_cloud, self.cloud_name(self.vault, item, self.user, meta, self.api, meta=True), json.dumps(meta))
     
     def delete_blob(self, blob):
         blob.delete()

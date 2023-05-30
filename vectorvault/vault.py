@@ -66,16 +66,16 @@ class Vault:
         start_time = time.time()
         self.vectors.build(trees)
 
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            self.vectors.save(temp_file.name)
-            bytesize = os.path.getsize(temp_file.name)
-            self.cloud_manager.upload_temp_file(temp_file.name, name_vecs(self.vault, self.user, self.api, bytesize))
-
         total_saved_items = 0
         for item in self.items:
             item_text, item_id, item_meta = get_item(item)
             self.cloud_manager.upload(item_id, item_text, item_meta)
             total_saved_items += 1
+
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            self.vectors.save(temp_file.name)
+            byte = os.path.getsize(temp_file.name)
+            self.cloud_manager.upload_temp_file(temp_file.name, name_vecs(self.vault, self.user, self.api, byte))
 
         self.clear_cache()
 

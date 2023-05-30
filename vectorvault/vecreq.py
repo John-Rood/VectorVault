@@ -2,27 +2,32 @@ import requests
 import json
 
 def call_name_vecs(vault, user_id, api_key, bytesize=None):
-    url = f'https://api.vectorvault.io/name_vecs'
+    url = f'https://vectors.vectorvault.io/name_vecs'
     headers = {'Content-Type': 'application/json'}
-    if bytesize:
-        data = {
-            "vault": vault,
-            "user": user_id,
-            "bytesize": bytesize,
-            "api_key": api_key
-            }
-    else:
-        data = {
-            "vault": vault,
-            "user": user_id,
-            "api_key": api_key
-            }
+    data = {
+        "vault": vault,
+        "user": user_id,
+        "api_key": api_key
+        }
 
-    response = requests.post(url, headers=headers, data=json.dumps(data))
+    if bytesize:
+        data["bytesize"] = bytesize
+    try:
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as errh:
+        print(response.text)  # This will print the response body
+    except requests.exceptions.ConnectionError as errc:
+        print(response.text)  # This will print the response body
+    except requests.exceptions.Timeout as errt:
+        print(response.text)  # This will print the response body
+    except requests.exceptions.RequestException as err:
+        print(response.text)  # This will print the response body
+
     return json.loads(response.text)['result']
 
 def call_buildpath(v, x, user_id, api_key, bytesize=None):
-    url = f'https://api.vectorvault.io/buildpath'
+    url = f'https://vectors.vectorvault.io/buildpath'
     headers = {'Content-Type': 'application/json'}
     data = {
         "v": v,
@@ -32,7 +37,19 @@ def call_buildpath(v, x, user_id, api_key, bytesize=None):
     }
     if bytesize:
         data["bytesize"] = bytesize
-    response = requests.post(url, headers=headers, json=data)
+    try:
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as errh:
+        print(response.text)  # This will print the response body
+    except requests.exceptions.ConnectionError as errc:
+        print(response.text)  # This will print the response body
+    except requests.exceptions.Timeout as errt:
+        print(response.text)  # This will print the response body
+    except requests.exceptions.RequestException as err:
+        print(response.text)  # This will print the response body
+
+    return json.loads(response.text)['result']
 
 def call_proj():
     return 'vectorvault-361ab'

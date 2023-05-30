@@ -1,8 +1,7 @@
 import datetime 
-from .vecreq import call_name_vecs, call_buildpath
+from vecreq import call_name_vecs, call_buildpath
 from annoy import AnnoyIndex
 import threading
-import sys
 
 def itemize(vault, x, meta=None, text=None, name=None):
     meta = {} if meta is None else meta
@@ -40,17 +39,13 @@ def append_path_suffix(base_path, is_item, is_meta):
 
 def cloud_name(v, x, user_id, object, api_key, item=False, meta=False):
     base_path = f'{v}/{x}'
-    bytesize = sys.getsizeof(object)
-    t = threading.Thread(target=call_buildpath, args=(v, x, user_id, api_key, bytesize))
+    t = threading.Thread(target=call_buildpath, args=(v, x, user_id, api_key))
     t.start()
     final_path = append_path_suffix(base_path, item, meta)
     return final_path
 
-def name_vecs(vault, user_id, api_key, bytesize=None):
-    if bytesize:
-        return call_name_vecs(vault, user_id, api_key, bytesize)
-    else:
-        return call_name_vecs(vault, user_id, api_key)
+def name_vecs(vault, user_id, api_key, byte=None):
+    return call_name_vecs(vault, user_id, api_key, byte)
 
 def get_vectors(dims):
     return AnnoyIndex(dims, 'angular')

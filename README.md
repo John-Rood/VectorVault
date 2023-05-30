@@ -106,7 +106,6 @@ vault.save()
 ^ these three lines execute fast and can be called as often as you like. For example: you can use `add()`, `get_vectors()`, and `save()` mid conversation to save every message to the vault as soon as they comes in. Small loads are usually finished in less than a second. Large loads depend on total data size. 
 >> A test was done adding the full text of 37 books at once. The `get_vectors()` function took 8 minutes and 56 seconds. (For comparison, processing one at a time via openai's embedding function would take roughly two days)
 
-
 <br>
 <br>
 
@@ -115,7 +114,7 @@ vault.save()
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/5ae905b0-43d0-4b86-a965-5b447ee8c7de/Vector+Vault+Vault.jpg?content-type=image%2Fjpeg" width="60%" height="60%" />
 </p>
 
-Making a call to your vault is really easy. You can even do it by command line:
+Since your vault lives in the cloud, making a call to it is really easy. You can even do it by command line:
 ```
 curl -X POST "https://api.vectorvault.io/get_similar" \
      -H "Content-Type: application/json" \
@@ -123,9 +122,10 @@ curl -X POST "https://api.vectorvault.io/get_similar" \
         "user": "your_username",
         "api_key": "your_api_key",
         "vault": "your_vault_name",
-        "text": "your_text"
+        "text": "Your text input"
      }'
 ```
+>> {"results":[{"data":"NASA Mars Exploration... **shortend for brevity**","metadata":{"created_at":"2023-05-29T19:21:20.846023","item_id":0,"name":"webdump-0","updated_at":"2023-05-29T19:21:20.846028"}}]}
     
 This is the same exact call, but in Python:
 ```
@@ -134,6 +134,8 @@ similar_data = vault.get_similar("Your text input")
 for result in similar_data:
     print(result['data'])
 ```
+>> NASA Mars Exploration... NASA To Host Briefing... Program studies Mars... A Look at a Steep North Polar...
+
 ^ this prints each similar item that was retieved. The `get_similar()` function retrieves items from the vault using vector cosine similarity search algorithm to find results. Default returns a list with 4 results. 
 `similar_data = vault.get_similar(text_input, n = 10)` returns 10 results instead of 4.
 
@@ -147,6 +149,7 @@ for result in similar_data:
     print(result['data'])
     print(result['metadata'])
 ```
+>> NASA Mars Exploration... {"created_at":"2023-05-29T19...} NASA To Host Briefing... {"created_at":"2023-05-29T19...} Program studies Mars... {"created_at":"2023-05-29T19...} A Look at a Steep North Polar... {"created_at":"2023-05-29T19...}
 
 <br>
 <br>
@@ -154,7 +157,7 @@ for result in similar_data:
 ### Use `get_chat()` with `get_context=True` to get response from chatgpt referencing vault data
 Retrieving items from the vault, is useful when using it supply context to a large language model, like chatgpt for instance, to get a contextualized response. The follow example searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the vault data.
 ```
-question = "This text will be used find contextually similar references in the vault"
+question = "Should I use Vector Vault for my next generative ai application"
 
 answer = vault.get_chat(question, get_context=True)  
 print(answer)
@@ -199,7 +202,7 @@ Enter your text, optionally add chat history, and optionally choose a summary re
 `vault_response = vault.get_chat(text, get_context=True, return_context=True)`
 <br>
 
-Response is a string, unless `return_context=True` is passed, then response will be a dictionary containing the results from the vault as well as the response:
+Response from ChatGPT in string format, unless `return_context=True` is passed, then response will be a dictionary containing the results - response from ChatGPT, and the vault data.
 ```
 # print response:
 print(vault_response['response'])
@@ -209,6 +212,7 @@ for item in vault_response['context']:
     print("\n\n", f"item {item['metadata']['name']}")
     print(item['data'])
 ```
+
 <br>
 <br>
 
@@ -277,10 +281,11 @@ similar_data = vault.get_similar("Your text input")
 for result in similar_data:
     print(result['metadata']['name'])
 ```
+>> Lifestyle in LA Lifestyle in LA Lifestyle in LA Lifestyle in LA
 <br>
 
 ### Add Any Meta Fields & Retrieve later
-Here we open the popular book by George Orwell, "1984", from a .txt file. We read the file and save all the book's text to a variable called "text". Then we create a dictionary containing all the information about the book. Then we save all that to the vault. When you call the vault later, you can reference any of the metadata. When referencing the vault with `get_similar()` or `get_chat(text, get_context=True)` the vault will return sample texts from the book, and if the vault has many books in it, you may want to know where that sample is coming from. The metadata is how you will know.
+Here we open the popular book by George Orwell, "1984", from a .txt file. We read the file and save all the book's text to a variable called "text". Create a dictionary containing all the information about the book. Save all that to the vault. Now when calling `get_similar()` or `get_chat(text, get_context=True, return_context=True)` the vault will return texts from the book and the metadata will have what you need to know. 
 
 
 ```
@@ -315,14 +320,16 @@ for result in similar_data:
     print(result['metadata']['title'])
     print(result['metadata']['author'])
     print(result['metadata']['genre'])
-    # etc...
 ```
-^ list is always returned. So you can break it down like above or like below...
+>> 1984 George Orwell Dystopian 1984 George Orwell Dystopian 1984 George Orwell Dystopian 1984 George Orwell Dystopian
+
+^ list is always returned, so you can do like above or like below...
 
 ```
 similar_data = vault.get_similar("How will the government control you in the future?") 
 print(similar_data[0]['metadata']['title'])
 ```
+>> 1984
 
 <br>
 <br>
@@ -335,7 +342,7 @@ science_vault = Vault(user='your_user_id', api_key='your_api_key', vault='scienc
 
 print(science_vault.get_vaults())
 ```
->> Output: ['biology', 'physics', 'chemistry']
+>> ['biology', 'physics', 'chemistry']
 
 
 ## Access vaults within vaults
@@ -351,7 +358,7 @@ chemistry_vault = Vault(user='your@email.com', api_key='your_api_key', vault='sc
 
 print(chemistry_vault.get_vaults())
 ```
->> Output: ['reactions', 'formulas', 'lab notes']
+>> ['reactions', 'formulas', 'lab notes']
 
 
 - lab notes vault within chemistry vault
@@ -379,7 +386,7 @@ for item in vault_response['context']:
 
 ```
 
->> Output: Question: 
+>> Question: 
 What is a token broker? 
  
 >>Answer: 
@@ -414,7 +421,7 @@ vault_response = vault.get_chat(user_input2, history=history, get_context=True)
 
 print("Question:", user_input2, "\n\nAnswer:", vault_response2)
 ```
->> Output: Question: 
+>> Question: 
 How do I use it? 
  
 >>Answer: 

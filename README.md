@@ -239,8 +239,9 @@ while len(summary) > 1000:
 <br>
 <br>
 <br>
+<br>
 
-# Metadata
+# Metadata Made Easy
 
 Metadata is useful later, when you make a call to the vault and want to know specifics about the data you got back. To add metadata to your vault, just include the meta as a parameter in `add()`. Meta is always a dict, and you can add any fields you want. (If you don't add a 'name' field, a generic one will automatically be generated, so the name field in the metadata always exists)
 ```
@@ -363,67 +364,6 @@ lab_notes_vault = Vault(user='your@email.com', api_key='your_api_key', vault='sc
 ```
 
 
-<br>
-
-## Real world usage:
-```
-user_input = input("What's your question?")
-
-# Get response from Language model
-vault_response = vault.get_chat(user_input, get_context=True, return_context=True)
-
-answer = vault_response['response']
-print("Question:", user_input, "\n\nAnswer:", answer)
-
-# show the context used to generate the answer
-for item in vault_response['context']:
-    print("\n\n", f"item {item['metadata']['item_id']}")
-    print(item['data'])
-
-```
-
->> Question: 
-What is a token broker? 
- 
->>Answer: 
-A token broker is a service that generates downscoped access tokens for token
-consumers to access or modify specific resources...
->>
-
->> item 33
-Various workloads (token consumers) in the same network will send authenticated
-requests to that broker for downscoped tokens to...
->>
- >>item 4
-Another reason to use downscoped credentials is to ensure tokens in flight...
->>
-
-
->>
->> item 37
-The following is an...
->>
-
-
-<br>
-
-```
-user_input2 = input("What's your next question?")
-
-history = user_input + answer
-
-# Get response from Language model
-vault_response = vault.get_chat(user_input2, history=history, get_context=True)
-
-print("Question:", user_input2, "\n\nAnswer:", vault_response2)
-```
->> Question: 
-How do I use it? 
- 
->>Answer: 
-You can use it by...
-
-
 
 <br>
 <br>
@@ -478,7 +418,7 @@ That's all it takes to create an AI customer service chatbot that responds as we
 
 
 ## Getting Started:
-Open the "examples" folder and try out the Google Colab tutorials we have! They will show you a lot, plus they are in Google Colab, so no local set up required, just open them up and press play.
+Open the [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) and try out the Google Colab tutorials we have! They will show you a lot, plus they are in Google Colab, so no local set up required, just open them up and press play.
 
 <br>
 <br>

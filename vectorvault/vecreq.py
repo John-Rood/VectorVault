@@ -1,5 +1,6 @@
 import requests
 import json
+import sys
 
 def call_name_vecs(vault, user_id, api_key, bytesize=None):
     url = f'https://vectors.vectorvault.io/name_vecs'
@@ -14,17 +15,15 @@ def call_name_vecs(vault, user_id, api_key, bytesize=None):
         data["bytesize"] = bytesize
     try:
         response = requests.post(url, headers=headers, data=json.dumps(data))
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as errh:
-        print(response.text)  # This will print the response body
-    except requests.exceptions.ConnectionError as errc:
-        print(response.text)  # This will print the response body
-    except requests.exceptions.Timeout as errt:
-        print(response.text)  # This will print the response body
-    except requests.exceptions.RequestException as err:
-        print(response.text)  # This will print the response body
-
-    return json.loads(response.text)['result']
+        return json.loads(response.text)['result']
+    except json.JSONDecodeError as e:
+        print(f"An error occurred: {e}")
+        print(f"Response status code: {response.status_code}")
+        print(f"Response text: {response.text}")
+        sys.exit(1)  
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        sys.exit(1)  
 
 def call_buildpath(v, x, user_id, api_key, bytesize=None):
     url = f'https://vectors.vectorvault.io/buildpath'
@@ -39,17 +38,16 @@ def call_buildpath(v, x, user_id, api_key, bytesize=None):
         data["bytesize"] = bytesize
     try:
         response = requests.post(url, headers=headers, data=json.dumps(data))
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as errh:
-        print(response.text)  # This will print the response body
-    except requests.exceptions.ConnectionError as errc:
-        print(response.text)  # This will print the response body
-    except requests.exceptions.Timeout as errt:
-        print(response.text)  # This will print the response body
-    except requests.exceptions.RequestException as err:
-        print(response.text)  # This will print the response body
+        return json.loads(response.text)['result']
+    except json.JSONDecodeError as e:
+        print(f"An error occurred: {e}")
+        print(f"Response status code: {response.status_code}")
+        print(f"Response text: {response.text}")
+        sys.exit(1)  
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        sys.exit(1)  
 
-    return json.loads(response.text)['result']
 
 def call_proj():
     return 'vectorvault-361ab'

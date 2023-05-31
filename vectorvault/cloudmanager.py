@@ -59,8 +59,8 @@ class CloudManager:
 
     def upload(self, item, text, meta):
         with ThreadPoolExecutor() as executor:
-            executor.submit(self.upload_to_cloud, self.cloud_name(self.vault, item, self.user, text, self.api, item=True), text)
-            executor.submit(self.upload_to_cloud, self.cloud_name(self.vault, item, self.user, meta, self.api, meta=True), json.dumps(meta))
+            executor.submit(self.upload_to_cloud, self.cloud_name(self.vault, item, self.user, self.api, item=True), text)
+            executor.submit(self.upload_to_cloud, self.cloud_name(self.vault, item, self.user, self.api, meta=True), json.dumps(meta))
     
     def delete_blob(self, blob):
         blob.delete()

@@ -61,7 +61,7 @@ class Vault:
     def save(self, trees=16):
         if self.saved_already == True:
             self.clear_cache()
-            raise "The last save was aborted before the build finished. The cache was cleared and Save is empty now."
+            print("The last save was aborted before the build finished. The cache was cleared and Save is empty now.")
         self.saved_already = True
         start_time = time.time()
         self.vectors.build(trees)

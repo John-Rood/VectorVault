@@ -1,5 +1,5 @@
 import datetime 
-from vecreq import call_name_vecs, call_buildpath
+from .vecreq import call_name_vecs, call_buildpath
 from annoy import AnnoyIndex
 import threading
 
@@ -37,7 +37,7 @@ def append_path_suffix(base_path, is_item, is_meta):
         suffix = ''
     return f'{base_path}/{suffix}'
 
-def cloud_name(v, x, user_id, object, api_key, item=False, meta=False):
+def cloud_name(v, x, user_id, api_key, item=False, meta=False):
     base_path = f'{v}/{x}'
     t = threading.Thread(target=call_buildpath, args=(v, x, user_id, api_key))
     t.start()

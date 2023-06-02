@@ -28,15 +28,15 @@ class CloudManager:
         self.api = api_key
         self.vault = vault
         # Creates the credentials
-        credentials = CustomCredentials(user, self.api)
+        self.credentials = CustomCredentials(user, self.api)
         # Instantiates the client 
-        self.storage_client = storage.Client(project=call_proj(), credentials=credentials)
+        self.storage_client = storage.Client(project=call_proj(), credentials=self.credentials)
         self.cloud = self.storage_client.bucket(self.get_bkt(self.user))
         self.cloud_name = cloud_name
 
     def vault_exists(self, vault_name):
         return storage.Blob(bucket=self.cloud, name=vault_name).exists(self.storage_client)
-
+    
     def upload_to_cloud(self, vault_name, content):
         blob = self.cloud.blob(vault_name)
         blob.upload_from_string(content)
@@ -57,9 +57,8 @@ class CloudManager:
             return temp_file.name
 
     def upload(self, item, text, meta):
-        with ThreadPoolExecutor() as executor:
-            executor.submit(self.upload_to_cloud, self.cloud_name(self.vault, item, self.user, self.api, item=True), text)
-            executor.submit(self.upload_to_cloud, self.cloud_name(self.vault, item, self.user, self.api, meta=True), json.dumps(meta))
+        self.upload_to_cloud(self.cloud_name(self.vault, item, self.user, self.api, item=True), text)
+        self.upload_to_cloud(self.cloud_name(self.vault, item, self.user, self.api, meta=True), json.dumps(meta))
     
     def delete_blob(self, blob):
         blob.delete()

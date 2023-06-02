@@ -2,19 +2,19 @@ import datetime
 from .vecreq import call_name_vecs, call_buildpath
 from annoy import AnnoyIndex
 import threading
+from copy import deepcopy
 
 def itemize(vault, x, meta=None, text=None, name=None):
-    meta = {} if meta is None else meta
-
-    if 'name' not in meta and name is None:
-        name = f'{vault}-{x}'
-    elif name is not None:
-        name = __name__
+    meta = deepcopy(meta) if meta else {}
+    if 'name' not in meta and name is not None:
+        meta['name'] = name
+    elif name is None:
+        meta['name'] = f'{vault}-{x}'
     metaize(meta, name, x)
     return package(text, meta)
     
 def metaize(meta, name, x):
-    meta['name'] = name
+    meta['name'] = meta.get('name', name)
     meta['item_id'] = x  
     if 'created_at' not in meta:
         meta['created_at'] = datetime.datetime.utcnow().isoformat()

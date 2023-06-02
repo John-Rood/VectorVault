@@ -32,7 +32,7 @@ class CustomCredentials(Credentials):
     def valid(self):
         if self.expiry is None:
             return False
-        return datetime.datetime.now() < self.expiry
+        return datetime.datetime.utcnow() < self.expiry
 
     def refresh(self, request):
         if not self.valid:

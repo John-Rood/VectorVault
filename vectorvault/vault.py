@@ -32,17 +32,19 @@ class Vault:
         self.vectors = get_vectors(dims)
         self.api = api_key
         self.dims = dims
+        self.verbose = verbose
         try:
             self.cloud_manager = CloudManager(user, api_key, self.vault)
+            if self.verbose:
+                print(f'Connected vault: {self.vault}')
         except Exception as e:
-            print('API KEY NOT FOUND! Using Vault without cloud access. `get_chat()` will still work')
+            print('API KEY NOT FOUND! Using Vault without cloud access. `get_chat()` will still work', e)
             # user can still use the get_chat() function without an api key
             pass
         self.user = user
         self.x = 0
         self.x_checked = False
         self.vecs_loaded = False
-        self.verbose = verbose
         self.items = []
         self.last_time = None
         self.last_chat_time = None
@@ -245,6 +247,8 @@ class Vault:
         if not self.needed_sleep_time:
             self.needed_sleep_time = 0
         
+        deduction = self.needed_sleep_time - (time.time() - self.last_time)
+        self.needed_sleep_time = deduction if deduction > 0 else 0
         time.sleep(self.needed_sleep_time)
         
         texts = []
@@ -275,7 +279,7 @@ class Vault:
                 self.needed_sleep_time = 0
 
             if self.verbose == True:
-                print(f"Time calc'd to sleep: {self.needed_sleep_time}")
+                print(f"Sleep time needed to stay under Rate Limit: {self.needed_sleep_time}")
             if req_min > 3500:
                 time.sleep(1)
 
@@ -299,7 +303,7 @@ class Vault:
     def get_chat_cloud(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, expansion = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False):
         return call_get_chat(self.user, self.vault, self.api, text, history, summary, get_context, n_context, return_context, expansion, history_search, model, include_context_meta)
     
-    def get_chat(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, expansion = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False):
+    def get_chat(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, expansion = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, stream=False):
         '''
             Chat get response from OpenAI's ChatGPT. 
             Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
@@ -350,6 +354,8 @@ class Vault:
         if not history:
             history = ''
         
+        deduction = self.needed_sleep_time - (time.time() - self.last_chat_time)
+        self.needed_sleep_time = deduction if deduction > 0 else 0
         time.sleep(self.needed_sleep_time)
 
         if self.ai.get_tokens(text) > 4000:
@@ -399,15 +405,23 @@ class Vault:
                             user_input = user_input[-15000:]
                         if include_context_meta:
                             context = self.get_similar(user_input, n=n_context)
-                            input = str(context)
+                            input_ = str(context)
                         else:
                             context = self.get_similar(user_input, n=n_context)
-                            input = ''
+                            input_ = ''
                             for text in context:
-                                input += text['data']
-                        response = self.ai.llm_w_context(segment, input, history, model=model)
+                                input_ += text['data']
+                        if stream == False:
+                            response = self.ai.llm_w_context(segment, input_, history, model=model)
+                        elif stream == True:
+                            for word in self.ai.llm_w_context(segment, input_, history, model=model, stream=True):
+                                yield word
                     else:
-                        response = self.ai.llm(segment, history, model=model)
+                        if stream == False:
+                            response = self.ai.llm(segment, history, model=model)
+                        elif stream == True:
+                            for word in self.ai.llm(segment, history, model=model, stream=True):
+                                yield word
                     break
                 except Exception as e:
                     print(f"API Error: {e}. Sleeping 5 seconds")
@@ -420,6 +434,26 @@ class Vault:
 
         if return_context == False:
             return response
-        else:
+        elif return_context == True:
             return {'response': response, 'context': context}
+        
+
+    def print_stream(self, function):
+        full_text= ''
+        newlinetime=1
+        for word in function:
+            full_text += word
+            self.print_stream(word) 
+            if len(full_text) / 80 > newlinetime:
+                newlinetime += 1
+                print('\n', end='', flush=True)
     
+            
+    def cloud_stream(self, function):
+        for word in function:
+            try:
+                word = word.replace('\n', '<br/>')
+                yield f"data: {word} \n\n"
+            except:
+                yield f"data: {word} \n\n"
+

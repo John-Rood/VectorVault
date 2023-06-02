@@ -23,7 +23,7 @@ class CustomCredentials(Credentials):
         self.api = api
         self.token = None
         self.expiry = None
-        self.refresh()
+        self.refresh(requests.Request())
 
     def apply(self, headers, token=None):
         headers["Authorization"] = f"Bearer {self.token}"
@@ -34,20 +34,20 @@ class CustomCredentials(Credentials):
             return False
         return datetime.datetime.now() < self.expiry
 
-    def refresh(self):
+    def refresh(self, request):
         if not self.valid:
             data = {
                 "user_id": self.user,
                 "api_key": self.api,
             }
-            response = requests.post('https://credentials.vectorvault.io/access', json=data)
+            response = requests.post('https://vv-creds-etrszydrna-uc.a.run.app/access', json=data)
             response.raise_for_status()  
             response_data = response.json()
             self.token = response_data['access_token']
             self.expiry = datetime.datetime.fromisoformat(response_data['expiry'])
 
-    def before_request(self, auth_request, method, url, request_headers):
-        self.apply(request_headers)
+    def before_request(self, request, method, url, headers):
+        self.apply(headers)
 
     def __getstate__(self):
         return self.__dict__.copy()

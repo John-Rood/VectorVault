@@ -33,7 +33,6 @@ class CloudManager:
         self.storage_client = storage.Client(project=call_proj(), credentials=credentials)
         self.cloud = self.storage_client.bucket(self.get_bkt(self.user))
         self.cloud_name = cloud_name
-        print(f'Connected to Vault: {self.vault}')
 
     def vault_exists(self, vault_name):
         return storage.Blob(bucket=self.cloud, name=vault_name).exists(self.storage_client)

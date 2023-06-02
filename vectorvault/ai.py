@@ -21,7 +21,7 @@ class AI:
         pass
 
     # This function returns a ChatGPT completion based on a provided input.
-    def llm(self, user_input, history=None, model='gpt-3.5-turbo'):
+    def llm(self, user_input, history=None, model='gpt-3.5-turbo', stream=False):
         inchar = len(user_input)
         histchar = len(history) if history else 0
         if inchar + histchar > 16000:
@@ -39,15 +39,30 @@ class AI:
             # 'model' is the name of the model to use
             # 'messages' is a list of message objects that mimics a conversation.
             # Each object has a 'role' that can be 'system', 'user', or 'assistant', and a 'content' which is the actual content of the message.
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": f"{user_input}"}]
-            )
+            if stream == False:
+                response = openai.ChatCompletion.create(
+                    model=model,
+                    messages=[{"role": "user", "content": f"{user_input}"}]
+                )
+                return response['choices'][0]['message']['content']
+            elif stream == True:
+                response = openai.ChatCompletion.create(
+                    model=model,
+                    messages=[{"role": "user", "content": f"{user_input}"}],
+                    stream=True
+                )
             # The API responds with a 'choices' array containing the 'message' object.
-        return response['choices'][0]['message']['content']
-    
+                for message in response:
+                    choices = message.get('choices', [])
+                    if choices:
+                        delta = choices[0].get('delta', {})
+                        if 'content' in delta:
+                            content = delta['content']
+                            yield content
+                        
+                    
     # This function returns a ChatGPT completion based contextual input
-    def llm_w_context(self, user_input, context, history=None, model='gpt-3.5-turbo'):
+    def llm_w_context(self, user_input, context, history=None, model='gpt-3.5-turbo', stream=False):
         prompt_template = """
         Use the following pieces of context to answer the question at the end. 
         Answer as if you were the modern voice of the context. Make sure to not just repeat what is referenced. Don't preface, and don't give any warnings at the end.
@@ -91,12 +106,28 @@ class AI:
         user_input = history + user_input
         prompt = prompt_template.format(context=context, question=user_input)
 
-        response = openai.ChatCompletion.create(
-            model=model,
-            messages=[
-                {"role": "user", "content": f"{prompt}"}]
-        )
-        return response['choices'][0]['message']['content']
+        if stream == False:
+            response = openai.ChatCompletion.create(
+                model=model,
+                messages=[
+                    {"role": "user", "content": f"{prompt}"}]
+            )
+            return response['choices'][0]['message']['content']
+        elif stream == True:
+            response = openai.ChatCompletion.create(
+                model=model,
+                messages=[
+                    {"role": "user", "content": f"{prompt}"}],
+                stream=True
+            )
+        # The API responds with a 'choices' array containing the 'message' object.
+            for message in response:
+                choices = message.get('choices', [])
+                if choices:
+                    delta = choices[0].get('delta', {})
+                    if 'content' in delta:
+                        content = delta['content']
+                        yield content
 
 
     def summarize(self, user_input, model='gpt-3.5-turbo'):    

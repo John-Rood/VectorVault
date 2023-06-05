@@ -282,7 +282,6 @@ Response is a always a stream
 `vault.get_chat_stream` will start a chat stream. The input parameters are mostly like the regular get_chat functionality, and the capabilites are all the same. The only difference is that the get_chat function returns the whole reply message at once. The get_chat_stream `yield`s each word as it it received. This means that using get_chat_stream is very different than using get_chat. Here's an example:
 
 ```
-# input_text is the input, history is the past conversation
 for word in vault.get_chat_stream(input_text, history=history, get_context=True):
         print(word)
 ```

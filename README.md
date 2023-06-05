@@ -245,7 +245,7 @@ while len(summary) > 1000:
 Use the built in streaming functionality to get interactive chat streaming. Here's an [app](https://philbrosophy.web.app) we built to showcase what you can do with Vector Vault:
 <br>
 
-![Alt text](https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/559fd0ea-8fa7-40a2-9260-c5b0f4b063b5/Streaming+Demo+Offish.gif)
+![Alt text](https://github.com/John-Rood/VectorVault/blob/main/examples/Streaming%20Demo%20Offish.gif)
 
 ## get_chat_stream():
 

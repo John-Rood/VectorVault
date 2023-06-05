@@ -56,3 +56,9 @@ def get_item(item):
     item_meta = item["meta"]
     return item_text, item_id, item_meta
 
+def build_return(results, item_data, meta):
+    result = {
+        "data": item_data,
+        "metadata": meta
+    }
+    results.append(result)

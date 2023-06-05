@@ -111,7 +111,6 @@ def call_get_chat(user, vault, api_key, text, history=None, summary=False, get_c
         "get_context": get_context,
         "n_context": n_context,
         "return_context": return_context,
-        "expansion": expansion,
         "history_search": history_search,
         "model": model,
         "include_context_meta": include_context_meta

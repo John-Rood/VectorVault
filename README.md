@@ -279,13 +279,20 @@ Example Context-Response with SPECIFIC META TAGS for Context Samples Returned & 
 `vault_response = vault.print_stream(vault.get_chat_stream(text, get_context = True, return_context = True, include_context_meta=True, metatag=['title', 'author'], metatag_prefixes=['\n\n Title: ', '\nAuthor: '], metatag_suffixes=['', '\n']))`
 
 Response is a always a stream
-`vault.get_chat_stream` will start a chat stream. The input parameters are mostly like the regular get_chat functionality, and the capabilites are all the same. The only difference is that the get_chat function returns the whole reply message at once. The get_chat_stream `yield`s each word as it it received. This means that using get_chat_stream is very different than using get_chat. Here's an example:
+`vault.get_chat_stream` will start a chat stream. The input parameters are mostly like the regular get_chat functionality, and the capabilites are all the same. The only difference is that the get_chat function returns the whole reply message at once. The get_chat_stream `yield`s each word as it it received. This means that using `get_chat_stream()` is very different than using `get_chat()`. Here's an example that prints the same message:
 
 ```
-for word in vault.get_chat_stream(input_text, history=history, get_context=True):
+## get_chat()
+print(vault.get_chat(text, history)
+
+## get_chat_stream()
+for word in vault.get_chat_stream(text, history):
         print(word)
 ```
 This will take each word yielded and print it as it comes in. However, that will not look good, so it's best to use the built in print function `print_stream`. 
+```
+vault.print_stream(vault.get_chat_stream(text, history)
+```
 <br>
 
 Because streaming is a key functionality for end user applications, we also have a `cloud_stream` function to make cloud streaming to your front end app easy. In a flask app, your return would look like: `return Response(vault.cloud_stream(vault.get_chat_stream(text, history, get_context=True)), mimetype='text/event-stream')`

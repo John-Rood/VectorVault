@@ -314,7 +314,7 @@ This makes going live with highly functional cloud apps really easy. Now you can
 </p>
 <br>
 
-In the following code, we will add all of a company's past support conversations to a vault. (The conversations are stored in a .txt file). As new people message in, we will search the vault for similar questions and answers. We take the past answers returned from the vault and instruct ChatGPT to use those previous answers to answer this new question. (NOTE: This will also work based on a customer FAQ, or customer support response templates).
+In the following code, we will add all of a company's past support conversations to a cloud Vault. (We load the company support texts from a .txt file, vectorize them, then add them to the Vault). As new people message in, we will vector search the Vault for similar questions and answers. We take the past answers returned from the Vault and instruct ChatGPT to use those previous answers to answer this new question. (NOTE: This will also work based on a customer FAQ, or customer support response templates).
 
 <br>
 

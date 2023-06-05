@@ -240,129 +240,58 @@ while len(summary) > 1000:
 <br>
 <br>
 <br>
+
+# Streaming:
+Use the built in streaming functionality to get interactive chat streaming. Here's an [app](https://philbrosophy.web.app) we built to showcase what you can do with Vector Vault:
 <br>
 
-# Metadata Made Easy
+![Alt text](https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/559fd0ea-8fa7-40a2-9260-c5b0f4b063b5/Streaming+Demo+Offish.gif)
 
-Metadata is useful later, when you make a call to the vault and want to know specifics about the data you got back. To add metadata to your vault, just include the meta as a parameter in `add()`. Meta is always a dict, and you can add any fields you want. (If you don't add a 'name' field, a generic one will automatically be generated, so the name field in the metadata always exists)
+## get_chat_stream():
+
+Example Usage: `vault.print_stream(vault.get_chat_stream(text))`
+Always use this `get_chat_stream()` wrapped by either `print_stream()` or `cloud_stream()`.
+`cloud_stream()` is for cloud functions, like a flask app, serving a front end elsewhere
+`print_stream()` is for local console printing
+
+Example Signle Usage: 
+`response = vault.print_stream(vault.get_chat_stream(text))`
+
+Example Chat: 
+`response = vault.print_stream(vault.get_chat_stream(text, chat_history))`
+
+Example Summary: 
+`summary = vault.print_stream(vault.get_chat_stream(text, summary=True))`
+
+Example Context-Based Response:
+`response = vault.print_stream(vault.get_chat_stream(text, get_context = True))`
+
+Example Context-Based Response w/ Chat History:
+`response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True))`
+
+Example Context-Response with Context Samples Returned:
+`vault_response = vault.print_stream(vault.get_chat_stream(text, get_context = True, return_context = True))`
+
+Example Context-Response with SPECIFIC META TAGS for Context Samples Returned:
+`vault_response = vault.print_stream(vault.get_chat_stream(text, get_context = True, return_context = True, include_context_meta=True, metatag=['title', 'author']))`
+
+Example Context-Response with SPECIFIC META TAGS for Context Samples Returned & Specific Meta Prefixes and Suffixes:
+`vault_response = vault.print_stream(vault.get_chat_stream(text, get_context = True, return_context = True, include_context_meta=True, metatag=['title', 'author'], metatag_prefixes=['\n\n Title: ', '\nAuthor: '], metatag_suffixes=['', '\n']))`
+
+Response is a always a stream
+`vault.get_chat_stream` will start a chat stream. The input parameters are mostly like the regular get_chat functionality, and the capabilites are all the same. The only difference is that the get_chat function returns the whole reply message at once. The get_chat_stream `yield`s each word as it it received. This means that using get_chat_stream is very different than using get_chat. Here's an example:
+
 ```
-meta = {
-    'name': 'Lifestyle in LA',
-    'country': 'United State',
-    'city': 'LA' 
-}
-
-vault.add(text, meta)
-
-vault.get_vectors()
-
-vault.save()
+# input_text is the input, history is the past conversation
+for word in vault.get_chat_stream(input_text, history=history, get_context=True):
+        print(word)
 ```
+This will take each word yielded and print it as it comes in. However, that will not look good, so it's best to use the built in print function `print_stream`. Because streaming is a key functionality for end user applications, we also have a `cloud_stream` function to make cloud streaming to your front end app easy. In a flask app, your return would look like: `return Response(vault.cloud_stream(vault.get_chat_stream(text, history, get_context=True)), mimetype='text/event-stream')`
+This makes going live with highly functional cloud apps really easy. Now you can build impressive applications in record time.
+
 
 <br>
-
-To add just the 'name' field to the metadata, call the `name` param in `add()` like this:
-```
-vault.add(text, name='Lifestyle in LA')
-
-vault.get_vectors()
-
-vault.save()
-```
-
-<br>
-
-To find the name later:
-```
-similar_data = vault.get_similar("Your text input") 
-
-for result in similar_data:
-    print(result['metadata']['name'])
-```
->> Lifestyle in LA Lifestyle in LA Lifestyle in LA Lifestyle in LA
-<br>
-
-### Add Any Meta Fields & Retrieve later
-Here we open the popular book by George Orwell, "1984", from a .txt file. We read the file and save all the book's text to a variable called "text". Create a dictionary containing all the information about the book. Save all that to the vault. Now when calling `get_similar()` or `get_chat(text, get_context=True, return_context=True)` the vault will return texts from the book and the metadata will have what you need to know. 
-
-
-```
-with open('1984.txt', 'r') as file:
-    text = file.read()
-
-book_metadata = {
-    'title': '1984',
-    'author': 'George Orwell',
-    'genre': 'Dystopian',
-    'publication_year': 1949,
-    'publisher': 'Secker & Warburg',
-    'ISBN': '978-0451524935',
-    'language': 'English',
-    'page_count': 328
-}
-
-vault.add(text, book_metadata)
-
-vault.get_vectors()
-
-vault.save()
-```
-
-<br>
-
-To find the metadata later:
-```
-similar_data = vault.get_similar("How will the government control you in the future?") 
-
-for result in similar_data:
-    print(result['metadata']['title'])
-    print(result['metadata']['author'])
-    print(result['metadata']['genre'])
-```
->> 1984 George Orwell Dystopian 1984 George Orwell Dystopian 1984 George Orwell Dystopian 1984 George Orwell Dystopian
-
-^ list is always returned, so you can do like above or like below...
-
-```
-similar_data = vault.get_similar("How will the government control you in the future?") 
-print(similar_data[0]['metadata']['title'])
-```
->> 1984
-
-<br>
-<br>
-
-# Change Vaults
-
-In this example science vault, we will print a list of vaults in the current vault directory
-```
-science_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science')
-
-print(science_vault.get_vaults())
-```
->> ['biology', 'physics', 'chemistry']
-
-
-## Access vaults within vaults
-
-- biology vault within science vault
-```
-biology_vault = Vault(user='your@email.com', api_key='your_api_key', vault='science/biology')
-```
-
-- chemistry vault within science vault
-```
-chemistry_vault = Vault(user='your@email.com', api_key='your_api_key', vault='science/chemistry')
-
-print(chemistry_vault.get_vaults())
-```
->> ['reactions', 'formulas', 'lab notes']
-
-
-- lab notes vault within chemistry vault
-```
-lab_notes_vault = Vault(user='your@email.com', api_key='your_api_key', vault='science/chemistry/lab notes')
-```
+<br> 
 
 
 
@@ -441,15 +370,15 @@ Happy coding!
 <br>
 
 ### What is the latency on large datasets?
-To conceptualize "large", 37 full length book texts with vectors make up ~80MB of storage with around 10,000 - 15,000 items of ~1000 characters for each item. This example of 37 books is considered small. Free plans come with 1GB of storage, and 100MB/mo of uploading, so this doesn't even hit the free plan limit. Calling similar items from this vault is one second response time - with vectors retreived, vectors searched, then similar items returned. This example is about the same amount of data as the entire customer support history for any given company. So if you build a typical customer service chatbot, your vault size will be considered small.  If you had 10 times that much data, api latency may be around 5 seconds. Our architechture is optimized for lightning fast responses on small-medium size datasets, so if your data size grows to large amounts, and you see the call time taking too long, its recommended that you segment you data into multiple vaults to keep latency to 1 second on api calls... Or you can just get an Enterprise Cloud Plan from us.
+37 full length book texts with vectors make up ~250MB of storage with around 10,000 - 15,000 items of 1000+ characters for each item. This example of 37 books is considered small. Personal plans come with 1GB of storage, so this doesn't even come close to plan limit. Calling similar items from this vault is one second response time - with vectors retreived, vectors searched, then similar items returned. Running locally, you can expect ~0.7 seconds. Just referencing the cloud, you can expect ~1 second. This example is about the same amount of data as the entire customer support history for any given company. So if you build a typical customer service chatbot, your vault size will be considered small. You can try our app at the bottom of our [website](https://vectorvault.io) to see the latency for yourself. Keep in mind that if you do so, you will be seeing the latency from chatgpt on top of the vault time, but it's still so fast that its not noticible during a conversation. If you had 10 times that much data, api latency may be around 2 seconds max, so still fast enough for realtime conversations. Or you can just get an Enterprise Cloud Plan from us and get it even faster.
 
 <br>
 
 ### How should I segment my data?
-Vaults within vaults is the optimal structure for segmenting data. If a vault grows too large, just make multiple child vaults within the current vault directory, and store the data there. If your 'Science' vault grows too large, split it into multiple child vaults, like 'Science/Chemistry', etc - this accesses a "Chemistry" vault within the Science vault. Now you can fine grain datasets, where every child vault contains more specific subject information than the parent vault. This segmenting structure allows you to focus data on large data sets. *Keep in mind this only applies to very large data sets.* Also, if your data set is large and you don't mind a little longer response times on vault call, then you don't need to do anything. In that case, you can just add it all to one vault and not worry about it. 
+Vaults within vaults is the optimal structure for segmenting data. If a vault grows too large, just make multiple child vaults within the current vault directory, and store the data there. If your 'Science' vault grows too large, split it into multiple child vaults, like 'Science/Chemistry', etc - this accesses a "Chemistry" vault within the Science vault. Now you can fine grain datasets, where every child vault contains more specific subject information than the parent vault. This segmenting structure allows you to focus data on large data sets.
 
 <br>
 
 ### What if I'm a large company with very large data
-If you need to store large amounts of data in single vaults for whatever reason, let us know and we can set you up with Enterprise Cloud Plan. In our Enterprise plan, we create a persistent storage pod with as much memory as you need, that is always active. With an Enterprise plan, a billion vectors search will respond in one second. For reference, the full text of 3.7 million books would be ~1.1 billion vectors, and take up about 8 terabytes of storage. If this is what you're looking for, just reach out to us by email at support at vectorvault.io.
+If you need to store more than 1 gig of data in single vaults for any reason, let us know and we can set you up with Enterprise Cloud Plan. In our Enterprise plan, we create a persistent storage pod with as much memory as you need. It is always active and scalable to terabytes. With an Enterprise plan, a billion vectors search will respond in one second. For reference, the full text of 3.7 million books would be ~1.1 billion vectors, and take up ~8 terabytes of storage. If this is what you're looking for, just reach out to us by email at support at vectorvault.io.
 

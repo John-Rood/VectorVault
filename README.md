@@ -251,8 +251,8 @@ Use the built in streaming functionality to get interactive chat streaming. Here
 
 Example Usage: `vault.print_stream(vault.get_chat_stream(text))`
 Always use this `get_chat_stream()` wrapped by either `print_stream()` or `cloud_stream()`.
-`cloud_stream()` is for cloud functions, like a flask app, serving a front end elsewhere
-`print_stream()` is for local console printing
+`cloud_stream()` is for cloud functions, like a flask app serving a front end elsewhere.
+`print_stream()` is for local console printing.
 
 Example Signle Usage: 
 `response = vault.print_stream(vault.get_chat_stream(text))`

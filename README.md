@@ -242,7 +242,7 @@ while len(summary) > 1000:
 <br>
 
 # Streaming:
-Use the built in streaming functionality to get interactive chat streaming. Here's an [app](https://philbrosophy.web.app) we built to showcase what you can do with Vector Vault:
+Use the built-in streaming functionality to get interactive chat streaming. Here's an [app](https://philbrosophy.web.app) we built to showcase what you can do with Vector Vault:
 <br>
 
 ![Alt text](https://github.com/John-Rood/VectorVault/blob/main/examples/Streaming%20Demo%20Offish.gif)

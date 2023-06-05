@@ -291,7 +291,7 @@ for word in vault.get_chat_stream(text, history):
 ```
 This will take each word yielded and print it as it comes in. However, that will not look good, so it's best to use the built in print function `print_stream`. 
 ```
-vault.print_stream(vault.get_chat_stream(text, history)
+vault.print_stream(vault.get_chat_stream(text, history))
 ```
 <br>
 

@@ -114,7 +114,8 @@ vault.save()
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/5ae905b0-43d0-4b86-a965-5b447ee8c7de/Vector+Vault+Vault.jpg?content-type=image%2Fjpeg" width="60%" height="60%" />
 </p>
 
-Since your vault lives in the cloud, making a call to it is really easy. You can even do it by command line:
+You can create a javascript or HTML post to `"https://api.vectorvault.io/get_similar"`, to run front end apps.
+Since your Vault lives in the cloud, making a call to it is really easy. You can even do it with a `curl` from command line:
 ```
 curl -X POST "https://api.vectorvault.io/get_similar" \
      -H "Content-Type: application/json" \
@@ -404,6 +405,7 @@ question = 'customer question'
 
 answer = vault.get_chat(question, get_context=True)
 ```
+<br>
 
 That's all it takes to create an AI customer service chatbot that responds as well as any support rep!
 
@@ -439,7 +441,7 @@ Happy coding!
 <br>
 
 ### What is the latency on large datasets?
-To conceptualize "large", 37 full length book texts with vectors make up ~80MB of storage with around 10,000 - 15,000 items of ~1000 characters for each item. This example of 37 books is considered small. Free plans come with 1GB of storage, and 100MB/mo of uploading, so this doesn't even hit the free plan limit. Calling similar items from this vault is one second response time - with vectors retreived, vectors searched, then similar items returned. This example is about the same amount of data as the entire customer support history for any given company. So if you build a typical customer service chatbot, your vault size will be considered small.  If you had 10 times that much data, api latency may be around 5 seconds. Our architechture is optimized for lightning fast responses on small-medium size datasets, so if your data size grows to large amounts, and you see the call time taking too long, its recommended that you segment you data into multiple vaults to keep latency to 1 second on api calls. 
+To conceptualize "large", 37 full length book texts with vectors make up ~80MB of storage with around 10,000 - 15,000 items of ~1000 characters for each item. This example of 37 books is considered small. Free plans come with 1GB of storage, and 100MB/mo of uploading, so this doesn't even hit the free plan limit. Calling similar items from this vault is one second response time - with vectors retreived, vectors searched, then similar items returned. This example is about the same amount of data as the entire customer support history for any given company. So if you build a typical customer service chatbot, your vault size will be considered small.  If you had 10 times that much data, api latency may be around 5 seconds. Our architechture is optimized for lightning fast responses on small-medium size datasets, so if your data size grows to large amounts, and you see the call time taking too long, its recommended that you segment you data into multiple vaults to keep latency to 1 second on api calls... Or you can just get an Enterprise Cloud Plan from us.
 
 <br>
 

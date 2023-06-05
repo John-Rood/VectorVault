@@ -22,7 +22,7 @@ Basic Interactions:
 <br>
 `get_vaults()` : Retrieves a list of Vaults within the current Vault directory
 <br>
-`get_similar()` : Retrieves similar texts from the Vault for a given input text - We processes vectors in the cloud
+`get_similar()` : Retrieves similar texts from the Vault for a given input text - We process vectors in the cloud
 <br>
 `get_similar_local()` : Retrieves similar texts from the Vault for a given input text - You process vectors locally
 <br>

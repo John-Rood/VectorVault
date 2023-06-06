@@ -177,6 +177,9 @@ class Vault:
         if current_segment:
             segments.append(" ".join(current_segment))
 
+        if self.verbose == True:
+            print(f'New text chunk of size: {len(current_segment)}') 
+
         return segments
     
     def get_items_by_vector(self, vector, n: int = 4):
@@ -219,16 +222,16 @@ class Vault:
         self.items.append(new_item)
         self.x += 1
 
-    def add(self, text: str, meta: dict = None, name: str = ''):
+    def add(self, text: str, meta: dict = None, name: str = '', split=False, split_size=1000):
         """
             If your text length lenght is greater than 4000 tokens, Vault.split_text(your_text)  
             will automatically be added
         """
 
-        if self.ai.get_tokens(text) > 4000:
+        if len(text) > 15000 or split == True:
             if self.verbose == True:
-                print('Text length too long. Using the built-in "split_text()" function to get a list of text segments') 
-            texts = self.split_text(text) # returns list of text segments
+                print('Using the built-in "split_text()" function to get a list of texts') 
+            texts = self.split_text(text, split_size) # returns list of text segments
         else:
             texts = [text]
         for text in texts:
@@ -338,10 +341,7 @@ class Vault:
         if self.verbose == True:
             print("get vectors time --- %s seconds ---" % (time.time() - start_time))
 
-    def get_chat_cloud(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False):
-        return call_get_chat(self.user, self.vault, self.api, text, history, summary, get_context, n_context, return_context, history_search, model, include_context_meta)
-    
-    def get_chat(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False):
+    def get_chat(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, custom_prompt=False):
         '''
             Chat get response from OpenAI's ChatGPT. 
             Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
@@ -379,7 +379,30 @@ class Vault:
             Default `expansion = False` can be set to True to create additional context from user input for vector retrieval. Allowing for greater search accuracy if
             user input is too short or lacks the specificity needed for a quality retrieval search. ('expansion' is not context-aware). Default is good.
 
-            history_search is False by default skip adding the history of the conversation to the question to retrieval search 
+            history_search is False by default skip adding the history of the conversation to the text input for similarity search (useful if history contains subject infomation useful for answering the new text input and the text input doesn't contain that info)
+        
+            custom_prompt overrides the stock prompt. Check out the prompts in ai.py to see more. 
+            `llm` and `llm_stream` models manage history internally, so the input is the only part that needs formatting. 
+            example for generic chat: 
+            custom_prompt = """
+                Answer this question as if you were a financial advisor: "{content}". 
+            """
+
+            The `llm_w_context` and `llm__w_context_stream` models for retrieval inject the history, context, and user input all in one prompt.
+            example for Vault chat - 
+            custom_prompt = """
+                Use the following Context to answer the Question at the end. 
+                Answer as if you were the modern voice of the context, without referencing the context or mentioning that fact any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
+
+                Chat History (if any): {history}
+
+                Additional Context: {context}
+
+                Question: {question}
+
+                (Respond to the Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
+                Answer:
+            """ 
         '''
 
         start_time = time.time()
@@ -426,7 +449,7 @@ class Vault:
             while True:
                 try:
                     if summary and not get_context:
-                        response += self.ai.summarize(segment, model=model)
+                        response += self.ai.summarize(segment, model=model, custom_prompt=custom_prompt)
                     elif get_context and not summary:
                         user_input = segment + history if history_search else segment
                         if self.ai.get_tokens(user_input) > 4000:
@@ -443,9 +466,9 @@ class Vault:
                             input_ = ''
                             for text in context:
                                 input_ += text['data']
-                        response = self.ai.llm_w_context(segment, input_, history, model=model)
+                        response = self.ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt)
                     else:
-                        response = self.ai.llm(segment, history, model=model)
+                        response = self.ai.llm(segment, history, model=model, custom_prompt=custom_prompt)
                     break
                 except Exception as e:
                     exception += 1
@@ -466,7 +489,7 @@ class Vault:
         elif return_context == True:
             return {'response': response, 'context': context}
         
-    def get_chat_stream(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, metatag=False, metatag_prefixes=False, metatag_suffixes=False):
+    def get_chat_stream(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, metatag=False, metatag_prefixes=False, metatag_suffixes=False, custom_prompt=False):
         '''
             This streams. Example: vault.print_stream(vault.get_chat_stream(text))
             Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream().
@@ -497,7 +520,28 @@ class Vault:
             Example Context-Response with SPECIFIC META TAGS for Context Samples Returned & Specific Meta Prefixes and Suffixes:
             `vault_response = vault.print_stream(vault.get_chat_stream(text, get_context = True, return_context = True, include_context_meta=True, metatag=['title', 'author'], metatag_prefixes=['\n\n Title: ', '\nAuthor: '], metatag_suffixes=['', '\n']))`
             
-            Response is a always a stream
+            custom_prompt overrides the stock prompt. Check out the prompts in ai.py to see more. 
+            `llm` and `llm_stream` models manage history internally, so the input is the only part that needs formatting. 
+            example for generic chat: 
+            custom_prompt = """
+                Answer this question as if you were a financial advisor: "{content}". 
+            """
+
+            The `llm_w_context` and `llm__w_context_stream` models for retrieval inject the history, context, and user input all in one prompt.
+            example for Vault chat - 
+            custom_prompt = """
+                Use the following Context to answer the Question at the end. 
+                Answer as if you were the modern voice of the context, without referencing the context or mentioning that fact any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
+
+                Chat History (if any): {history}
+
+                Additional Context: {context}
+
+                Question: {question}
+
+                (Respond to the Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
+                Answer:
+            """ 
         '''
 
         start_time = time.time()
@@ -543,10 +587,12 @@ class Vault:
             exceptions = 0
             while True:
                 try:
-                    if summary and not get_context:
-                        response += self.ai.summarize(segment, model=model)
+                    if summary and get_context == False:
+                        for word in self.ai.summarize_stream(segment, model=model, custom_prompt=custom_prompt):
+                            yield word
+                        yield '!END'
                     elif get_context and not summary:
-                        user_input = segment
+                        user_input = segment + history if history_search else segment
                         if self.ai.get_tokens(user_input) > 4000:
                             user_input = user_input[-16000:]
                         if self.ai.get_tokens(user_input) > 4000:
@@ -563,7 +609,7 @@ class Vault:
                             input_ += text['data']
 
                         if return_context: # send the ai stream, then the vault data
-                            for word in self.ai.llm_w_context_stream(segment, input_, history, model=model):
+                            for word in self.ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt):
                                 yield word
                             for item in context:
                                 if not metatag:
@@ -580,11 +626,11 @@ class Vault:
                                 yield item['data']
                             yield '!END'
                         else: # No context return and just send back the ai stream only 
-                            for word in self.ai.llm_w_context_stream(segment, input_, history, model=model):
+                            for word in self.ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt):
                                 yield word
                             yield '!END'
                     else:
-                        for word in self.ai.llm_stream(segment, history, model=model):
+                        for word in self.ai.llm_stream(segment, history, model=model, custom_prompt=custom_prompt):
                             yield word
                         yield '!END'
                     break
@@ -601,16 +647,20 @@ class Vault:
         if self.verbose == True:
             print("get chat time --- %s seconds ---" % (time.time() - start_time))
 
-    def print_stream(self, function):
+    def print_stream(self, function, printing=True):
         full_text= ''
         newlinetime=1
         for word in function:
             if word != '!END':
                 full_text += word
-                print(word, end='', flush=True) 
-                if len(full_text) / 80 > newlinetime:
-                    newlinetime += 1
-                    print('\n', end='', flush=True)
+                if printing == True:
+                    if len(full_text) / 80 > newlinetime:
+                        newlinetime += 1
+                        print(f'\n{word}', end='', flush=True)
+                    else:
+                        print(word, end='', flush=True) 
+            else:
+                return full_text
     
     def cloud_stream(self, function):
         for word in function:

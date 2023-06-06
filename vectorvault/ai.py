@@ -22,8 +22,7 @@ class AI:
 
     # This function returns a ChatGPT completion based on a provided input.
     def llm(self, user_input, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
-        prompt_template = """ {content}
-        """ if custom_prompt == False else custom_prompt
+        prompt_template = custom_prompt if custom_prompt else """{content}""" 
         intokes = self.get_tokens(user_input)
         histokes = self.get_tokens(history) if history else 0
         if intokes + histokes > max_tokens:
@@ -46,6 +45,7 @@ class AI:
                     {"role": "system", "content": f"Chat history: {history}"},
                     {"role": "user", "content": f"{prompt}"}]
             )
+            return response['choices'][0]['message']['content']
         else:
             # 'model' is the name of the model to use
             # 'messages' is a list of message objects that mimics a conversation.
@@ -60,7 +60,7 @@ class AI:
                     
     # This function returns a ChatGPT completion based contextual input
     def llm_w_context(self, user_input, context, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
-        prompt_template = """
+        prompt_template = custom_prompt if custom_prompt else """
         Use the following Context to answer the Question at the end. 
         Answer as if you were the modern voice of the context, without referencing the context or mentioning that fact any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
 
@@ -71,7 +71,7 @@ class AI:
         Question: {question}
 
         (Answer the question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
-        Answer:""" if custom_prompt == False else custom_prompt
+        Answer:""" 
 
         intokes = self.get_tokens(user_input)
         contokes = self.get_tokens(context)
@@ -118,8 +118,7 @@ class AI:
 
     # This function returns a ChatGPT completion based on a provided input.
     def llm_stream(self, user_input, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
-        prompt_template = """ {content}
-        """ if custom_prompt == False else custom_prompt
+        prompt_template = custom_prompt if custom_prompt else """{content}""" 
         intokes = self.get_tokens(user_input)
         histokes = self.get_tokens(history) if history else 0
         if intokes + histokes > max_tokens:
@@ -142,6 +141,13 @@ class AI:
                     {"role": "system", "content": f"Chat history: {history}"},
                     {"role": "user", "content": f"{prompt}"}]
             )
+            for message in response:
+                choices = message.get('choices', [])
+                if choices:
+                    delta = choices[0].get('delta', {})
+                    if 'content' in delta:
+                        content = delta['content']
+                        yield content
         else:
             # 'model' is the name of the model to use
             # 'messages' is a list of message objects that mimics a conversation.
@@ -164,7 +170,7 @@ class AI:
                     
     # This function returns a ChatGPT completion based contextual input
     def llm_w_context_stream(self, user_input, context, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
-        prompt_template = """
+        prompt_template = custom_prompt if custom_prompt else """
         Use the following Context to answer the Question at the end. 
         Answer as if you were the modern voice of the context, without referencing the context or mentioning that fact any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
 
@@ -175,7 +181,7 @@ class AI:
         Question: {question}
 
         (Respond to the Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
-        Answer:""" if custom_prompt == False else custom_prompt
+        Answer:""" 
 
         intokes = self.get_tokens(user_input)
         contokes = self.get_tokens(context)
@@ -230,8 +236,7 @@ class AI:
 
 
     def summarize(self, user_input, model='gpt-3.5-turbo', custom_prompt=False):   
-        prompt_template = """Summarize the following: {content}
-        """ if custom_prompt == False else custom_prompt
+        prompt_template = custom_prompt if custom_prompt else """Summarize the following: {content}"""
         prompt = prompt_template.format(content=user_input)
         response = openai.ChatCompletion.create(
             model=model,
@@ -239,6 +244,23 @@ class AI:
         )
         # The API responds with a 'choices' array containing the 'message' object.
         return response['choices'][0]['message']['content']
+
+    def summarize_stream(self, user_input, model='gpt-3.5-turbo', custom_prompt=False):   
+        prompt_template = custom_prompt if custom_prompt else """Summarize the following: {content}"""
+        prompt = prompt_template.format(content=user_input)
+        response = openai.ChatCompletion.create(
+            model=model,
+            messages=[{"role": "user", "content": f"{prompt}"}],
+            stream = True
+        )
+        # The API responds with a 'choices' array containing the 'message' object.
+        for message in response:
+                choices = message.get('choices', [])
+                if choices:
+                    delta = choices[0].get('delta', {})
+                    if 'content' in delta:
+                        content = delta['content']
+                        yield content
 
     def get_tokens(self, string: str, encoding_name: str = "cl100k_base") -> int:
         """Returns the number of tokens in a text string."""

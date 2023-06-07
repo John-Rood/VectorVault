@@ -162,7 +162,7 @@ answer = vault.get_chat(question)
 <br>
 
 # ChatGPT
-## With `get_chat()` you can use ChatGPT standalone or with Vault data integrated
+## Use ChatGPT with `get_chat()` 
 
 <p align="center">
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/74776e31-4bfd-4d6b-837b-674790ca4288/wisdomandwealth_Electric_Yellow_and_Dark_Blue_-_chat_messages_g_c81a4325-5347-44a7-879d-a58a6d115446.png" width="60%" height="60%" />

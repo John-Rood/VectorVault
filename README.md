@@ -35,7 +35,7 @@ Basic Interactions:
 
 <br>
 
-# Build Your Vault:
+# Access The Vault:
 <p align="center">
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/2acebcaa-f5dd-44c9-8bba-c10723bc7064/Vector+Vault+Vault+2000.png" width="60%" height="60%" />
 </p>
@@ -56,7 +56,7 @@ The api key will be sent to your email.
 
 <br>
 
-# Use Vector Vault:
+# Build The Vault:
 
 Set your openai key as an envorionment variable
 ```
@@ -98,7 +98,7 @@ vault.save()
 <br>
 <br>
 
-# Vault Call:
+# Use The Vault:
 <p align="center">
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/5ae905b0-43d0-4b86-a965-5b447ee8c7de/Vector+Vault+Vault.jpg?content-type=image%2Fjpeg" width="60%" height="60%" />
 </p>

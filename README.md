@@ -2,13 +2,13 @@
 
 Vector Vault is a vector database cloud service built to make generative ai chat quick and easy. It allows you to vectorize data easily and access it seamlessly from the cloud. It's scalable to both small projects and large applications with millions of users. Vector Vault has been designed with a user-friendly code interface to make the process of working with vector data easy and let you focus on what matters, results. Vector Vault ensures secure and isolated data handling and enables you to create and interact vector databases - aka "vaults" - in the cloud,  under one second response times.
 
-The `vectorvault` package comes with extensive chat functionality, built-in chat history slicing and reducing large inputs to the maximum allowable size for the model. This happens internally within the `get_chat()` function so that you don't have to think about the details and can make smooth chat applications with ease. Speaking of smooth chat experiences, `vectorvault` also comes with chat streaming built-in. Simple use the `get_chat_stream()` function that works just like the regular `get_chat()` but with streaming. 
+The `vectorvault` package comes with extensive chat functionality, so that you don't have to think about the details and can make smooth chat applications with ease. Speaking of smooth chat experiences, `vectorvault` also comes with chat streaming built-in. Simply use the `get_chat_stream()` function that works just like the regular `get_chat()` but with streaming. 
 
 `langchain` is a popular package for building functionality with llms, but when it comes to referencing vector databases, the database retrieval and chat integration can be complicated and difficult. This is one of the reasons we built `vectorvault`. We've integrated all the chat options people like to use with `langchain`, but made them all easier and more straight forward to use. Now with Vector Vault, integrating vector database results into generative chat applications is not only easy, it's the default. You also have total control over every aspect with parameters. If you have been looking for an easy and reliable way to use vector databases with ChatGPT, then Vector Vault is for you.
 
 By combining vector similarity search with generative ai chat, new possibilities for conversation and communication emerge. For example, product information can be added to a Vault, and when a customer asks a product question, the right product information can be instantly retreived and seamlessly used in conversation by chatgpt for an accurate response. This capability allows for informed conversation and the possibilites range from ai automated customer support, to new ways to get news, to ai code reviews that reference source documentation, to ai domain experts for specific knowledge sets, and much more.
 
-Vector Vault uses a proprietary architecture, "Inception", allowing you to create any number of vaults, and vaults within a vaults. Each vault is it's own database, and automatically integrates data storage in the cloud. You will need a Vector Vault api key in order to access the cloud vaults. If you don't already have one, you can use the included `register()` function or sign up at [VectorVault.io](https://vectorvault.io)
+Vector Vault allows you to create any number of vaults, and vaults within a vaults. Each vault is it's own vector database, and automatically integrates with data storage in the cloud. You will need an api key in order to access the Vault Cloud. If you don't already have one, you can sign up at [VectorVault.io](https://vectorvault.io)
 
 The `vectorvault` package allows you to interact with your Vault Cloud using its Python-based API. Each vault is a seperate vector database. `vectorvault` includes operations such as creating a vault, deleting a vault, preparing data to add, getting vector embeddings for prepared data using OpenAI's text-embedding-ada-002, saving the data and embeddings to the cloud, referencing cloud vault data via vector search and retrieval, interacting with OpenAI's ChatGPT model to get responses, managing conversation history, and retrieving contextualized responses with reference vault data as context.
 
@@ -88,22 +88,9 @@ vault.save()
 <br>
 <br>
 
-Now that you have saved some data to the vault, you can add more at anytime, and your vault will automatically handle the adding process. These three lines execute very fast.
+Now that you have saved some data to the vault, you can add more at anytime. `vault.add()` is very versitile. You can add any length of text, even a full book...and it will be all automatically split and processed. `vault.get_vectors()` is also extremely flexible, because you can `vault.add()` as much as you want, then when you're done, process all the vectors at once with a `vault.get_vectors()` call - Which internally batches vector embeddings with OpenAI's text-embeddings-ada-002, and comes with auto rate-limiting and concurrent requests for maximum processing speed. 
 ```
-vault.add(more_text_data)
-
-vault.get_vectors()
-
-vault.save()
-```
-
-<br>
-<br>
-
-`vault.add()` is very versitile. You can add any length of text, even a full book...and it will be all automatically split and processed.
-`vault.get_vectors()` is also extremely flexible, because you can `vault.add()` as much as you want, then when you're done, process all the vectors at once with a `vault.get_vectors()` call - Which internally batches vector embeddings with OpenAI's text-embeddings-ada-002, and comes with auto rate-limiting and concurrent requests for maximum processing speed. 
-```
-vault.add(insanely_large_text_data)
+vault.add(very_large_text)
 vault.get_vectors() 
 vault.save() 
 ```
@@ -113,7 +100,7 @@ vault.save()
 <br>
 <br>
 
-# Call Your Vault:
+# Vault Call:
 <p align="center">
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/5ae905b0-43d0-4b86-a965-5b447ee8c7de/Vector+Vault+Vault.jpg?content-type=image%2Fjpeg" width="60%" height="60%" />
 </p>
@@ -283,17 +270,17 @@ Example Context-Response with SPECIFIC META TAGS for Context Samples Returned & 
 `vault_response = vault.print_stream(vault.get_chat_stream(text, get_context = True, return_context = True, include_context_meta=True, metatag=['title', 'author'], metatag_prefixes=['\n\n Title: ', '\nAuthor: '], metatag_suffixes=['', '\n']))`
 
 Response is a always a stream
-`vault.get_chat_stream` will start a chat stream. The input parameters are mostly like the regular get_chat functionality, and the capabilites are all the same. The only difference is that the get_chat function returns the whole reply message at once. The get_chat_stream `yield`s each word as it it received. This means that using `get_chat_stream()` is very different than using `get_chat()`. Here's an example that prints the same message:
+`vault.get_chat_stream` will start a chat stream. The input parameters are mostly like the regular get_chat functionality, and the capabilites are all the same. The only difference is that the get_chat function returns the whole reply message at once. The get_chat_stream `yield`s each word as it it received. This means that using `get_chat_stream()` is very different than using `get_chat()`. Here's an example that prints the same message to show their difference:
 
 ```
 ## get_chat()
-print(vault.get_chat(text, history)
+print(vault.get_chat(text, history))
 
 ## get_chat_stream()
 for word in vault.get_chat_stream(text, history):
         print(word)
 ```
-This will take each word yielded and print it as it comes in. However, that will not look good, so it's best to use the built in print function `print_stream`. 
+This will take each word yielded and print it as it comes in. However, it's best to use the built in print function `print_stream`. 
 ```
 vault.print_stream(vault.get_chat_stream(text, history))
 ```

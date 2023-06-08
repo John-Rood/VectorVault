@@ -1,18 +1,3 @@
-# VECTOR VAULT CONFIDENTIAL
-# __________________
-# 
-#  All Rights Reserved.
-# 
-# NOTICE:  All information contained herein is, and remains
-# the property of Vector Vault and its suppliers,
-# if any.  The intellectual and technical concepts contained
-# herein are proprietary to Vector Vault
-# and its suppliers and may be covered by U.S. and Foreign Patents,
-# patents in process, and are protected by trade secret or copyright law.
-# Dissemination of this information or reproduction of this material
-# is strictly forbidden unless prior written permission is obtained
-# from Vector Vault.
-
 import openai
 import tiktoken
 
@@ -21,44 +6,56 @@ class AI:
         pass
 
     # This function returns a ChatGPT completion based on a provided input.
-    def llm(self, user_input, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
+    def llm(self, user_input: str = None, history: str = None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
+        '''
+            If you pass in a custom_prompt with content already fully filled in, and no user_input, it will process your custom_prompt only without changing       
+        '''
         prompt_template = custom_prompt if custom_prompt else """{content}""" 
-        intokes = self.get_tokens(user_input)
-        histokes = self.get_tokens(history) if history else 0
-        if intokes + histokes > max_tokens:
-            tokes_left = max_tokens - intokes - histokes
-            if tokes_left < 0: # way too much input
-                char_to_remove = (tokes_left * -1) * 5 # make positive and remove that amount
-                user_input = user_input[char_to_remove:] # get in front of it, chop at max
+        if user_input:
+            intokes = self.get_tokens(user_input)
+            histokes = self.get_tokens(history) if history else 0
+            if intokes + histokes > max_tokens:
+                tokes_left = max_tokens - intokes - histokes
+                if tokes_left < 0: # way too much input
+                    char_to_remove = (tokes_left * -1) * 5 # make positive and remove that amount
+                    user_input = user_input[char_to_remove:] # get in front of it, chop at max
+                if history:
+                    intokes = self.get_tokens(user_input)
+                    tokes_left = max_tokens - intokes
+                    chars_left = int(tokes_left * 4)
+                    history = history[-chars_left:]
+                else: # no history. If it was overlimit, then it was taken care of above
+                    pass
             if history:
-                intokes = self.get_tokens(user_input)
-                tokes_left = max_tokens - intokes
-                chars_left = int(tokes_left * 4)
-                history = history[-chars_left:]
-            else: # no history. If it was overlimit, then it was taken care of above
-                pass
-        if history:
-            prompt = prompt_template.format(content=user_input)
-            response = openai.ChatCompletion.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": f"Chat history: {history}"},
-                    {"role": "user", "content": f"{prompt}"}]
-            )
-            return response['choices'][0]['message']['content']
-        else:
-            # 'model' is the name of the model to use
-            # 'messages' is a list of message objects that mimics a conversation.
-            # Each object has a 'role' that can be 'system', 'user', or 'assistant', and a 'content' which is the actual content of the message.
-            prompt = prompt_template.format(content=user_input)
-            response = openai.ChatCompletion.create(
-                model=model,
-                messages=[{"role": "user", "content": f"{prompt}"}]
-            )
-            return response['choices'][0]['message']['content']
-                        
+                prompt = prompt_template.format(content=user_input)
+                response = openai.ChatCompletion.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": f"Chat history: {history}"},
+                        {"role": "user", "content": f"{prompt}"}]
+                )
+                return response['choices'][0]['message']['content']
+            else:
+                # 'model' is the name of the model to use
+                # 'messages' is a list of message objects that mimics a conversation.
+                # Each object has a 'role' that can be 'system', 'user', or 'assistant', and a 'content' which is the actual content of the message.
+                prompt = prompt_template.format(content=user_input)
+                response = openai.ChatCompletion.create(
+                    model=model,
+                    messages=[{"role": "user", "content": f"{prompt}"}]
+                )
+                return response['choices'][0]['message']['content']
+        else: # make no changes, and return response to passed in custom_prompt
+            if custom_prompt:
+                response = openai.ChatCompletion.create(
+                    model=model,
+                    messages=[{"role": "user", "content": f"{custom_prompt}"}]
+                )
+                return response['choices'][0]['message']['content']
+            else:
+                raise 'Error: Need custom_prompt if no user_input'
+            
                     
-    # This function returns a ChatGPT completion based contextual input
     def llm_w_context(self, user_input, context, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
         prompt_template = custom_prompt if custom_prompt else """
         Use the following Context to answer the Question at the end. 
@@ -116,7 +113,7 @@ class AI:
         )
         return response['choices'][0]['message']['content']
 
-    # This function returns a ChatGPT completion based on a provided input.
+
     def llm_stream(self, user_input, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
         prompt_template = custom_prompt if custom_prompt else """{content}""" 
         intokes = self.get_tokens(user_input)
@@ -149,16 +146,12 @@ class AI:
                         content = delta['content']
                         yield content
         else:
-            # 'model' is the name of the model to use
-            # 'messages' is a list of message objects that mimics a conversation.
-            # Each object has a 'role' that can be 'system', 'user', or 'assistant', and a 'content' which is the actual content of the message.
             prompt = prompt_template.format(content=user_input)
             response = openai.ChatCompletion.create(
                 model=model,
                 messages=[{"role": "user", "content": f"{prompt}"}],
                 stream=True
             )
-        # The API responds with a 'choices' array containing the 'message' object.
             for message in response:
                 choices = message.get('choices', [])
                 if choices:
@@ -168,7 +161,6 @@ class AI:
                         yield content
                         
                     
-    # This function returns a ChatGPT completion based contextual input
     def llm_w_context_stream(self, user_input, context, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
         prompt_template = custom_prompt if custom_prompt else """
         Use the following Context to answer the Question at the end. 
@@ -216,7 +208,6 @@ class AI:
                     remove_from_context = int(context_length - char_to_take_away)
                     context = context[-remove_from_context:] 
 
-        # Format the prompt
         prompt = prompt_template.format(context=context, history=history, question=user_input)
         user_input = history + user_input
         response = openai.ChatCompletion.create(
@@ -225,7 +216,6 @@ class AI:
                 {"role": "user", "content": f"{prompt}"}],
             stream=True
         )
-    # The API responds with a 'choices' array containing the 'message' object.
         for message in response:
             choices = message.get('choices', [])
             if choices:
@@ -242,7 +232,6 @@ class AI:
             model=model,
             messages=[{"role": "user", "content": f"{prompt}"}]
         )
-        # The API responds with a 'choices' array containing the 'message' object.
         return response['choices'][0]['message']['content']
 
     def summarize_stream(self, user_input, model='gpt-3.5-turbo', custom_prompt=False):   
@@ -253,7 +242,6 @@ class AI:
             messages=[{"role": "user", "content": f"{prompt}"}],
             stream = True
         )
-        # The API responds with a 'choices' array containing the 'message' object.
         for message in response:
                 choices = message.get('choices', [])
                 if choices:
@@ -261,21 +249,21 @@ class AI:
                     if 'content' in delta:
                         content = delta['content']
                         yield content
+    
+    def smart_summary(self, text, previous_summary, model='gpt-3.5-turbo', custom_prompt=False):   
+        prompt_template = custom_prompt if custom_prompt else """Given the previous summary: {previous_summary} 
+        Continue from where it leaves off by summarizing the next segment content: {content}"""
+        prompt = prompt_template.format(previous_summary=previous_summary, content=text)
+        response = openai.ChatCompletion.create(
+            model=model,
+            messages=[{"role": "user", "content": f"{prompt}"}]
+        )
+        return response['choices'][0]['message']['content']
+        
 
     def get_tokens(self, string: str, encoding_name: str = "cl100k_base") -> int:
         """Returns the number of tokens in a text string."""
         encoding = tiktoken.get_encoding(encoding_name)
         num_tokens = len(encoding.encode(string))
         return num_tokens
-
-
-# Notes: OpenAI's CEO, Sam Altman, recently testified in congress to compel the government to regulate the creation of cutting edge ai 
-# by forcing anyone seeking to do so to acquire a license first, or pay heavy pentalties. This anti-competitive attack on the 
-# open-source community, and development community at large is not cool.
-# If the claimed ai threats made public Altman hold true, then having the most capable models in the hands of only a few small companies 
-# is the real existential crisis we need to watch out for. Diversity is our only true security, and that comes from an open community.
-# While "Open"AI has gone against it's original mission (to stay open and transparent with data and models) they are however, the
-# most used ai right now. They have a great platform that can support massive load at high quality and no one else in the world has that.
-# Our goals are to support the community at large, therefore we integrate with them exclusively for now.
-# In the future, we will add open models, and competitors, as they become well-adopted, and with the exception that they
-# support the open development community at large.
+    

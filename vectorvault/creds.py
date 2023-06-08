@@ -11,7 +11,7 @@
 # patents in process, and are protected by trade secret or copyright law.
 # Dissemination of this information or reproduction of this material
 # is strictly forbidden unless prior written permission is obtained
-# from Vector Vault.
+# from Vector Vault. See license for consent.
 
 from google.auth.credentials import Credentials
 import requests

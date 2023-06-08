@@ -11,7 +11,7 @@
 # patents in process, and are protected by trade secret or copyright law.
 # Dissemination of this information or reproduction of this material
 # is strictly forbidden unless prior written permission is obtained
-# from Vector Vault.
+# from Vector Vault. See license for consent.
 
 import numpy as np
 import tempfile
@@ -231,7 +231,7 @@ class Vault:
         if len(text) > 15000 or split == True:
             if self.verbose == True:
                 print('Using the built-in "split_text()" function to get a list of texts') 
-            texts = self.split_text(text, split_size) # returns list of text segments
+            texts = self.split_text(text, min_threshold=split_size) # returns list of text segments
         else:
             texts = [text]
         for text in texts:

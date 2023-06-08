@@ -1,4 +1,4 @@
-from ai import AI
+from .ai import AI
 
 '''
     ToolsGPT is a set of tools special to large language models. 
@@ -31,7 +31,7 @@ from ai import AI
 
 '''
 
-class ToolsGPT:
+class ToolsGPT():
     def __init__(self, verbose=False):
         self.verbose = verbose
         self.llm = AI().llm

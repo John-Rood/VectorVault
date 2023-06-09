@@ -237,38 +237,14 @@ Use the built-in streaming functionality to get interactive chat streaming. Here
 ![Alt text](https://github.com/John-Rood/VectorVault/blob/778c11dfc8b71675d704c5f559c3452dc65b910a/digital%20assets/Streaming%20Demo%20Offish.gif)
 
 ## get_chat_stream():
+The easiest way to see how this works, is to just to it in action. Check our [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) that has Colab notebooks you can be running in the browser seconds from now.
 
-Example Usage: `vault.print_stream(vault.get_chat_stream(text))`
-Always use this `get_chat_stream()` wrapped by either `print_stream()` or `cloud_stream()`.
-`cloud_stream()` is for cloud functions, like a flask app serving a front end elsewhere.
-`print_stream()` is for local console printing.
-
-Example Signle Usage: 
-`response = vault.print_stream(vault.get_chat_stream(text))`
 
 Example Chat: 
 `response = vault.print_stream(vault.get_chat_stream(text, chat_history))`
 
-Example Summary: 
-`summary = vault.print_stream(vault.get_chat_stream(text, summary=True))`
-
-Example Context-Based Response:
-`response = vault.print_stream(vault.get_chat_stream(text, get_context = True))`
-
-Example Context-Based Response w/ Chat History:
-`response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True))`
-
-Example Context-Response with Context Samples Returned:
-`vault_response = vault.print_stream(vault.get_chat_stream(text, get_context = True, return_context = True))`
-
-Example Context-Response with SPECIFIC META TAGS for Context Samples Returned:
-`vault_response = vault.print_stream(vault.get_chat_stream(text, get_context = True, return_context = True, include_context_meta=True, metatag=['title', 'author']))`
-
-Example Context-Response with SPECIFIC META TAGS for Context Samples Returned & Specific Meta Prefixes and Suffixes:
-`vault_response = vault.print_stream(vault.get_chat_stream(text, get_context = True, return_context = True, include_context_meta=True, metatag=['title', 'author'], metatag_prefixes=['\n\n Title: ', '\nAuthor: '], metatag_suffixes=['', '\n']))`
-
-Response is a always a stream
-`vault.get_chat_stream` will start a chat stream. The input parameters are mostly like the regular get_chat functionality, and the capabilites are all the same. The only difference is that the get_chat function returns the whole reply message at once. The get_chat_stream `yield`s each word as it it received. This means that using `get_chat_stream()` is very different than using `get_chat()`. Here's an example that prints the same message to show their difference:
+Response is a always a stream:
+The `get_chat()` function returns the whole reply message at once. The get_chat_stream `yield`s each word as it it received. This means that using `get_chat_stream()` is different than using `get_chat()`. Here's an example that prints the same message to show their difference:
 
 ```
 ## get_chat()
@@ -278,14 +254,15 @@ print(vault.get_chat(text, history))
 for word in vault.get_chat_stream(text, history):
         print(word)
 ```
-This will take each word yielded and print it as it comes in. However, it's best to use the built in print function `print_stream`. 
+
 ```
+# it's best to use the built in print function print_stream() function
 vault.print_stream(vault.get_chat_stream(text, history))
 ```
 <br>
 
 Because streaming is a key functionality for end user applications, we also have a `cloud_stream` function to make cloud streaming to your front end app easy. In a flask app, your return would look like: `return Response(vault.cloud_stream(vault.get_chat_stream(text, history, get_context=True)), mimetype='text/event-stream')`
-This makes going live with highly functional cloud apps really easy. Now you can build impressive applications in record time! If have any questions, message in [Discord](https://discord.gg/AkMsP9Uq).
+This makes going live with highly functional cloud apps really easy. Now you can build impressive applications in record time! If have any questions, message in [Discord](https://discord.gg/AkMsP9Uq). Check out our [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) that has notebooks you can run in the browser with Google Colab.
 
 
 <br>

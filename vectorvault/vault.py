@@ -26,6 +26,7 @@ from .cloudmanager import CloudManager
 from .ai import AI
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name
 from .vecreq import call_get_total_vectors, call_get_vaults, call_get_similar, call_get_chat
+from .tools_gpt import ToolsGPT
 
 
 class Vault:
@@ -54,6 +55,7 @@ class Vault:
         self.needed_sleep_time = None
         self.saved_already = False
         self.ai = AI()
+        self.tools = ToolsGPT(verbose=verbose)
 
     def get_vaults(self, vault: str = None):
         vault = self.vault if vault is None else vault

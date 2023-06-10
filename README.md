@@ -237,7 +237,7 @@ Use the built-in streaming functionality to get interactive chat streaming. Here
 ![Alt text](https://github.com/John-Rood/VectorVault/blob/778c11dfc8b71675d704c5f559c3452dc65b910a/digital%20assets/Streaming%20Demo%20Offish.gif)
 
 ## get_chat_stream():
-The easiest way to see how this works, is to just to it in action. Check our [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) that has Colab notebooks you can be running in the browser seconds from now.
+The easiest way to see how this works, is just to see it in action. Check our [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) that has Colab notebooks you can be running in the browser seconds from now.
 
 
 `get_chat()` function returns the whole reply message at once. `get_chat_stream` `yield`s each word as it it received.

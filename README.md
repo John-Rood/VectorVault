@@ -240,7 +240,7 @@ Use the built-in streaming functionality to get interactive chat streaming. Here
 See it in action. Check our [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) that has Colab notebooks you can be running in the browser seconds from now.
 
 
-`get_chat()` function returns the whole reply message at once. `get_chat_stream` `yield`s each word as it it received.
+`get_chat()` function returns the whole reply message at once. `get_chat_stream` yields each word as it it received.
 
 ```python
 ## get_chat()

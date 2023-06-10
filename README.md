@@ -258,7 +258,7 @@ vault.print_stream(vault.get_chat_stream(text, history))
 <br>
 
 Because streaming is a key functionality for end user applications, we also have a `cloud_stream` function to make cloud streaming to your front end app easy. In a flask app, your return would look like: 
-```
+```python
 return Response(vault.cloud_stream(vault.get_chat_stream(text, history, get_context=True)), mimetype='text/event-stream')
 ```
 This makes going live with highly functional cloud apps really easy. Now you can build impressive applications in record time! If have any questions, message in [Discord](https://discord.gg/AkMsP9Uq). Check out our [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) that has notebooks you can run in the browser with Google Colab.

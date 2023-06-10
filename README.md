@@ -240,11 +240,7 @@ Use the built-in streaming functionality to get interactive chat streaming. Here
 The easiest way to see how this works, is to just to it in action. Check our [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) that has Colab notebooks you can be running in the browser seconds from now.
 
 
-Example Chat: 
-`response = vault.print_stream(vault.get_chat_stream(text, chat_history))`
-
-Response is a always a stream:
-The `get_chat()` function returns the whole reply message at once. The get_chat_stream `yield`s each word as it it received. This means that using `get_chat_stream()` is different than using `get_chat()`. Here's an example that prints the same message to show their difference:
+`get_chat()` function returns the whole reply message at once. `get_chat_stream` `yield`s each word as it it received.
 
 ```
 ## get_chat()
@@ -256,12 +252,15 @@ for word in vault.get_chat_stream(text, history):
 ```
 
 ```
-# it's best to use the built in print function print_stream() function
+# But it's best to use the built in print function print_stream() function
 vault.print_stream(vault.get_chat_stream(text, history))
 ```
 <br>
 
-Because streaming is a key functionality for end user applications, we also have a `cloud_stream` function to make cloud streaming to your front end app easy. In a flask app, your return would look like: `return Response(vault.cloud_stream(vault.get_chat_stream(text, history, get_context=True)), mimetype='text/event-stream')`
+Because streaming is a key functionality for end user applications, we also have a `cloud_stream` function to make cloud streaming to your front end app easy. In a flask app, your return would look like: 
+```
+return Response(vault.cloud_stream(vault.get_chat_stream(text, history, get_context=True)), mimetype='text/event-stream')
+```
 This makes going live with highly functional cloud apps really easy. Now you can build impressive applications in record time! If have any questions, message in [Discord](https://discord.gg/AkMsP9Uq). Check out our [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) that has notebooks you can run in the browser with Google Colab.
 
 

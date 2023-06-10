@@ -47,7 +47,7 @@ pip install vector-vault
 <br>
 
 ### Get Your Vector Vault API Key:
-```
+```python
 from vectorvault import register
 
 register(first_name='John', last_name='Smith', email='john@smith.com', password='make_a_password')
@@ -59,7 +59,7 @@ The api key will be sent to your email.
 # Build The Vault:
 
 Set your openai key as an envorionment variable
-```
+```python
 os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 ```
 
@@ -69,7 +69,7 @@ os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 4. Get vectors embeddings 
 5. Save to the cloud vault
 
-```
+```python
 from vectorvault import Vault
 
 vault = Vault(user='your@email.com', api_key='your_api_key', vault='name_of_vault)
@@ -87,7 +87,7 @@ vault.save()
 <br>
 
 Now that you have saved some data to the vault, you can add more at anytime. `vault.add()` is very versitile. You can add any length of text, even a full book...and it will be all automatically split and processed. `vault.get_vectors()` is also extremely flexible, because you can `vault.add()` as much as you want, then when you're done, process all the vectors at once with a `vault.get_vectors()` call - Which internally batches vector embeddings with OpenAI's text-embeddings-ada-002, and comes with auto rate-limiting and concurrent requests for maximum processing speed. 
-```
+```python
 vault.add(very_large_text)
 vault.get_vectors() 
 vault.save() 
@@ -118,7 +118,7 @@ curl -X POST "https://api.vectorvault.io/get_similar" \
 >> {"results":[{"data":"NASA Mars Exploration... **shortend for brevity**","metadata":{"created_at":"2023-05-29T19:21:20.846023","item_id":0,"name":"webdump-0","updated_at":"2023-05-29T19:21:20.846028"}}]}
     
 This is the same exact call, but in Python:
-```
+```python
 similar_data = vault.get_similar("Your text input") 
 
 for result in similar_data:
@@ -132,7 +132,7 @@ for result in similar_data:
 <br>
 
 Print the metadata:
-```
+```python
 similar_data = vault.get_similar("Your text input") 
 
 for result in similar_data:
@@ -146,14 +146,14 @@ for result in similar_data:
 
 ### Use `get_chat()` with `get_context=True` to get response from chatgpt referencing vault data
 Retrieving items from the vault, is useful when using it supply context to a large language model, like chatgpt for instance, to get a contextualized response. The follow example searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the vault data.
-```
+```python
 question = "Should I use Vector Vault for my next generative ai application"
 
 answer = vault.get_chat(question, get_context=True)  
 print(answer)
 ```
 The following line will send chatgpt the question for response and not interact with the vault in any way
-```
+```python
 answer = vault.get_chat(question) 
 ```
 
@@ -193,7 +193,7 @@ Enter your text, optionally add chat history, and optionally choose a summary re
 <br>
 
 Response from ChatGPT in string format, unless `return_context=True` is passed, then response will be a dictionary containing the results - response from ChatGPT, and the vault data.
-```
+```python
 # print response:
 print(vault_response['response'])
 
@@ -212,13 +212,13 @@ for item in vault_response['context']:
 </p>
 
 You can summarize any text, no matter how large - even an entire book all at once. Long texts are split into the largest possible chunk sizes and a summary is generated for each chunk. When all summaries are finished, they are concatenated and returned as one.
-```
+```python
 summary = vault.get_chat(text, summary=True)
 ```
 <br>
 
 want to make a summary of a certain length?...
-```
+```python
 summary = vault.get_chat(text, summary=True)
 
 while len(summary) > 1000:
@@ -242,7 +242,7 @@ The easiest way to see how this works, is to just to it in action. Check our [ex
 
 `get_chat()` function returns the whole reply message at once. `get_chat_stream` `yield`s each word as it it received.
 
-```
+```python
 ## get_chat()
 print(vault.get_chat(text, history))
 
@@ -251,7 +251,7 @@ for word in vault.get_chat_stream(text, history):
         print(word)
 ```
 
-```
+```python
 # But it's best to use the built in print function print_stream() function
 vault.print_stream(vault.get_chat_stream(text, history))
 ```
@@ -284,7 +284,7 @@ In the following code, we will add all of a company's past support conversations
 <br>
 
 ### Create the Customer Service Vault
-```
+```python
 from vectorvault import Vault
 
 os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
@@ -303,7 +303,7 @@ vault.save()
 
 And just like that, in a only a few lines of code we created a customer service vault. Now whenever you want to use it in production, just connect to that vault, and use the `get_chat()` with `get_context=True`. When you call `get_chat(text, get_context=True)` it will take the customer's question, search the vault to find the most similar questions and answers, then have ChatGPT reply to the customer using that information.
 
-```
+```python
 question = 'customer question'
 
 answer = vault.get_chat(question, get_context=True)

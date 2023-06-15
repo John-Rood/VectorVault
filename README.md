@@ -336,21 +336,3 @@ Happy coding!
 </p>
 
 <br>
-
-
-## FAQ
-<br>
-
-### What is the latency on large datasets?
-37 full length book texts with vectors make up ~250MB of storage with around 10,000 - 15,000 items of 1000+ characters for each item. This example of 37 books is considered small. Personal plans come with 1GB of storage, so this doesn't even come close to plan limit. Calling similar items from this vault is one second response time - with vectors retreived, vectors searched, then similar items returned. Running locally, you can expect ~0.7 seconds. Just referencing the cloud, you can expect ~1 second. This example is about the same amount of data as the entire customer support history for any given company. So if you build a typical customer service chatbot, your vault size will be considered small. You can try our app at the bottom of our [website](https://vectorvault.io) to see the latency for yourself. Keep in mind that if you do so, you will be seeing the latency from chatgpt on top of the vault time, but it's still so fast that its not noticible during a conversation. If you had 10 times that much data, api latency may be around 2 seconds max, so still fast enough for realtime conversations. Or you can just get an Enterprise Cloud Plan from us and get it even faster.
-
-<br>
-
-### How should I segment my data?
-Vaults within vaults is the optimal structure for segmenting data. If a vault grows too large, just make multiple child vaults within the current vault directory, and store the data there. If your 'Science' vault grows too large, split it into multiple child vaults, like 'Science/Chemistry', etc - this accesses a "Chemistry" vault within the Science vault. Now you can fine grain datasets, where every child vault contains more specific subject information than the parent vault. This segmenting structure allows you to focus data on large data sets.
-
-<br>
-
-### What if I'm a large company with very large data
-If you need to store more than 1 gig of data in single vaults for any reason, let us know and we can set you up with Enterprise Cloud Plan. In our Enterprise plan, we create a persistent storage pod with as much memory as you need. It is always active and scalable to terabytes. With an Enterprise plan, a billion vectors search will respond in one second. For reference, the full text of 3.7 million books would be ~1.1 billion vectors, and take up ~8 terabytes of storage. If this is what you're looking for, just reach out to us by email at support at vectorvault.io.
-

@@ -255,11 +255,11 @@ vault.print_stream(vault.get_chat_stream(text, history))
 ```
 <br>
 
-Because streaming is a key functionality for end user applications, we also have a `cloud_stream` function to make cloud streaming to your front end app easy. In a flask app, your return would look like: 
+Streaming is a key functionality for professional applications, so we also built a `cloud_stream` function to make cloud streaming to your front end app easy. In a flask app, all you need to do is recieve the customer text in a post and then call the vault in the return like this: 
 ```python
 return Response(vault.cloud_stream(vault.get_chat_stream(text, history, get_context=True)), mimetype='text/event-stream')
 ```
-This makes going live with highly functional cloud apps really easy. Now you can build impressive applications in record time! If have any questions, message in [Discord](https://discord.gg/AkMsP9Uq). Check out our [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) that has notebooks you can run in the browser with Google Colab.
+This makes going live with a high level app extremely fast and easy, plus your infrastructure will be scalable and robust. Now you can build impressive applications in record time! If have any questions, message in [Discord](https://discord.gg/AkMsP9Uq). Check out our Colab notebooks in the [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) you can run in the browser right now.
 
 
 <br>
@@ -299,7 +299,7 @@ vault.save()
 
 <br>
 
-And just like that, in a only a few lines of code we created a customer service vault. Now whenever you want to use it in production, just connect to that vault, and use the `get_chat()` with `get_context=True`. When you call `get_chat(text, get_context=True)` it will take the customer's question, search the vault to find the most similar questions and answers, then have ChatGPT reply to the customer using that information.
+And just like that, in a only a few lines of code we created a customer service vault. Now whenever you want to use it in production, just use the `get_chat()` with `get_context=True`, which will take the customer's question, search the vault to find the most similar questions and answers, then have ChatGPT reply to the customer using that information.
 
 ```python
 question = 'customer question'
@@ -308,7 +308,7 @@ answer = vault.get_chat(question, get_context=True)
 ```
 <br>
 
-That's all it takes to create an AI customer service chatbot that responds as well as any support rep!
+That's all it takes to create an AI customer service chatbot that responds as well as any human support rep!
 
 
 <br>

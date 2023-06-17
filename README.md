@@ -242,6 +242,7 @@ print(science_vault.get_vaults())
 ```
 >> ['biology', 'physics', 'chemistry']
 
+<br>
 
 ## Access vaults within vaults with
 
@@ -269,15 +270,24 @@ lab_notes_vault = Vault(user='YOUR_EMAIL', api_key='YOUR_API_KEY', vault='scienc
 <br>
 
 ### Use `get_chat()` with `get_context=True` to get response from chatgpt referencing vault data
-Retrieving items from the vault, is useful when using it supply context to a large language model, like chatgpt for instance, to get a contextualized response. The follow example searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the vault data.
+
 ```python
 question = "Should I use Vector Vault for my next generative ai application"
 
 answer = vault.get_chat(question, get_context=True)  
+
 print(answer)
 ```
-The following line will send chatgpt the question for response and not interact with the vault in any way
+>> Vector Vault makes building generative ai easy, so you should consider using Vector Vault for your next project. Additionally, it is important to keep in mind your specific use cases and other technologies you are currently using. However, given the fact that Vector Vault can be integrated in any work flow and be isolated in a cloud environment, it is an ideal package to integrate into any application that you want to utilize generative ai with. To do so, just send the text inputs to your Vector Vault implementation and return the response. With this in mind, it is likely that Vector Vault would make building your next generative ai application both faster and easier.
+
+<br>
+
+To integrate vault data in the response, you need to pass `get_context=True` 
 ```python
+# this will get context from the vault, then ask chatgpt the question
+answer = vault.get_chat(question, get_context=True) 
+
+# this will send to chatgpt only and not interact with the vault in any way
 answer = vault.get_chat(question) 
 ```
 

@@ -453,9 +453,9 @@ vault.save()
 And just like that, in a only a few lines of code we created a customer service vault. Now whenever you want to use it in production, just use the `get_chat()` with `get_context=True`, which will take the customer's question, search the vault to find the most similar questions and answers, then have ChatGPT reply to the customer using that information.
 
 ```python
-question = 'customer question'
+customer_question = "I just bought your XD2000 remote and I'm having trouble syncing it to my tv"
 
-answer = vault.get_chat(question, get_context=True)
+chatbot_answer = vault.get_chat(customer_question, get_context=True)
 ```
 <br>
 

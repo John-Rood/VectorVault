@@ -272,7 +272,7 @@ lab_notes_vault = Vault(user='YOUR_EMAIL', api_key='YOUR_API_KEY', vault='scienc
 ### Use `get_chat()` with `get_context=True` to get response from chatgpt referencing vault data
 
 ```python
-question = "Should I use Vector Vault for my next generative ai application"
+question = "Should I use Vector Vault for my next generative ai application?"
 
 answer = vault.get_chat(question, get_context=True)  
 

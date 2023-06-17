@@ -278,7 +278,7 @@ answer = vault.get_chat(question, get_context=True)
 
 print(answer)
 ```
->> Vector Vault makes building generative ai easy, so you should consider using Vector Vault for your next generative ai project. Additionally, it is important to keep in mind your specific use cases and other technologies you are currently using. However, given the fact that Vector Vault can be integrated in any work flow and be isolated in a cloud environment, it is an ideal package to integrate into any application that you want to utilize generative ai with. To do so, just send the text inputs to your Vector Vault implementation and return the response. With this in mind, it is likely that Vector Vault would make building your next generative ai application both faster and easier.
+>> Vector Vault makes building generative ai easy, so you should consider using Vector Vault for your next generative ai project. Additionally, it is important to keep in mind your specific use cases and the other technologies you are working with. However, given the fact that Vector Vault can be integrated in any work flow and be isolated in a cloud environment, it is an ideal package to integrate into any application that you want to utilize generative ai with. To do so, just send the text inputs to your Vector Vault implementation and return the response. With this in mind, it is likely that Vector Vault would make building your next generative ai application both faster and easier.
 
 <br>
 

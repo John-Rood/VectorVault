@@ -48,7 +48,7 @@ pip install vector-vault
 ```python
 from vectorvault import register
 
-register(first_name='John', last_name='Smith', email='john@smith.com', password='make_a_password')
+register(first_name='FIRST_NAME', last_name='LAST_NAME', email='YOUR_EMAIL', password='make_a_password')
 ```
 The api key will be sent to your email.
 
@@ -70,7 +70,7 @@ os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 ```python
 from vectorvault import Vault
 
-vault = Vault(user='your@email.com', api_key='your_api_key', vault='name_of_vault)
+vault = Vault(user='YOUR_EMAIL', api_key='YOU_API_KEY', vault='NAME_OF_VAULT)
 
 text_data = 'some data'
 
@@ -142,6 +142,132 @@ for result in similar_data:
 <br>
 <br>
 
+# Metadata Made Easy
+
+To add metadata to your vault, just include the meta as a parameter in `add()`. Meta is always a dict, and you can add any fields you want.
+```python
+meta = {
+    'name': 'Lifestyle in LA',
+    'country': 'United State',
+    'city': 'LA' 
+}
+
+vault.add(text, meta)
+
+vault.get_vectors()
+
+vault.save()
+```
+
+<br>
+
+To add just the 'name' field to the metadata...
+```python
+vault.add(text, name='Lifestyle in LA')
+
+vault.get_vectors()
+
+vault.save()
+```
+
+<br>
+
+Find the name later:
+```python
+similar_data = vault.get_similar("Your text input") 
+
+for result in similar_data:
+    print(result['metadata']['name'])
+```
+>> Lifestyle in LA Lifestyle in LA Lifestyle in LA Lifestyle in LA
+
+<br>
+
+### Add Any Meta Fields & Retrieve later
+
+```python
+with open('1984.txt', 'r') as file:
+    text = file.read()
+
+book_metadata = {
+    'title': '1984',
+    'author': 'George Orwell',
+    'genre': 'Dystopian',
+    'publication_year': 1949,
+    'publisher': 'Secker & Warburg',
+    'ISBN': '978-0451524935',
+    'language': 'English',
+    'page_count': 328
+}
+
+vault.add(text, book_metadata)
+
+vault.get_vectors()
+
+vault.save()
+```
+
+
+*Notice we are not printing any content, just the metadata:*
+```python
+# Later
+similar_data = vault.get_similar("How will the government control you in the future?") 
+
+for result in similar_data:
+    print(result['metadata']['title'])
+    print(result['metadata']['author'])
+    print(result['metadata']['genre'])
+```
+>> 1984 George Orwell Dystopian 1984 George Orwell Dystopian 1984 George Orwell Dystopian 1984 George Orwell Dystopian
+
+
+
+```python
+# list is always returned, so you can do a for loop like above or numerically like this
+similar_data = vault.get_similar("How will the government control you in the future?") 
+print(similar_data[0]['metadata']['title'])
+```
+>> 1984
+
+<br>
+<br>
+
+# Change Vaults
+
+```python
+# print the list of vaults inside the current vault directory
+science_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science')
+
+print(science_vault.get_vaults())
+```
+>> ['biology', 'physics', 'chemistry']
+
+
+## Access vaults within vaults with
+
+
+```python
+# biology vault within science vault
+biology_vault = Vault(user='YOUR_EMAIL', api_key='YOUR_API_KEY', vault='science/biology')
+```
+
+```python
+# chemistry vault within science vault
+chemistry_vault = Vault(user='YOUR_EMAIL', api_key='YOUR_API_KEY', vault='science/chemistry')
+
+print(chemistry_vault.get_vaults())
+```
+>> ['reactions', 'formulas', 'lab notes']
+
+
+```python
+# lab notes vault within chemistry vault
+lab_notes_vault = Vault(user='YOUR_EMAIL', api_key='YOUR_API_KEY', vault='science/chemistry/lab notes')
+```
+
+<br>
+<br>
+
 ### Use `get_chat()` with `get_context=True` to get response from chatgpt referencing vault data
 Retrieving items from the vault, is useful when using it supply context to a large language model, like chatgpt for instance, to get a contextualized response. The follow example searches the vault for 4 similar results and then give those to chatgpt as context, asking chatgpt answer the question using the vault data.
 ```python
@@ -188,18 +314,25 @@ Enter your text, optionally add chat history, and optionally choose a summary re
 
 - Example Context-Response with Context Samples Returned:
 `vault_response = vault.get_chat(text, get_context=True, return_context=True)`
+Response from ChatGPT in string format, unless `return_context=True`, then response will be a dictionary containing response from ChatGPT and the vault data.
+
 <br>
 
-Response from ChatGPT in string format, unless `return_context=True` is passed, then response will be a dictionary containing the results - response from ChatGPT, and the vault data.
-```python
-# print response:
-print(vault_response['response'])
 
-# print context:
-for item in vault_response['context']:
-    print("\n\n", f"item {item['metadata']['name']}")
-    print(item['data'])
+## Normal Usage:
+```python
+# connect to the vault you want to use
+vault = Vault(user='YOUR_EMAIL', api_key='YOUR_API_KEY', vault='philosophy')
+
+# text input
+question = "How do you find happiness?"
+
+# get response
+answer = vault.get_chat(question, get_context=True)
+
+print(answer)
 ```
+>> The answer to finding happiness is not one-size-fits-all, as it can mean different things to different people. However, it has been found that happiness comes from living and working in line with your values and virtues, and finding pleasure in the actions that accord with them. Additionally, having good friends who share your values and provide support and companionship enhances happiness. It is important to remember that happiness cannot be solely dependent on external factors such as material possessions or fleeting pleasures, as they are subject to change and instability. Rather, true happiness may come from an inner sense of mastery and control over yourself and your actions, as well as a sense of purpose and meaning in life.
 
 <br>
 <br>
@@ -211,18 +344,19 @@ for item in vault_response['context']:
 
 You can summarize any text, no matter how large - even an entire book all at once. Long texts are split into the largest possible chunk sizes and a summary is generated for each chunk. When all summaries are finished, they are concatenated and returned as one.
 ```python
+# get summary, no matter how large the input text
 summary = vault.get_chat(text, summary=True)
 ```
 <br>
 
-want to make a summary of a certain length?...
+Want to make it a certain length?
 ```python
+# make a summary under a legnth of 1000 characters
 summary = vault.get_chat(text, summary=True)
 
 while len(summary) > 1000:
     summary = vault.get_chat(summary, summary=True)
 ```
-^ in the above example, we make a summary, then we enter while loop that continues until the summary recieved back is a certain lenght. You could use this to summarize a 1000 page book to less than 1000 characters of text. 
 
 <br>
 <br>
@@ -238,7 +372,7 @@ Use the built-in streaming functionality to get interactive chat streaming. Here
 See it in action. Check our [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) that has Colab notebooks you can be running in the browser seconds from now.
 
 
-`get_chat()` function returns the whole message at once. `get_chat_stream` yields each word as it's received.
+`get_chat()` function returns the whole message at once. `get_chat_stream` yields each word as it's received. Other than that, they are nearly identical and have the same input parameters.
 
 ```python
 ## get_chat()
@@ -250,13 +384,20 @@ for word in vault.get_chat_stream(text, history):
 ```
 
 ```python
-# But it's best to use the built in print function print_stream() function
+# But it's best to use the built in print function: print_stream() 
 vault.print_stream(vault.get_chat_stream(text, history))
 ```
+
+```python
+# With print_stream() final answer is returned after streaming completes, so you can make it a variable
+answer = vault.print_stream(vault.get_chat_stream(text, history))
+```
+
 <br>
 
-Streaming is a key functionality for professional applications, so we also built a `cloud_stream` function to make cloud streaming to your front end app easy. In a flask app, all you need to do is recieve the customer text in a post and then call the vault in the return like this: 
+Streaming is a key for front end applications, so we also built a `cloud_stream` function to make cloud streaming to your front end app easy. In a flask app, all you need to do is recieve the customer text, then call the vault in the return like this: 
 ```python
+# Stream from a flask app in one line
 return Response(vault.cloud_stream(vault.get_chat_stream(text, history, get_context=True)), mimetype='text/event-stream')
 ```
 This makes going live with a high level app extremely fast and easy, plus your infrastructure will be scalable and robust. Now you can build impressive applications in record time! If have any questions, message in [Discord](https://discord.gg/AkMsP9Uq). Check out our Colab notebooks in the [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) you can run in the browser right now.

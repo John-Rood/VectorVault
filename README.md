@@ -438,7 +438,7 @@ from vectorvault import Vault
 
 os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 
-vault = Vault(user='your_user_id', api_key='your_api_key', vault='Customer Service')
+vault = Vault(user='your_email', api_key='your_api_key', vault='Customer Service')
 
 with open('customer_service.txt', 'r') as f:
     vault.add(f.read())

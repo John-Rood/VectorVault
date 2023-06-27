@@ -1,12 +1,12 @@
 ![alt text](https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/297fde6c-f5b4-4076-83bc-81dcfdbffebe/Vector+Vault+Header+5000.jpg)
 
-Vector Vault is a vector database cloud service built to make generative ai chat quick and easy. It allows you to seamlessly vectorize data and access it from the cloud. It's scalable to both small projects and large applications with millions of users. Vector Vault has been designed with a user-friendly code interface to make the process of working with vector search easy and let you focus on what matters, results. Vector Vault ensures secure and isolated data handling and enables you to create and interact vector databases - aka "vaults" - in the cloud with under one second response times.
+By combining vector similarity search with generative ai chat, new possibilities for conversation emerge. For example, product information can be added to the Vault, and when a customer asks a product question, the right product information can be instantly retreived and seamlessly used in conversation by ChatGPT for an accurate response. This capability allows for informed conversation that range from ai automated customer support, to new ways to get news, to ai code reviews that reference source documentation, to ai domain experts for specific knowledge sets, and much more. Vector Vault was built to allow you to tap into ^ **this** potential.
 
-The `vectorvault` package comes with extensive chat functionality, so that you don't have to think about the details and can make smooth chat applications with ease. Speaking of smooth chat experiences, `vectorvault` also comes with streaming built-in, so  you can make customer-ready applications fast (see below).
+Vector Vault is a vector database cloud service built to make generative ai chat quick and easy. It allows you to seamlessly vectorize data and access it from the cloud. It's scalable to both small projects and large applications with millions of users. Vector Vault has been designed with a user-friendly code interface to make the process of working with vector search easy and let you focus on what matters. Vector Vault ensures secure and isolated data handling and enables you to create and interact with vector databases - aka "vaults" - in under one second response times, from our serverless cloud architecture backed by Google. 
 
-Popular packages for building functionality with llms, like LangChain, can often be complicated and difficult when it comes to referencing vector databases, but referencing your vector database is crucial to create the chat experience you are going for. This is one of the reasons we built `vectorvault`... We've integrated all the chat options people like to use with LangChain, but made them all easier and more straight forward to use. Now with Vector Vault, integrating vector database results into generative chat applications is not only easy, it's the default. With `vectorvault` have total control over every aspect with parameters. If you have been looking for an easy and reliable way to use vector databases with ChatGPT, then Vector Vault is for you.
+We've integrated all the chat options people like to use with LangChain. By combining vector databases with OpenAI's chat in the `vectorvault` package, we've been able to hide a lot of the complexity in the background and make it really easy to build the kind of custom chat experience you want to build. 
 
-By combining vector similarity search with generative ai chat, new possibilities for conversation and communication emerge. For example, product information can be added to a Vault, and when a customer asks a product question, the right product information can be instantly retreived and seamlessly used in conversation by chatgpt for an accurate response. This capability allows for informed conversation and the possibilites range from ai automated customer support, to new ways to get news, to ai code reviews that reference source documentation, to ai domain experts for specific knowledge sets, and much more. You will need an api key in order to access the Vault Cloud. If you don't already have one, you can sign up at [VectorVault.io](https://vectorvault.io)
+With Vector Vault, integrating vector search results into your chat app is not only easy, it's the default. If you have been looking for an easy and reliable way to use vector databases with ChatGPT, then Vector Vault is for you. You will need an api key in order to access the Vault Cloud. If you don't already have one, you can sign up for a free account at [VectorVault.io](https://vectorvault.io)
 
 <br>
 
@@ -438,7 +438,8 @@ from vectorvault import Vault
 
 os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 
-vault = Vault(user='your_email', api_key='your_api_key', vault='Customer Service')
+vault = Vault(user='
+', api_key='your_api_key', vault='Customer Service')
 
 with open('customer_service.txt', 'r') as f:
     vault.add(f.read())

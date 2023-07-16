@@ -137,23 +137,22 @@ class Vault:
         '''
             Internal function use only
         '''
-        start_time = time.time()
-        if self.cloud_manager.vault_exists(name_vecs(self.vault, self.user, self.api)):
-            if self.vecs_loaded == False:
-                self.load_vectors()
-            num_existing_items = self.vectors.get_n_items()
-            new_index = get_vectors(self.dims)
-            for i in range(num_existing_items):
-                vector = self.vectors.get_item_vector(i)
-                new_index.add_item(i, vector)
-            self.x = i + 1
-            self.vectors = new_index
-        else:
-            pass
-        
-        self.x_checked = True
-        if self.verbose == True:
-            print("initialize index --- %s seconds ---" % (time.time() - start_time))
+        if self.x_checked == False:
+            start_time = time.time()
+            if self.cloud_manager.vault_exists(name_vecs(self.vault, self.user, self.api)):
+                if self.vecs_loaded == False:
+                    self.load_vectors()
+                num_existing_items = self.vectors.get_n_items()
+                new_index = get_vectors(self.dims)
+                for i in range(num_existing_items):
+                    vector = self.vectors.get_item_vector(i)
+                    new_index.add_item(i, vector)
+                self.x = i + 1
+                self.vectors = new_index
+            
+            self.x_checked = True
+            if self.verbose == True:
+                print("initialize index --- %s seconds ---" % (time.time() - start_time))
     
     def reload_vectors(self):
         '''
@@ -316,11 +315,7 @@ class Vault:
             If your text length is greater than 15000 characters, you should use Vault.split_text(your_text) to 
             get a list of text segments that are the right size
         """
-        if self.x_checked == False:
-            self.check_index()
-        else: 
-            pass
-        
+        self.check_index()
         new_item = itemize(self.vault, self.x, meta, text, name)
         self.items.append(new_item)
         self.x += 1
@@ -345,10 +340,7 @@ class Vault:
             If your text length is greater than 15000 characters, you should use Vault.split_text(your_text) to 
             get a list of text segments that are the right size
         """
-        if self.x_checked == False:
-            self.check_index()
-        else: 
-            pass
+        self.check_index()
         start_time = time.time()
 
         if self.ai.get_tokens(text) > 4000:

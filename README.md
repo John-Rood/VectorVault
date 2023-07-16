@@ -89,7 +89,10 @@ os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 ```python
 from vectorvault import Vault
 
-vault = Vault(user='YOUR_EMAIL', api_key='YOU_API_KEY', vault='NAME_OF_VAULT') # a new vault will be created if the name does not already exist - meaning you can create a Vault or connect to an exisiting Vault by calling this Vault instance
+vault = Vault(user='YOUR_EMAIL', api_key='YOU_API_KEY', vault='NAME_OF_VAULT') 
+# a new vault will be created if the name does not already exist 
+# so you can create a Vault or connect to an exisiting Vault
+# by calling this Vault instance
 
 text_data = 'some data'
 

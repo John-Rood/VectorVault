@@ -1,15 +1,15 @@
 import requests
+from typing import List, Dict
 
 base_url = 'https://register.vectorvault.io'
 
-def register(first_name: str, last_name: str, email: str, password: str) -> dict:
+def register(first_name: str, last_name: str, email: str, password: str, tags: List[Dict[str, str]]) -> dict:
     '''
         Registers a new user:
         
         response = register('John', 'Smith', 'johnsmith@gmail.com', 'password')
         print(response)
     '''
-
     headers = {
         'Authorization': 'expected_authorization_code'  # replace with your actual authorization code
     }
@@ -17,9 +17,10 @@ def register(first_name: str, last_name: str, email: str, password: str) -> dict
         'first': first_name,
         'last': last_name,
         'email': email,
-        'password': password
+        'password': password,
+        'tags': tags  # include the tags as part of the request data
     }
-    response = requests.post(f'{base_url}/register', headers=headers, data=data)
+    response = requests.post(f'{base_url}/register', headers=headers, json=data)  # use json=data instead of data=data
 
     if response.status_code != 200:
         return {'error': response.text}

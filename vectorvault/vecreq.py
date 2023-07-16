@@ -72,24 +72,26 @@ def call_get_total_vectors(user, vault, api_key):
     response = requests.get(url, params=params)
     return response.json()['total_vectors']
 
-def call_items_by_vector(user, vault, api_key, vector, num_items=4):
+def call_items_by_vector(user, vault, api_key, vector, num_items=4, include_distances=False):
     url = f"https://api.vectorvault.io/items_by_vector"
     payload = {
         'user': user,
         'vault': vault,
         'vector': vector,
+        'include_distances': include_distances,
         'num_items': num_items,
         'api_key': api_key
     }
     response = requests.post(url, json=payload)
     return response.json()['results']
 
-def call_get_similar(user, vault, api_key, text, num_items=4):
+def call_get_similar(user, vault, api_key, text, num_items=4, include_distances=False):
     url = f"https://api.vectorvault.io/get_similar"
     payload = {
         'user': user,
         'vault': vault,
         'api_key': api_key,
+        'include_distances': include_distances,
         'text': text,
         'num_items': num_items
     }

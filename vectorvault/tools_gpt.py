@@ -1,4 +1,5 @@
-from .ai import AI
+from ai import AI
+import time
 
 '''
     ToolsGPT is a set of tools special to large language models. 
@@ -36,19 +37,24 @@ class ToolsGPT():
         self.verbose = verbose
         self.llm = AI().llm
 
-    def get_rating(self, text: str, concept_to_rate_for: str = 'Quality', model='gpt-3.5-turbo', custom_prompt=False, loop_limit=20) -> int:
+    def get_rating(self, text: str = None, concept_to_rate_for: str = None, model='gpt-3.5-turbo', loop_limit=20) -> int:
         '''
-            Get a numeric rating out of 10. Input plain text, and optionally include a concept to rate for
-            Concept can be a comparison, or skill, or anything 
-            Output is integer
+            Get a numeric rating out of 10. Input plain text, and concept to rate for. Defualts to 'quality'
+            Output is integer. Leave no text and pass concept only to format custom
         '''
-        prompt_template = custom_prompt if custom_prompt else """Rate the following content 1 - 10. Respond only with a number in integer format.
-        Concept to rate out of ten for: {concept_to_rate_for}
-        User: Content to classify out of 10: "{content}" \n\n Reponse: Since I am not allowed to give any explination before or after my rating, I'd like to say
-        that this number has been carefully considered given your content. My rating out of 10 integer is: """
-        prompt = prompt_template.format(concept_to_rate_for=concept_to_rate_for, content=text)
-
-        answer = self.llm(custom_prompt=prompt, model=model).strip().replace('.', '').lower().strip('"').strip("'")
+        if text:
+            prompt_template = """Rate the following content 1 - 10. Respond only with a number in integer format.
+            Concept to rate out of ten for: {concept_to_rate_for}
+            User: Content to classify out of 10: "{content}" \n\n Reponse: Since I am not allowed to give any explination before or after my rating, I'd like to say
+            that this number has been carefully considered given your content. My rating out of 10 integer is: """
+            prompt = prompt_template.format(concept_to_rate_for=concept_to_rate_for, content=text)
+        else:
+            prompt_template = """Rate the following content 1 - 10. Respond only with a number in integer format.
+            Concept to rate out of ten for: {concept_to_rate_for} \n\n Reponse: Since I am not allowed to give any explination before or after my rating, I'd like to say
+            that this number has been carefully considered given your concept. My rating out of 10 integer is: """
+            prompt = prompt_template.format(concept_to_rate_for=concept_to_rate_for)
+        
+        answer = self.retry_llm(custom_prompt=prompt, model=model)
         if self.verbose == True:
             print(f"'Rating Initial Answer: {answer}")
 
@@ -69,108 +75,107 @@ class ToolsGPT():
                 except:
                     pass
 
-        # internal function to objectify
-        def get_number(self, text: str, model='gpt-3.5-turbo', custom_prompt=False):
-            prompt_template = custom_prompt if custom_prompt else """Respond only with a number in integer format... 
-            Example content: 'The number I would give to this is a 7 out of 10.' Example answer: '7' 
-            Example content 2: 'This is level 5 of sales quality' Example answer 2: '5' 
-            Example content 3: 'This s good, but could be better. I would rate this as an 8 out of 10.' Example answer 3: '8'\n
-            User: The following content should be a number between 1 & 10 - Content: "{content}" 
-            \n\nResponse: The number is: """
-            prompt = prompt_template.format(content=text)
+            # internal function to get integer 
+            def get_number(self, text: str, model='gpt-3.5-turbo', loop_limit=5):
+                prompt_template = """Respond only with a number in integer format... 
+                Example content: 'The number I would give to this is a 7 out of 10.' Example answer: '7' 
+                Example content 2: 'This is level 5 of sales quality' Example answer 2: '5' 
+                Example content 3: 'This s good, but could be better. I would rate this as an 8 out of 10.' Example answer 3: '8'\n
+                User: The following content should be a number between 1 & 10 - Content: "{content}" 
+                \n\nResponse: The number is: """
+                prompt = prompt_template.format(content=text)
 
-            return self.llm(custom_prompt=prompt, model=model).strip().replace('.', '').lower().strip('"').strip("'")
+                response = self.retry_llm(custom_prompt=prompt, model=model, loop_limit=loop_limit)
+                if self.verbose: 
+                    print("Extracted Number: ", response)
+                return response
             
         return answer
         
 
-    def get_yes_no(self, text: str, question: str, model='gpt-3.5-turbo', custom_prompt=False, loop_limit=20) -> str:
+    def get_yes_no(self, text: str, question: str, model='gpt-3.5-turbo', loop_limit=20) -> str:
         '''
             Get an exact "yes" or "no" to any question, given an input. 
             Be sure to input text to get a yes or no to, then ask the question to answer
         '''
-        answer = self.yay_or_nay(text, question, model=model, custom_prompt=custom_prompt)
+        answer = self.yay_or_nay(text, question, model=model)
         if self.verbose == True:
             print(f"Y/N Initial Answer: {answer}")
 
-        if answer == 'yes' or answer == 'no':
-            pass
-        else:
-            loops = 0
-            while True:
-                if loops >= loop_limit:
-                    break
-                answer = self.isolate_yes_no(answer)
-                if self.verbose == True:
-                    print(f"Y/N Answer {loops}: {answer}")
-                loops += 1
-                if answer == 'yes' or answer == 'no':
-                    break
+        loops = 0
+        while loops < loop_limit and answer not in ['yes', 'no']:
+            answer = self.isolate_yes_no(answer)
+            if self.verbose:
+                print(f"Y/N Answer {loops}: {answer}")
+            loops += 1
+
+        return answer
+
+    def get_binary(self, text: str, zero_if: str, one_if: str, model='gpt-3.5-turbo', loop_limit=20) -> str:
+        '''
+            Get an exact "0" or "1" to any question, given an input. 
+            Input text to get a decision on, then tell why to pick 0 and why to pick 1. 
+            Prompt starts with "Repond '0' if"...
+        '''
+        answer = self.zero_or_one(text, zero_if, one_if, model=model)
+        if self.verbose == True:
+            print(f"0/1 Initial Answer: {answer}")
+
+        loops = 0
+        while loops < loop_limit and int(answer) not in [0, 1]:
+            answer = self.isolate_zero_one(answer)
+            if self.verbose:
+                print(f"0/1 Answer {loops}: {answer}")
+            loops += 1
             
         return answer
 
-
-    def get_match(self, text: str, list_of_options: list, model='gpt-3.5-turbo', custom_prompt=False, loop_limit=20) -> str:
+    def get_match(self, text: str, list_of_options: list, model='gpt-3.5-turbo', loop_limit=4) -> str:
         '''
-            This function could be used in a variety of Natural Language Processing (NLP) tasks, 
-            such as text classification or intent recognition.
+        This function could be used in a variety of Natural Language Processing (NLP) tasks, 
+        such as text classification or intent recognition.
 
-            Classify any text input to a single option contained in a list of options. - Returns exact match to one of items on list.
-            Input text, and list of answers: ["list of answers", "is a list of strings", "do not forget"]
+        Classify any text input to a single option contained in a list of options. - Returns exact match to one of items on list.
+        Input text, and list of answers: ["list of answers", "is a list of strings", "do not forget"]
         '''
+
         list_copy = []
         for option in list_of_options:
             list_copy.append(option.strip().replace('.', '').lower().strip('"').strip("'"))
-        prompt_template = custom_prompt if custom_prompt else """Respond with one of the options on this list: {list_of_options} 
+        prompt_template = """Respond with one of the options on this list: {list_of_options} 
         Content to classify: "{content}"  \n\n Classifiy the content above into one of the following options: {list_of_options}"""
-
         prompt = prompt_template.format(content=text, list_of_options=list_copy)
 
-        answer = self.llm(custom_prompt=prompt, model=model).strip().replace('.', '').lower().strip('"').strip("'")
-        if self.verbose == True:
-            print(f"Get Answer Initial Answer: {answer}")
+        answer = self.retry_llm_in_list(prompt, list_copy, model, loop_limit)
 
-        loops = 0
-        while answer not in list_copy:
-            loops += 1
-            answer = self.llm(custom_prompt=prompt, model=model).strip().replace('.', '').lower().strip('"').strip("'")
-            if self.verbose == True:
-                print(f"Answer {loops}: {answer}")
-            if loops >= loop_limit:
-                break
+        if self.verbose:
+            print(f"Get Answer: {answer}")
 
-        answer = list_of_options[list_copy.index(answer)] # return original answer
-        
+        if answer is not None:
+            answer = list_of_options[list_copy.index(answer)]  # return original answer
+
         return answer
 
+    def get_topic(self, text: str, list_of_options: list, model='gpt-3.5-turbo', loop_limit=4) -> str:
+        '''
+        Like get_match, default optimized for topic recognition
+        '''
 
-    def get_topic(self, text: str, list_of_options: list, model='gpt-3.5-turbo', custom_prompt=False, loop_limit=20) -> str:
-        '''
-            Like get_match, default optimized for topic recognition
-        '''
         list_copy = []
         for option in list_of_options:
             list_copy.append(option.strip().replace('.', '').lower().strip('"').strip("'"))
-        prompt_template = custom_prompt if custom_prompt else """Respond with one of the options on this list: {list_of_options} 
+        prompt_template = """Respond with one of the options on this list: {list_of_options} 
         Content to classify: "{content}"  \n\nClassifiy the content above based on which topic it is mostly related to one topic: {list_of_options}"""
-
         prompt = prompt_template.format(content=text, list_of_options=list_copy)
 
-        topic = self.llm(custom_prompt=prompt, model=model).strip().replace('.', '').lower().strip('"').strip("'")
-        if self.verbose == True:
-            print(f"Topic Initial Answer: {topic}")
+        topic = self.retry_llm_in_list(prompt, list_copy, model, loop_limit)
 
-        loops = 0
-        while topic not in list_copy:
-            loops += 1
-            topic = self.llm(custom_prompt=prompt, model=model).strip().replace('.', '').lower().strip('"').strip("'")
-            if self.verbose == True:
-                print(f"Topic Answer {loops}: {topic}")
-            if loops >= loop_limit:
-                break
-        
-        topic = list_of_options[list_copy.index(topic)] # return original topic
-        
+        if self.verbose:
+            print(f"Topic Answer: {topic}")
+
+        if topic is not None:
+            topic = list_of_options[list_copy.index(topic)]  # return original topic
+
         return topic
 
 
@@ -223,7 +228,7 @@ class ToolsGPT():
 
         prompt = prompt_template.format(content=text, list_of_options=list_of_options)
 
-        return self.llm(custom_prompt=prompt, model=model).strip().replace('.', '').lower().strip('"').strip("'")
+        return self.retry_llm(custom_prompt=prompt, model=model)
 
     # internal function 
     def make_option_from_zero(self, text, model='gpt-3.5-turbo'):
@@ -236,7 +241,7 @@ class ToolsGPT():
         
         prompt = prompt_template.format(content=text)
 
-        return self.llm(custom_prompt=prompt, model=model).strip().replace('.', '').lower().strip('"').strip("'")
+        return self.retry_llm(custom_prompt=prompt, model=model)
     
     # internal function 
     def finalize_category(self, text, prev_answer):
@@ -245,12 +250,12 @@ class ToolsGPT():
         
         prompt = prompt_template.format(prev_answer=prev_answer, text=text)
 
-        return self.llm(custom_prompt=prompt).strip().replace('.', '').lower().strip('"').strip("'")
+        return self.retry_llm(custom_prompt=prompt)
 
     # internal function 
-    def isolate_yes_no(self, content, question: str, model='gpt-3.5-turbo', custom_prompt=False):
+    def isolate_yes_no(self, content, question: str, model='gpt-3.5-turbo'):
         '''Not recommended for external use. Internal function'''
-        prompt_template = custom_prompt if custom_prompt else """Do not respond with anything before the yes or no. Do not add anything after the "yes" or "no". 
+        prompt_template = """Do not respond with anything before the yes or no. Do not add anything after the "yes" or "no". 
         Example question 1: 'Is the Eiffel tower located in Paris?' Example answer 1: 'Yes' Example question 2: 'Do you think I am fat?' 
         Example answer 2: 'No' Example question 3: 'Should I use Matplotlib in Python to draw a graph of csv information I have' Example answer 3: 'Yes'
         Example question 4: 'As an ai language model, I can't tell you yes or no, but I it does have a tendency to work sometimes.' Example answer 4: 'Yes'
@@ -259,11 +264,11 @@ class ToolsGPT():
 
         prompt = prompt_template.format(content=content, question=question)
 
-        return self.llm(custom_prompt=prompt, model=model).strip().replace('.', '').lower().strip('"').strip("'")
+        return self.retry_llm(custom_prompt=prompt, model=model)
     
-    def yay_or_nay(self, content, question: str, model='gpt-3.5-turbo', custom_prompt=False):
+    def yay_or_nay(self, content, question: str, model='gpt-3.5-turbo'):
         '''Not recommended for external use. Internal function'''
-        prompt_template = custom_prompt if custom_prompt else """Do not respond with anything before the yes or no. Do not add anything after the "yes" or "no". 
+        prompt_template = """Do not respond with anything before the yes or no. Do not add anything after the "yes" or "no". 
         Example question 1: 'Is the Eiffel tower located in Paris?' Example answer 1: 'Yes' Example question 2: 'Do you think I am fat?' 
         Example answer 2: 'No' Example question 3: 'Should I use Matplotlib in Python to draw a graph of csv information I have' Example answer 3: 'Yes'
         Example question 4: 'As an ai language model, I can't tell you yes or no, but I it does have a tendency to work sometimes.' Example answer 4: 'Yes'
@@ -272,4 +277,42 @@ class ToolsGPT():
 
         prompt = prompt_template.format(content=content, question=question)
 
-        return self.llm(custom_prompt=prompt, model=model).strip().replace('.', '').lower().strip('"').strip("'")
+        return self.retry_llm(custom_prompt=prompt, model=model)
+    
+    def zero_or_one(self, content, zero_if: str, one_if: str, model='gpt-3.5-turbo'):
+        '''Not recommended for external use. Internal function'''
+        prompt_template = """Do not respond with anything before the 1 or 0. Do not add anything after the "1" or "0". 
+        Example question 1: 'Is the Eiffel tower located in Paris?' Example answer 1: '1' Example question 2: 'Do you think I am fat?' 
+        Example answer 2: '0' Example question 3: 'Should I use Matplotlib in Python to draw a graph of csv information I have' Example answer 3: '1'
+        Example question 4: 'As an ai language model, I can't tell you yes or no, but I it does have a tendency to work sometimes.' Example answer 4: '1'
+        Example question 5: 'Will this happen if it's 19 percent likely to happen?' Example answer 5: '0'
+        \n\nGiven this content: "{content}", Respond with a "0" if {zero_if} \n... or "1" if: "{one_if}"  """
+
+        prompt = prompt_template.format(content=content, zero_if=zero_if, one_if=one_if)
+
+        return self.retry_llm(custom_prompt=prompt, model=model)
+    
+    def isolate_zero_one(self, content, model='gpt-3.5-turbo'):
+        '''Not recommended for external use. Internal function'''
+        prompt_template = """Do not respond with anything before the 1 or 0. Do not add anything after the "1" or "0". 
+        Example question 1: 'Is the Eiffel tower located in Paris?' Example answer 1: '1' Example question 2: 'Do you think I am fat?' 
+        Example answer 2: '0' Example question 3: 'Should I use Matplotlib in Python to draw a graph of csv information I have' Example answer 3: '1'
+        Example question 4: 'As an ai language model, I can't tell you yes or no, but I it does have a tendency to work sometimes.' Example answer 4: '1'
+        Example question 5: 'Will this happen if it's 19 percent likely to happen?' Example answer 5: '0'
+        \n\nGiven this content: "{content}", Respond with a "0" or "1": """
+
+        prompt = prompt_template.format(content=content)
+
+        return self.retry_llm(custom_prompt=prompt, model=model)
+
+    # This function is called by the others to handle retries:
+    def retry_llm(self, custom_prompt, model='gpt-3.5-turbo', loop_limit=5):
+        for i in range(loop_limit):
+            try:
+                return self.llm(custom_prompt=custom_prompt, model=model).strip().replace('.', '').lower().strip('"').strip("'")
+            except Exception as e:
+                if i < loop_limit - 1:  # i is zero indexed
+                    time.sleep(5)  # wait 5 seconds before trying again
+                    print(f"Attempt {i+1} failed with error: {str(e)}. Retrying...")
+                else:
+                    raise f"Attempt {i+1} failed with error: {str(e)}. No more retries."

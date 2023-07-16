@@ -13,10 +13,11 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Vector Vault. See license for consent.import datetime 
 
-from .vecreq import call_name_vecs, call_buildpath
+from vecreq import call_name_vecs, call_buildpath
 from annoy import AnnoyIndex
 import threading
 from copy import deepcopy
+import datetime
 
 def itemize(vault, x, meta=None, text=None, name=None):
     meta = deepcopy(meta) if meta else {}
@@ -70,9 +71,16 @@ def get_item(item):
     item_meta = item["meta"]
     return item_text, item_id, item_meta
 
-def build_return(results, item_data, meta):
-    result = {
-        "data": item_data,
-        "metadata": meta
-    }
+def build_return(results, item_data, meta, distance=None):
+    if not distance:
+        result = {
+            "data": item_data,
+            "metadata": meta
+        }
+    else:
+        result = {
+            "data": item_data,
+            "metadata": meta,
+            "distance": distance
+        }
     results.append(result)

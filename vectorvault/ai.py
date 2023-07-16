@@ -65,7 +65,7 @@ class AI:
 
         Additional Context: {context}
 
-        Question: {question}
+        Question: {content}
 
         (Answer the question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
         Answer:""" 
@@ -105,7 +105,7 @@ class AI:
 
         # Format the prompt
         user_input = history + user_input
-        prompt = prompt_template.format(context=context, history=history, question=user_input)
+        prompt = prompt_template.format(context=context, history=history, content=user_input)
         response = openai.ChatCompletion.create(
             model=model,
             messages=[
@@ -170,7 +170,7 @@ class AI:
 
         Additional Context: {context}
 
-        Question: {question}
+        Question: {content}
 
         (Respond to the Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
         Answer:""" 
@@ -208,7 +208,7 @@ class AI:
                     remove_from_context = int(context_length - char_to_take_away)
                     context = context[-remove_from_context:] 
 
-        prompt = prompt_template.format(context=context, history=history, question=user_input)
+        prompt = prompt_template.format(context=context, history=history, content=user_input)
         user_input = history + user_input
         response = openai.ChatCompletion.create(
             model=model,

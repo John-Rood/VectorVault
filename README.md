@@ -41,7 +41,6 @@ With Vector Vault, integrating vector search results into your chat app is not o
 `v.get_distance(id1, id2)`  : For getting the vector distance between two items `id1` and `id2` in the Vault. 
 
 >> Items can be retrieved from the Vault with a nearest neighbor search using `get_similar()` and the item_ids can be found in the metadata. Item_ids are numeric and sequential, so accessing all items in the Vault can be done by iterating from beginning to end - e.g. `for i in range vault.get_total_items():`
-<br>
 
 `v.get_item_vector(id)` : returns the vector for item `id` in the Vault.
 <br>

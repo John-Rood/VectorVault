@@ -10,25 +10,55 @@ With Vector Vault, integrating vector search results into your chat app is not o
 
 <br>
 
-Basic Interactions:
+### Full Python API:
 
-`add()` : Prepares data to be added to the Vault, with automatic text splitting and processing for long texts. 
+`pip install vector-vault` : install
 <br>
-`get_vectors()` : Retrieves vectors embeddings for all prepared data 
+`from vectorvault import Vault` : import
 <br>
-`save()` : Saves the data with embeddings to the Vault (cloud), along with any metadata
+`v = Vault(user='your_eamil', api_key='your_api_key')` : Open a Vault instance 
 <br>
-`delete()` : Deletes the current Vault and all contents
+`v.add(text, meta=None, name='', split=False, split_size=1000)` : Loads data to be added to the Vault, with automatic text splitting for long texts. `text` is a text string. `meta` is a dictionary. `split=True` will split your text input, based on your `split_size`, which will be the approximate size of each split. For each split, a new item will automatically be created. `name` is a shortcut to adding a name field to the meta without creating a dictionary. If you don't create a dictionary, one with generic information will be created. If you don't assign a name, a generic one will be created. `text` is the only required input.
 <br>
-`get_vaults()` : Retrieves a list of Vaults within the current Vault directory
+`v.get_vectors()` : Retrieves vectors embeddings for all loaded data. *(No parameters)*
 <br>
-`get_similar()` : Retrieves similar texts from the Vault for a given input text - We process vectors in the cloud
+`v.save()` : Saves all loaded data with embeddings to the Vault (cloud), along with any metadata. *(No parameters)*
 <br>
-`get_similar_local()` : Retrieves similar texts from the Vault for a given input text - You process vectors locally
+`v.delete()` : Deletes the current Vault and all contents. *(No parameters)*
 <br>
-`get_chat()` : Retrieves a response from ChatGPT, with support for handling conversation history, summarizing responses, and retrieving context-based responses by referencing similar data in the vault
+`v.get_vaults()` : Retrieves a list of Vaults within the current Vault directory. *(No parameters)*
+<br>
+`v.get_similar(text, n)` : Retrieves similar texts from the Vault for a given input text - Processes vectors in the cloud. `text` is required. `n` is optional, default = 4.
+<br>
+`v.get_similar_local(text, n)` : Retrieves similar texts from the Vault for a given input text - Processes vectors locally. `text` is required. `n` is optional, default = 4. Local version for speed optimized local production.
+<br>
+`v.get_total_items()` : Returns the total number of items in the Vault
+<br>
+`v.clear_cache()` : Clears the cache for all the loaded items - *`add()` loads an item*
+<br>
+`v.get_items_by_vector(vector, n)` : Returns vector similar items. Requires input vector, returns similar items. `n` is number of items you want returned, default = 4
+<br>
+`v.get_distance(id1, id2)`  : For getting the vector distance between two items `id1` and `id2` in the Vault. 
 
->> `get_vectors()` utilizes openai embeddings api and internally batches vector embeddings with OpenAI's text-embeddings-ada-002 model, and comes with auto rate-limiting and concurrent requests for maximum processing speed
+>> Items can be retrieved from the Vault with a nearest neighbor search using `get_similar()` and the item_ids can be found in the metadata. Item_ids are numeric and sequential, so accessing all items in the Vault can be done by iterating from beginning to end - e.g. `for i in range vault.get_total_items():`
+<br>
+
+`v.get_item_vector(id)` : returns the vector for item `id` in the Vault.
+<br>
+`v.get_items(ids)` : returns a list containing your item(s). `ids` is a list of ids, one or many
+<br>
+`v.cloud_stream(function)` : For cloud application yielding the chat stream, like a flask app. Called like *`v.cloud_stream(v.get_chat_stream('some_text'))`* in the return of a flask app.
+<br>
+`v.print_stream(function)` : For locally printing the chat stream. Called like *`v.print_stream(v.get_chat_stream('some_text'))`*. You can also assign a variable to it like *`reply = v.print_stream()`*  It still streams to the console, but the final complete text will also be available in the *`reply`* variable.
+<br>
+`v.get_chat()` : Retrieves a response from ChatGPT, with parameters for handling conversation history, summarizing responses, and retrieving context-based responses that reference similar data in the vault. *(See dedicated section below on using this function and its' parameters)*
+<br>
+`v.get_chat_stream()` : Retrieves a response from ChatGPT in stream format, with parameters for handling conversation history, summarizing responses, and retrieving context-based responses that reference similar data in the Vault. *(See dedicated section below on using this function and its' parameters)*
+<br>
+
+
+
+>> `get_vectors()` utilizes OpenAI's embeddings api, internally batches vector embeddings with the text-embeddings-ada-002 model, and comes with auto rate-limiting and concurrent requests for maximum processing speed
 
 
 <br>
@@ -44,16 +74,6 @@ pip install vector-vault
 ```
 <br>
 
-### Get Your Vector Vault API Key:
-```python
-from vectorvault import register
-
-register(first_name='FIRST_NAME', last_name='LAST_NAME', email='YOUR_EMAIL', password='make_a_password')
-```
-The api key will be sent to your email.
-
-<br>
-
 # Build The Vault:
 
 Set your openai key as an envorionment variable
@@ -61,16 +81,16 @@ Set your openai key as an envorionment variable
 os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 ```
 
-1. Create a Vault instance - (new vault will be created if name does not exist)
+1. Create a Vault instance 
 2. Gather some text data we want to store
 3. Add the data to the Vault
 4. Get vectors embeddings 
-5. Save to the cloud vault
+5. Save to the Vault Cloud
 
 ```python
 from vectorvault import Vault
 
-vault = Vault(user='YOUR_EMAIL', api_key='YOU_API_KEY', vault='NAME_OF_VAULT)
+vault = Vault(user='YOUR_EMAIL', api_key='YOU_API_KEY', vault='NAME_OF_VAULT') # a new vault will be created if the name does not already exist - meaning you can create a Vault or connect to an exisiting Vault by calling this Vault instance
 
 text_data = 'some data'
 
@@ -84,14 +104,19 @@ vault.save()
 <br>
 <br>
 
-Now that you have saved some data to the vault, you can add more at anytime. `vault.add()` is very versitile. You can add any length of text, even a full book...and it will be all automatically split and processed. `vault.get_vectors()` is also extremely flexible, because you can `vault.add()` as much as you want, then when you're done, process all the vectors at once with a `vault.get_vectors()` call - Which internally batches vector embeddings with OpenAI's text-embeddings-ada-002, and comes with auto rate-limiting and concurrent requests for maximum processing speed. 
+`vault.add()` is very versitile. You can add any length of text, even a full book...and it will be all automatically split and processed. `vault.get_vectors()` is also extremely flexible. You can `vault.add()` as much as you want, and then when you're done, process all the vectors at once with a single `vault.get_vectors()` call - Which internally batches vector embeddings with OpenAI's text-embeddings-ada-002, and comes with auto rate-limiting and concurrent requests for maximum processing speed. 
 ```python
+
 vault.add(very_large_text)
+
 vault.get_vectors() 
+
 vault.save() 
+
+# these three lines execute fast and can be called mid-conversation before a reply
 ```
-^ these three lines execute fast and can be called as often as you like. For example: you can use `add()`, `get_vectors()`, and `save()` mid conversation to save every message to the vault as soon as they comes in. Small loads are usually finished in less than a second. Large loads depend on total data size. 
->> A test was done adding the full text of 37 books at once. The `get_vectors()` function took 8 minutes and 56 seconds. (For comparison, processing one at a time via openai's embedding function would take roughly two days)
+Small save loads are usually finished in less than a second. Large loads depend on total data size. 
+>> A test was done adding the full text of 37 books at once. The `get_vectors()` function took 8 minutes and 56 seconds. (For comparison, processing one at a time via OpenAI's embedding function would take roughly two days)
 
 <br>
 <br>
@@ -101,8 +126,7 @@ vault.save()
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/5ae905b0-43d0-4b86-a965-5b447ee8c7de/Vector+Vault+Vault.jpg?content-type=image%2Fjpeg" width="60%" height="60%" />
 </p>
 
-You can create a javascript or HTML post to `"https://api.vectorvault.io/get_similar"`, to run front end apps.
-Since your Vault lives in the cloud, making a call to it is really easy. You can even do it with a `curl` from command line:
+From command line:
 ```
 curl -X POST "https://api.vectorvault.io/get_similar" \
      -H "Content-Type: application/json" \
@@ -113,10 +137,13 @@ curl -X POST "https://api.vectorvault.io/get_similar" \
         "text": "Your text input"
      }'
 ```
->> {"results":[{"data":"NASA Mars Exploration... **shortend for brevity**","metadata":{"created_at":"2023-05-29T19:21:20.846023","item_id":0,"name":"webdump-0","updated_at":"2023-05-29T19:21:20.846028"}}]}
+>> [{"data":"NASA Mars Exploration... *(shortend for brevity)*","metadata":{"created_at":"2023-05-29T19:21:20.846023","item_id":0,"name":"webdump-0","updated_at":"2023-05-29T19:21:20.846028"}}]
     
-This is the same exact call, but in Python:
+<br>
+
+In Python:
 ```python
+# The same exact call, but in Python:
 similar_data = vault.get_similar("Your text input") 
 
 for result in similar_data:
@@ -124,15 +151,18 @@ for result in similar_data:
 ```
 >> NASA Mars Exploration... NASA To Host Briefing... Program studies Mars... A Look at a Steep North Polar...
 
-^ this prints each similar item that was retieved. The `get_similar()` function retrieves items from the vault using vector cosine similarity search algorithm to find results. Default returns a list with 4 results. 
-`similar_data = vault.get_similar(text_input, n = 10)` returns 10 results instead of 4.
+<br>
+    
+The metadata:
+```python
+print(similar_data[0]['metadata']) # printing from only the first result 
+```
+>> {"created_at":"2023-05-29T19:21:20.846023","item_id":0,"name":"webdump-0","updated_at":"2023-05-29T19:21:20.846028"}
 
 <br>
 
-Print the metadata:
+Printing the data and metadata together:
 ```python
-similar_data = vault.get_similar("Your text input") 
-
 for result in similar_data:
     print(result['data'])
     print(result['metadata'])
@@ -144,8 +174,10 @@ for result in similar_data:
 
 # Metadata Made Easy
 
-To add metadata to your vault, just include the meta as a parameter in `add()`. Meta is always a dict, and you can add any fields you want.
+
 ```python
+# To add metadata to your vault, just include the meta as a parameter in `add()`. Meta is always a dict, and you can add any fields you want.
+
 meta = {
     'name': 'Lifestyle in LA',
     'country': 'United State',
@@ -161,8 +193,10 @@ vault.save()
 
 <br>
 
-To add just the 'name' field to the metadata...
+
 ```python
+# To add just the 'name' field to the metadata:
+
 vault.add(text, name='Lifestyle in LA')
 
 vault.get_vectors()
@@ -172,20 +206,23 @@ vault.save()
 
 <br>
 
-Find the name later:
+
 ```python
+# To find the name later: 
+
 similar_data = vault.get_similar("Your text input") 
 
-for result in similar_data:
-    print(result['metadata']['name'])
+print(similar_data[0]['metadata'])
 ```
->> Lifestyle in LA Lifestyle in LA Lifestyle in LA Lifestyle in LA
+>> Lifestyle in LA 
 
 <br>
 
-### Add Any Meta Fields & Retrieve later
+## Any Fields:
 
 ```python
+# Add any fields you want to the metadata:
+
 with open('1984.txt', 'r') as file:
     text = file.read()
 
@@ -207,10 +244,10 @@ vault.get_vectors()
 vault.save()
 ```
 
+<br>
 
-*Notice we are not printing any content, just the metadata:*
 ```python
-# Later
+# Later you can get all those fields
 similar_data = vault.get_similar("How will the government control you in the future?") 
 
 for result in similar_data:
@@ -220,7 +257,7 @@ for result in similar_data:
 ```
 >> 1984 George Orwell Dystopian 1984 George Orwell Dystopian 1984 George Orwell Dystopian 1984 George Orwell Dystopian
 
-
+<br>
 
 ```python
 # list is always returned, so you can do a for loop like above or numerically like this
@@ -287,7 +324,7 @@ To integrate vault data in the response, you need to pass `get_context=True`
 # this will get context from the vault, then ask chatgpt the question
 answer = vault.get_chat(question, get_context=True) 
 
-# this will send to chatgpt only and not interact with the vault in any way
+# this will send to chatgpt only and not interact with the Vault in any way
 answer = vault.get_chat(question) 
 ```
 
@@ -307,6 +344,12 @@ Get chat response from OpenAI's ChatGPT.
 Rate limiting, auto retries, and chat histroy slicing auto-built-in so you can create complex chat capability without getting complicated. 
 Enter your text, optionally add chat history, and optionally choose a summary response instead (default: summmary=False)
 
+<br>
+<br>
+
+## The get_chat() function:
+`get_chat(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, custom_prompt=False)`
+
 - Example Signle Usage: 
 `response = vault.get_chat(text)`
 
@@ -324,7 +367,41 @@ Enter your text, optionally add chat history, and optionally choose a summary re
 
 - Example Context-Response with Context Samples Returned:
 `vault_response = vault.get_chat(text, get_context=True, return_context=True)`
-Response from ChatGPT in string format, unless `return_context=True`, then response will be a dictionary containing response from ChatGPT and the vault data.
+Response is a string, unless return_context == True, then response will be a dictionary 
+
+- Example Custom Prompt:
+`response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)`
+
+`custom_prompt` overrides the stock prompt we provide. Check ai.py to see the originals we provide. 
+`llm` and `llm_stream` models manage history internally, so the `content` is the only variable to be included and formattable in the prompt. 
+
+*Example WIHTOUT Vault Context:*
+
+```python
+my_prompt = """Answer this question as if you were a financial advisor: "{content}". """
+response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)
+```
+
+Getting context from the Vault is usually the goal when customizing text generation, and doing that requires additional prompt variables.
+`llm_w_context` and `llm__w_context_stream` models inject the history, context, and user input all in one prompt. In this case, your custom prompt needs to have `history`, `context` and `question` formattable in the prompt like so:
+
+*Example WITH Vault Context:*  
+```python
+custom_prompt = """
+    Use the following Context to answer the Question at the end. 
+    Answer as if you were the modern voice of the context, without referencing the context or mentioning that fact any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
+
+    Chat History (if any): {history}
+
+    Additional Context: {context}
+
+    Question: {question}
+
+    (Respond to the Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
+    Answer:
+""" 
+response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)
+```
 
 <br>
 
@@ -381,8 +458,7 @@ Use the built-in streaming functionality to get interactive chat streaming. Here
 ## get_chat_stream():
 See it in action. Check our [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) that has Colab notebooks you can be running in the browser seconds from now.
 
-
-`get_chat()` function returns the whole message at once. `get_chat_stream` yields each word as it's received. Other than that, they are nearly identical and have the same input parameters.
+The `get_chat()` function returns the whole message at once, whereas the `get_chat_stream()` yields each word as it's received. Other than that, they are nearly identical and have nearly the same input parameters. Streaming is a much better experience and the preferred option for front end applications users interact with.
 
 ```python
 ## get_chat()
@@ -401,6 +477,68 @@ vault.print_stream(vault.get_chat_stream(text, history))
 ```python
 # With print_stream() final answer is returned after streaming completes, so you can make it a variable
 answer = vault.print_stream(vault.get_chat_stream(text, history))
+```
+
+<br>
+<br>
+
+## The get_chat_stream() function:
+`get_chat_stream(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, metatag=False, metatag_prefixes=False, metatag_suffixes=False, custom_prompt=False)`
+
+Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream().
+cloud_stream() is for cloud functions, like a flask app serving a front end elsewhere.
+print_stream() is for local console printing
+
+- Example Signle Usage: 
+`response = vault.print_stream(vault.get_chat_stream(text))`
+
+- Example Chat: 
+`response = vault.print_stream(vault.get_chat_stream(text, chat_history))`
+
+- Example Summary: 
+`summary = vault.print_stream(vault.get_chat_stream(text, summary=True))`
+
+- Example Context-Based Response:
+`response = vault.print_stream(vault.get_chat_stream(text, get_context = True))`
+
+- Example Context-Based Response w/ Chat History:
+`response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True))`
+
+- Example Context-Response with Context Samples Returned:
+`vault_response = vault.print_stream(vault.get_chat_stream(text, get_context = True, return_context = True))`
+
+- Example Custom Prompt:
+`response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)`
+
+`custom_prompt` overrides the stock prompt we provide. Check ai.py to see the originals we provide. 
+`llm` and `llm_stream` models manage history internally, so the `content` is the only variable to be included and formattable in the prompt. Visit the get_chat_stream() function in vault.py for more information on metatags or check out our examples folder streaming tutorial.
+
+*Example WIHTOUT Vault Context:*
+
+```python
+my_prompt = """Answer this question as if you were a financial advisor: "{content}". """
+response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True, custom_prompt=my_prompt))
+```
+
+Getting context from the Vault is usually the goal when customizing text generation, and doing that requires additional prompt variables.
+`llm_w_context` and `llm__w_context_stream` models inject the history, context, and user input all in one prompt. In this case, your custom prompt needs to have `history`, `context` and `question` formattable in the prompt like so:
+
+*Example WITH Vault Context:*  
+```python
+custom_prompt = """
+    Use the following Context to answer the Question at the end. 
+    Answer as if you were the modern voice of the context, without referencing the context or mentioning that fact any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
+
+    Chat History (if any): {history}
+
+    Additional Context: {context}
+
+    Question: {question}
+
+    (Respond to the Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
+    Answer:
+""" 
+response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True, custom_prompt=my_prompt))
 ```
 
 <br>
@@ -438,8 +576,7 @@ from vectorvault import Vault
 
 os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 
-vault = Vault(user='
-', api_key='your_api_key', vault='Customer Service')
+vault = Vault(user='your_email', api_key='your_api_key', vault='Customer Service')
 
 with open('customer_service.txt', 'r') as f:
     vault.add(f.read())

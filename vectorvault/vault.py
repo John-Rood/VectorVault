@@ -22,11 +22,11 @@ import openai
 import json
 import traceback
 from concurrent.futures import ThreadPoolExecutor
-from cloudmanager import CloudManager
-from ai import AI
-from itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name
-from vecreq import call_get_total_vectors, call_get_vaults, call_get_similar
-from tools_gpt import ToolsGPT
+from .cloudmanager import CloudManager
+from .ai import AI
+from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name
+from .vecreq import call_get_total_vectors, call_get_vaults, call_get_similar
+from .tools_gpt import ToolsGPT
 
 
 class Vault:

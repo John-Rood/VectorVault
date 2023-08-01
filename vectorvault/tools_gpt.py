@@ -10,26 +10,34 @@ import time
     These tools bridge the gap between human interaction and code. 
     
     ToolsGPT allows you to get the following for any input:
-        1. a Rating - out of 10
-        2. a Match - to a list
-        3. a Topic - match to a list
-        4. Match or Make (M&M) - to list or make new option for the list
+        1. `get_rating` - returns a rating out of 10 for any input
+        2. `get_yes_no` - returns a 'yes' or a 'no' to any question
+        3. `get_binary` - returns a '0' or '1' to any input
+        4. `get_match` - returns a match to a list options
+        5. `match_or_make` - returns a match to a list of options, or a new option
+        6. `get_topic` - returns the topic subject matter of any input 
 
-        1. Out of 10:
+        1. `get_rating`:
             Useful to get a quality rating
+
+        2. `get_yes_no`:
+            Useful for getting a difinitive answer 
+
+        3. `get_binary`:
+            Useful for getting numeric input on a difinitive answer
         
-        2. Answer Match
+        4. `get_match`:
             Useful to get an exact match to one option in a set of options
             in: (text and list of answers)
             out: (exact match to one answer in list of answer)
 
-        3. Topic Match
+        5. `get_topic`:
             Useful to classify the topic of conversation
         
-        4. Match or Make
+        6. `match_or_make` (M&M):
             Get a match to a list of options, or make a new one if unrelated
             Useful if you aren't sure if the input will match one of your existing list options, and need flexibility of creating a new one
-
+            Also useful when starting from an empty list. - will create it from scratch
 '''
 
 class ToolsGPT():
@@ -266,6 +274,7 @@ class ToolsGPT():
 
         return self.retry_llm(custom_prompt=prompt, model=model)
     
+    # internal function 
     def yay_or_nay(self, content, question: str, model='gpt-3.5-turbo'):
         '''Not recommended for external use. Internal function'''
         prompt_template = """Do not respond with anything before the yes or no. Do not add anything after the "yes" or "no". 
@@ -279,6 +288,7 @@ class ToolsGPT():
 
         return self.retry_llm(custom_prompt=prompt, model=model)
     
+    # internal function 
     def zero_or_one(self, content, zero_if: str, one_if: str, model='gpt-3.5-turbo'):
         '''Not recommended for external use. Internal function'''
         prompt_template = """Do not respond with anything before the 1 or 0. Do not add anything after the "1" or "0". 
@@ -292,6 +302,7 @@ class ToolsGPT():
 
         return self.retry_llm(custom_prompt=prompt, model=model)
     
+    # internal function 
     def isolate_zero_one(self, content, model='gpt-3.5-turbo'):
         '''Not recommended for external use. Internal function'''
         prompt_template = """Do not respond with anything before the 1 or 0. Do not add anything after the "1" or "0". 

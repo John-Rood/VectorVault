@@ -200,7 +200,7 @@ vault.save()
 
 similar_data = vault.get_similar("Your text input") 
 
-print(similar_data[0]['metadata'])
+print(similar_data[0]['metadata']['name'])
 ```
 >> Lifestyle in LA 
 

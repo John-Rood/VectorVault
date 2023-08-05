@@ -191,18 +191,6 @@ vault.get_vectors()
 vault.save()
 ```
 
-<br>
-
-
-```python
-# To add just the 'name' field to the metadata:
-
-vault.add(text, name='Lifestyle in LA')
-
-vault.get_vectors()
-
-vault.save()
-```
 
 <br>
 
@@ -215,6 +203,16 @@ similar_data = vault.get_similar("Your text input")
 print(similar_data[0]['metadata'])
 ```
 >> Lifestyle in LA 
+
+<br>
+
+
+
+```python
+# To add just the 'name' field to the metadata:
+vault.add(text, name='Lifestyle in LA')
+
+```
 
 <br>
 

@@ -583,7 +583,7 @@ class Vault:
                         response = self.ai.llm(segment, history, model=model, custom_prompt=custom_prompt)
                     break
                 except Exception as e:
-                    exception += 1
+                    exceptions += 1
                     print(traceback.format_exc())
                     print(f"API Error: {e}. Sleeping 5 seconds")
                     if exceptions >= 5:

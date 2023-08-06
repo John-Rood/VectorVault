@@ -78,13 +78,18 @@ Check out the tutorials in the Examples folder. You will need an api key in orde
 • `match_or_make`:
  Get a match to a list of options, or make a new one if unrelated
  Useful if you aren't sure if the input will match one of your existing list options, and need flexibility of creating a new one. When starting from an empty list. - will create it from scratch
-<br>
-Tools example 1: `number_out_of_ten = v.tools.get_rating('how LeBron James compareas to Michael Jordan')`
-<br>
-Tools example 2: `this_or_that = v.tools.get_binary('should I turn right or left, 0 for right, 1 for left')` 
-<br>
-Tools example 3: `answer = v.tools.get_yes_no('should I use Vector Vault to build my next AI project?')`
-<br>`print(answer)`
+
+```python
+# Tools example 1:
+number_out_of_ten = v.tools.get_rating('how LeBron James compareas to Michael Jordan')
+
+# Tools example 2: 
+this_or_that = v.tools.get_binary('should I turn right or left, 0 for right, 1 for left')
+
+# Tools example 3: 
+answer = v.tools.get_yes_no('should I use Vector Vault to build my next AI project?')
+print(answer)
+```
 >> yes
 
 

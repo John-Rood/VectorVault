@@ -1,10 +1,10 @@
 ![alt text](https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/297fde6c-f5b4-4076-83bc-81dcfdbffebe/Vector+Vault+Header+5000.jpg)
 
-Vector Vault is a vector database cloud service built to make generative ai chat quick and easy. It allows you to seamlessly vectorize data and access it from the cloud. It's scalable to both small projects and large applications with millions of users. Vector Vault has been designed with a user-friendly code interface to make the process of working with vector search easy and let you focus on what matters. Vector Vault ensures secure and isolated data handling and enables you to create and interact with vector databases - aka "vaults" - in under one second response times, from our serverless cloud architecture backed by Google. 
+Vector Vault is a cloud-native vector database combined with OpenAI. Easily call ChatGPT or GPT4 and customize how they respond. Take any text data, vectorize it, and add it to the cloud vector database in 3 lines of code. Vector Vault enables you to quickly and securely create and interact with your vector databases - aka "Vaults". Vaults are hosted on serverless distributed cloud architecture backed by Google, making `vectorvault` scalable to any project size. 
 
-We've integrated all the chat options people like to use with LangChain. By combining vector databases with OpenAI's chat in the `vectorvault` package, we've been able to hide a lot of the complexity in the background and make it really easy to build the kind of custom chat experience you want to build. 
+`vectorvault` takes inspiration from LangChain and integrates their most popular chat features and LLM tools. However, by combining vector databases with OpenAI's chat into one single package, `vectorvault` is able to hide mos of the complexity, making it really easy to build custom chat experiences. The main value of the `vectorvault` package is how few lines of code you'll need to write to create the expirience you're goign for. It's much simpler and easier to use ChatGPT with the `vectorvault` package than OpenAI's default package. It's also easy to customize what ChatGPT says by simply adding the kind of things you want it to say to the Vault. When you call the `get_chat()` function with "get_context=True", whatever you have added to the Vault will be the way ChatGPT sounds. Check out [PhilosophyGPT](https://philbrosophy.web.app) for an example of this (which was made using Vector Vault).
 
-With Vector Vault, integrating vector search results into your chat app is not only easy, it's the default. If you have been looking for a fast and reliable way to use vector databases with ChatGPT, then Vector Vault is for you. You will need an api key in order to access the Vault Cloud. If you don't already have one, you can sign up for a free account at [VectorVault.io](https://vectorvault.io)
+Check out the tutorials in the Examples folder. You will need an api key in order to access the Vault Cloud. If you don't already have one, you can sign up for a free account at [VectorVault.io](https://vectorvault.io). While the service is paid for production usage, the first tier is free, and the following tiers are very affordable.
 
 <br>
 
@@ -14,7 +14,10 @@ With Vector Vault, integrating vector search results into your chat app is not o
 <br>
 `from vectorvault import Vault` : import
 <br>
-`v = Vault(user='your_eamil', api_key='your_api_key')` : Open a Vault instance 
+`v = Vault(
+  user='your_eamil', 
+  api_key='your_api_key',
+  openai_key='your_openai_api_key')` Create Vault Instance and Connect to OpenAI
 <br>
 `v.add(text, meta=None, name='', split=False, split_size=1000)` : Loads data to be added to the Vault, with automatic text splitting for long texts. `text` is a text string. `meta` is a dictionary. `split=True` will split your text input, based on your `split_size`, which will be the approximate size of each split. For each split, a new item will automatically be created. `name` is a shortcut to adding a name field to the meta without creating a dictionary. If you don't create a dictionary, one with generic information will be created. If you don't assign a name, a generic one will be created. `text` is the only required input.
 <br>

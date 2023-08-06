@@ -27,9 +27,9 @@ import time
             Useful for getting a definitive answer in 0/1 format
         
         4. `get_match`:
-            Useful to get an exact match to one option in a set of options
-            in: (text and list of answers)
-            out: (exact match to one answer in list of answer)
+            Useful to get an exact match to a single option within a set of options 
+            -> in: (text and list of answers) 
+            -> out: (exact match to one answer in list of answer)
 
         5. `get_topic`:
             Useful to classify the topic of conversation

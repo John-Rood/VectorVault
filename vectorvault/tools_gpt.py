@@ -24,7 +24,7 @@ import time
             Useful for getting a difinitive answer 
 
         3. `get_binary`:
-            Useful for getting numeric input on a difinitive answer
+            Useful for getting a definitive answer in 0/1 format
         
         4. `get_match`:
             Useful to get an exact match to one option in a set of options

@@ -6,7 +6,7 @@ Vector Vault is a cloud-native vector database combined with OpenAI. Easily call
 
 Make bots with knowledge and personalities. Create dynamic game characters with goals and opinions, AI support reps for a product/service, or your alter ego AI self. Use the "LLM Exclusive Tools" to create AI smart automation in code. The possibilities are endless and only limited by your imagination.
 
-Check out the tutorials in the Examples folder. You will need an api key in order to access the Vault Cloud. If you don't already have one, you can sign up for a free account at [VectorVault.io](https://vectorvault.io). While the service is paid for production usage, the first tier is free, and the following tiers are very affordable.
+Check out the tutorials in the Examples folder. You don't need a Vector Vault API key to use the tools or chat features, but you will need one to access the Vault Cloud. If you don't already have one, you can sign up for a free account at [VectorVault.io](https://vectorvault.io). While the service is paid for production usage, the first tier is free, and the following tiers are very affordable.
 
 <br>
 

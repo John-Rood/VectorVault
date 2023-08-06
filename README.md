@@ -88,6 +88,7 @@ this_or_that = v.tools.get_binary('should I turn right or left, 0 for right, 1 f
 
 # Tools example 3: 
 answer = v.tools.get_yes_no('should I use Vector Vault to build my next AI project?')
+
 print(answer)
 ```
 >> yes

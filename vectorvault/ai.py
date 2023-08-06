@@ -10,6 +10,8 @@ class AI:
         '''
             If you pass in a custom_prompt with content already fully filled in, and no user_input, it will process your custom_prompt only without changing       
         '''
+        max_tokens = max_tokens * 4 if model == 'gpt-3.5-turbo-16k' else max_tokens
+        max_tokens = max_tokens * 8 if model == 'gpt-4-32k' else max_tokens
         prompt_template = custom_prompt if custom_prompt else """{content}""" 
         if user_input:
             intokes = self.get_tokens(user_input)
@@ -70,6 +72,9 @@ class AI:
         (Answer the question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
         Answer:""" 
 
+        max_tokens = max_tokens * 4 if model == 'gpt-3.5-turbo-16k' else max_tokens
+        max_tokens = max_tokens * 8 if model == 'gpt-4-32k' else max_tokens
+
         intokes = self.get_tokens(user_input)
         contokes = self.get_tokens(context)
         history = history if history else ""
@@ -115,6 +120,11 @@ class AI:
 
 
     def llm_stream(self, user_input, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
+        '''
+            Stream version of "llm"
+        '''
+        max_tokens = max_tokens * 4 if model == 'gpt-3.5-turbo-16k' else max_tokens
+        max_tokens = max_tokens * 8 if model == 'gpt-4-32k' else max_tokens
         prompt_template = custom_prompt if custom_prompt else """{content}""" 
         intokes = self.get_tokens(user_input)
         histokes = self.get_tokens(history) if history else 0
@@ -174,6 +184,9 @@ class AI:
 
         (Respond to the Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
         Answer:""" 
+
+        max_tokens = max_tokens * 4 if model == 'gpt-3.5-turbo-16k' else max_tokens
+        max_tokens = max_tokens * 8 if model == 'gpt-4-32k' else max_tokens
 
         intokes = self.get_tokens(user_input)
         contokes = self.get_tokens(context)

@@ -84,7 +84,7 @@ Tools example 1: `number_out_of_ten = v.tools.get_rating('how LeBron James compa
 Tools example 2: `this_or_that = v.tools.get_binary('should I turn right or left, 0 for right, 1 for left')` 
 <br>
 Tools example 3: `answer = v.tools.get_yes_no('should I use Vector Vault to build my next AI project?')`
-`print(answer)`
+<br>`print(answer)`
 >> yes
 
 

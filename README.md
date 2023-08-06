@@ -4,7 +4,7 @@ Vector Vault is a cloud-native vector database combined with OpenAI. Easily call
 
 `vectorvault` takes inspiration from LangChain and integrates their most popular chat features and LLM tools. However, by combining vector databases with OpenAI's chat into one single package, `vectorvault` is able to hide most of the complexity, making it simple to build custom chat experiences. The main value of the `vectorvault` package is how few lines of code you'll need to write to create the expirience you're goign for. It's much simpler and easier to use ChatGPT with the `vectorvault` package than OpenAI's default package. Customize what ChatGPT says by adding the kind of things you want it to say to the Vault. When you call the `get_chat()` function with "get_context=True", whatever you have added to the Vault will be the way ChatGPT sounds. Check out [PhilosophyGPT](https://philbrosophy.web.app) for an example of this (which was made using Vector Vault).
 
-Make custom agents, business service agents, game characters, bots with personalities, bots with special knowledge or domain experts. Even use our "tools" to create AI smart automation in code. The possibilities are only limited by your imagination.
+Make bots with knowledge and personalities. Create dynamic game characters with goals and opinions, AI support reps for a product/service, or your alter ego AI self. Use the "LLM Exclusive Tools" to create AI smart automation in code. The possibilities are endless and only limited by your imagination.
 
 Check out the tutorials in the Examples folder. You will need an api key in order to access the Vault Cloud. If you don't already have one, you can sign up for a free account at [VectorVault.io](https://vectorvault.io). While the service is paid for production usage, the first tier is free, and the following tiers are very affordable.
 
@@ -19,7 +19,7 @@ Check out the tutorials in the Examples folder. You will need an api key in orde
 `v = Vault(
   user='your_eamil', 
   api_key='your_api_key',
-  openai_key='your_openai_api_key')` Create Vault Instance and Connect to OpenAI
+  openai_key='your_openai_api_key')` Create Vault Instance and Connect to OpenAI. *(Also call `verbose=True` to print all communications and notifications to the terminal while building)*
 <br>
 `v.add(text, meta=None, name='', split=False, split_size=1000)` : Loads data to be added to the Vault, with automatic text splitting for long texts. `text` is a text string. `meta` is a dictionary. *(`split=True` will split your text input, based on your `split_size`. For each split, a new item will be created. `name` parameter is a shortcut to adding a "name" field to the metadata. If you don't add a name or any metadata, generic info will be added for you. `text` is the only required input)*
 <br>
@@ -56,8 +56,10 @@ Check out the tutorials in the Examples folder. You will need an api key in orde
 <br>
 `v.get_chat_stream()` : Retrieves a response from ChatGPT in stream format, with parameters for handling conversation history, summarizing responses, and retrieving context-based responses that reference similar data in the Vault. *(See dedicated section below on using this function and its' parameters)*
 <br>
-• `v.tools`: 
 <br>
+<br>
+
+### LLM Exclusive Tools (`v.tools`):
 • `get_rating`:
  Useful to get a quality rating
 <br>
@@ -68,9 +70,7 @@ Check out the tutorials in the Examples folder. You will need an api key in orde
  Useful for getting a definitive answer in 0/1 format
 <br>
 • `get_match`:
- Useful to get an exact match to one option in a set of options
- in: (text and list of answers)
- out: (exact match to one answer in list of answer)
+ Useful to get an exact match to a single option within a set of options -> in: (text and list of answers) -> out: (exact match to one answer in list of answer)
 <br>
 • `get_topic`:
  Useful to classify the topic of conversation
@@ -78,9 +78,6 @@ Check out the tutorials in the Examples folder. You will need an api key in orde
 • `match_or_make`:
  Get a match to a list of options, or make a new one if unrelated
  Useful if you aren't sure if the input will match one of your existing list options, and need flexibility of creating a new one. When starting from an empty list. - will create it from scratch
-<br>
-<br>
-Tools Examples:
 <br>
 Tools example 1: `number_out_of_ten = v.tools.get_rating('how LeBron James compareas to Michael Jordan')`
 <br>
@@ -92,8 +89,8 @@ Tools example 3: `answer = v.tools.get_yes_no('should I use Vector Vault to buil
 
 
 
-
-
+<br>
+<br>
 <br>
 
 # Access The Vault:

@@ -81,7 +81,7 @@ Check out the tutorials in the Examples folder. You don't need a Vector Vault AP
 
 ```python
 # Tools example 1:
-number_out_of_ten = v.tools.get_rating('how LeBron James compareas to Michael Jordan')
+number_out_of_ten = v.tools.get_rating('how does LeBron James compare to Michael Jordan')
 
 # Tools example 2: 
 this_or_that = v.tools.get_binary('should I turn right or left, 0 for right, 1 for left')

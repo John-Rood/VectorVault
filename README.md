@@ -384,7 +384,7 @@ Getting context from the Vault is usually the goal when customizing text generat
 
 *Example Custom Prompt:*  
 ```python
-custom_prompt = """
+my_prompt = """
     Use the following Context to answer the Question at the end. 
     Answer as if you were the modern voice of the context, without referencing the context or mentioning that fact any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
 
@@ -521,7 +521,7 @@ Getting context from the Vault is usually the goal when customizing text generat
 
 *Example with Custom Prompt:*  
 ```python
-custom_prompt = """
+my_prompt = """
     Use the following Context to answer the Question at the end. 
     Answer as if you were the modern voice of the context, without referencing the context or mentioning that fact any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
 

@@ -180,7 +180,7 @@ for result in similar_data:
 
 meta = {
     'name': 'Lifestyle in LA',
-    'country': 'United State',
+    'country': 'United States',
     'city': 'LA' 
 }
 
@@ -196,23 +196,23 @@ vault.save()
 
 
 ```python
-# To find the name later: 
+# To get any metadata, just put "['metadata']", then the data you want after it, like: "['name']": 
 
-similar_data = vault.get_similar("Your text input") 
+similar_data = vault.get_similar("Your text input") # 4 results by default
 
+# printing metadata from first result...
 print(similar_data[0]['metadata']['name'])
+print(similar_data[0]['metadata']['country'])
+print(similar_data[0]['metadata']['city'])
 ```
 >> Lifestyle in LA 
 
+>> United States 
+
+>> LA 
+
 <br>
 
-
-
-```python
-# To add just the 'name' field to the metadata:
-vault.add(text, name='Lifestyle in LA')
-
-```
 
 <br>
 

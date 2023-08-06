@@ -516,7 +516,8 @@ class Vault:
             ```
 
         '''
-
+        
+        model = model.lower()
         start_time = time.time()
         if not self.last_chat_time:
             self.last_chat_time = start_time - 20
@@ -667,6 +668,7 @@ class Vault:
             ```
         '''
 
+        model = model.lower()
         start_time = time.time()
         if not self.last_chat_time:
             self.last_chat_time = start_time - 20

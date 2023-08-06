@@ -373,17 +373,16 @@ Response is a string, unless return_context == True, then response will be a dic
 `custom_prompt` overrides the stock prompt we provide. Check ai.py to see the originals we provide. 
 `llm` and `llm_stream` models manage history internally, so the `content` is the only variable to be included and formattable in the prompt. 
 
-*Example WIHTOUT Vault Context:*
+*Example with GPT4:*
 
 ```python
-my_prompt = """Answer this question as if you were a financial advisor: "{content}". """
-response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)
+response = vault.get_chat(text, chat_history, get_context=True, model='gpt4)
 ```
 
 Getting context from the Vault is usually the goal when customizing text generation, and doing that requires additional prompt variables.
 `llm_w_context` and `llm__w_context_stream` models inject the history, context, and user input all in one prompt. In this case, your custom prompt needs to have `history`, `context` and `question` formattable in the prompt like so:
 
-*Example WITH Vault Context:*  
+*Example Custom Prompt:*  
 ```python
 custom_prompt = """
     Use the following Context to answer the Question at the end. 
@@ -511,17 +510,16 @@ print_stream() is for local console printing
 `custom_prompt` overrides the stock prompt we provide. Check ai.py to see the originals we provide. 
 `llm` and `llm_stream` models manage history internally, so the `content` is the only variable to be included and formattable in the prompt. Visit the get_chat_stream() function in vault.py for more information on metatags or check out our examples folder streaming tutorial.
 
-*Example WIHTOUT Vault Context:*
+*Example with GPT4:*
 
 ```python
-my_prompt = """Answer this question as if you were a financial advisor: "{content}". """
-response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True, custom_prompt=my_prompt))
+response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True, model='gpt4))
 ```
 
 Getting context from the Vault is usually the goal when customizing text generation, and doing that requires additional prompt variables.
 `llm_w_context` and `llm__w_context_stream` models inject the history, context, and user input all in one prompt. In this case, your custom prompt needs to have `history`, `context` and `question` formattable in the prompt like so:
 
-*Example WITH Vault Context:*  
+*Example with Custom Prompt:*  
 ```python
 custom_prompt = """
     Use the following Context to answer the Question at the end. 

@@ -384,21 +384,22 @@ Getting context from the Vault is usually the goal when customizing text generat
 
 *Example Custom Prompt:*  
 ```python
+# You can build a custom prompt with custom variables:
 my_prompt = """
-    Use the following Context to answer the Question at the end. 
-    Answer as if you were the modern voice of the context, without referencing the context or mentioning that fact any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
+    Use the following information to answer the Question at the end. 
 
-    Chat History (if any): {history}
+    Math Result: {math_answer}
 
-    Additional Context: {context}
+    Known Variables: {known_vars}
 
     Question: {question}
 
     (Respond to the Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
     Answer:
 """ 
-response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)
+response = vault.get_chat(custom_prompt=my_prompt)
 ```
+A custom prompt makes the get_chat() function flexible for any use case. Check ai.py to see the stock prompt templates, and get a better idea of how they work...or just send me a message in Discord.
 
 <br>
 

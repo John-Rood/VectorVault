@@ -8,7 +8,8 @@ class AI:
     # This function returns a ChatGPT completion based on a provided input.
     def llm(self, user_input: str = None, history: str = None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
         '''
-            If you pass in a custom_prompt with content already fully filled in, and no user_input, it will process your custom_prompt only without changing       
+            If you pass in a custom_prompt with content already fully filled in, and no user_input, 
+            it will process your custom_prompt only without changing       
         '''
         max_tokens = max_tokens * 4 if model == 'gpt-3.5-turbo-16k' else max_tokens
         max_tokens = max_tokens * 8 if model == 'gpt-4-32k' else max_tokens
@@ -61,7 +62,8 @@ class AI:
     def llm_w_context(self, user_input = None, context = None, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
         prompt_template = custom_prompt if custom_prompt else """
         Use the following Context to answer the Question at the end. 
-        Answer as if you were the modern voice of the context, without referencing the context or mentioning that fact any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
+        Answer as if you were the modern voice of the context, without referencing the context or mentioning 
+        the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
 
         Chat History (if any): {history}
 
@@ -177,7 +179,8 @@ class AI:
     def llm_w_context_stream(self, user_input = None, context = None, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
         prompt_template = custom_prompt if custom_prompt else """
         Use the following Context to answer the Question at the end. 
-        Answer as if you were the modern voice of the context, without referencing the context or mentioning that fact any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
+        Answer as if you were the modern voice of the context, without referencing the context or mentioning 
+        the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
 
         Chat History (if any): {history}
 

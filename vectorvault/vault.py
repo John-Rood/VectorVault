@@ -444,7 +444,7 @@ class Vault:
         if self.verbose == True:
             print("get vectors time --- %s seconds ---" % (time.time() - start_time))
 
-    def get_chat(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, custom_prompt=False):
+    def get_chat(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, custom_prompt=False):
         '''
             Chat get response from OpenAI's ChatGPT. 
             Models: ChatGPT = "gpt-3.5-turbo" • GPT4 = "gpt-4" 
@@ -536,11 +536,14 @@ class Vault:
         self.needed_sleep_time = deduction if deduction > 0 else 0
         time.sleep(self.needed_sleep_time)
 
-        if self.ai.get_tokens(text) > 4000:
-            if summary:
-                inputs = self.split_text(text, 14500)
+        if text: 
+            if self.ai.get_tokens(text) > 4000:
+                if summary:
+                    inputs = self.split_text(text, 14500)
+                else:
+                    inputs = text[-16000:]
             else:
-                inputs = text[-16000:]
+                inputs = [text]
         else:
             inputs = [text]
         response = ''
@@ -606,7 +609,7 @@ class Vault:
         elif return_context == True:
             return {'response': response, 'context': context}
         
-    def get_chat_stream(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, metatag=False, metatag_prefixes=False, metatag_suffixes=False, custom_prompt=False):
+    def get_chat_stream(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, metatag=False, metatag_prefixes=False, metatag_suffixes=False, custom_prompt=False):
         '''
             Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream().
             cloud_stream() is for cloud functions, like a flask app serving a front end elsewhere.
@@ -686,12 +689,15 @@ class Vault:
         deduction = self.needed_sleep_time - (time.time() - self.last_chat_time)
         self.needed_sleep_time = deduction if deduction > 0 else 0
         time.sleep(self.needed_sleep_time)
-
-        if self.ai.get_tokens(text) > 4000:
-            if summary:
-                inputs = self.split_text(text, 14500)
+        
+        if text:
+            if self.ai.get_tokens(text) > 4000:
+                if summary:
+                    inputs = self.split_text(text, 14500)
+                else:
+                    inputs = text[-16000:]
             else:
-                inputs = text[-16000:]
+                inputs = [text]
         else:
             inputs = [text]
         response = ''

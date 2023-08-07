@@ -549,7 +549,10 @@ class Vault:
         response = ''
         for segment in inputs:
             start_time = time.time()
-            seg_len = self.ai.get_tokens(segment)
+            if text:
+                seg_len = self.ai.get_tokens(segment)
+            else:
+                seg_len = len(custom_prompt)
             # max 90,000 tokens per minute | max requests per minute = 3500
             trip_time = float(start_time - self.last_chat_time)
             req_min = 60 / trip_time # 1 min (60) / time between requests (trip_time)
@@ -570,7 +573,7 @@ class Vault:
                 try:
                     if summary and not get_context:
                         response += self.ai.summarize(segment, model=model, custom_prompt=custom_prompt)
-                    elif get_context and not summary:
+                    elif text and get_context and not summary:
                         user_input = segment + history if history_search else segment
                         if self.ai.get_tokens(user_input) > 4000:
                             user_input = user_input[-16000:]
@@ -587,7 +590,7 @@ class Vault:
                             for text in context:
                                 input_ += text['data']
                         response = self.ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt)
-                    else:
+                    else: # Custom prompt only
                         response = self.ai.llm(segment, history, model=model, custom_prompt=custom_prompt)
                     break
                 except Exception as e:
@@ -703,7 +706,10 @@ class Vault:
         response = ''
         for segment in inputs:
             start_time = time.time()
-            seg_len = self.ai.get_tokens(segment)
+            if text:
+                seg_len = self.ai.get_tokens(segment)
+            else:
+                seg_len = len(custom_prompt)
             # max 90,000 tokens per minute | max requests per minute = 3500
             trip_time = float(start_time - self.last_chat_time)
             req_min = 60 / trip_time # 1 min (60) / time between requests (trip_time)
@@ -726,7 +732,7 @@ class Vault:
                         for word in self.ai.summarize_stream(segment, model=model, custom_prompt=custom_prompt):
                             yield word
                         yield '!END'
-                    elif get_context and not summary:
+                    elif text and get_context and not summary:
                         user_input = segment + history if history_search else segment
                         if self.ai.get_tokens(user_input) > 4000:
                             user_input = user_input[-16000:]
@@ -764,7 +770,7 @@ class Vault:
                             for word in self.ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt):
                                 yield word
                             yield '!END'
-                    else:
+                    else: # Just a custom prompt
                         for word in self.ai.llm_stream(segment, history, model=model, custom_prompt=custom_prompt):
                             yield word
                         yield '!END'

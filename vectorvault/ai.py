@@ -147,6 +147,7 @@ class AI:
                 else: # no history. If it was overlimit, then it was taken care of above
                     pass
             prompt = prompt_template.format(content=user_input)
+
         if history:
             response = openai.ChatCompletion.create(
                 model=model,
@@ -161,10 +162,10 @@ class AI:
                     if 'content' in delta:
                         content = delta['content']
                         yield content
-        else:
+        else: # make no changes, and return response to custom_prompt
             response = openai.ChatCompletion.create(
                 model=model,
-                messages=[{"role": "user", "content": f"{prompt}"}],
+                messages=[{"role": "user", "content": f"{custom_prompt}"}],
                 stream=True
             )
             for message in response:

@@ -119,7 +119,10 @@ pip install vector-vault
 ```python
 from vectorvault import Vault
 
-vault = Vault(user='YOUR_EMAIL', api_key='YOU_API_KEY', vault='NAME_OF_VAULT', openai_key='YOUR_OPENAI_KEY') 
+vault = Vault(user='YOUR_EMAIL',
+              api_key='YOU_API_KEY', 
+              vault='NAME_OF_VAULT',
+              openai_key='YOUR_OPENAI_KEY') 
 # a new vault will be created if the 'vault' name does not already exist 
 # if name already exists, you will be connected to the existing vault
 

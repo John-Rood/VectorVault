@@ -110,11 +110,6 @@ pip install vector-vault
 
 # Upload:
 
-Set your openai key as an envorionment variable
-```python
-os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
-```
-
 1. Create a Vault instance 
 2. Gather some text data we want to store
 3. Add the data to the Vault
@@ -124,10 +119,9 @@ os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
 ```python
 from vectorvault import Vault
 
-vault = Vault(user='YOUR_EMAIL', api_key='YOU_API_KEY', vault='NAME_OF_VAULT') 
-# a new vault will be created if the name does not already exist 
-# so you can create a Vault or connect to an exisiting Vault
-# by calling this Vault instance
+vault = Vault(user='YOUR_EMAIL', api_key='YOU_API_KEY', vault='NAME_OF_VAULT', openai_key='YOUR_OPENAI_KEY') 
+# a new vault will be created if the 'vault' name does not already exist 
+# if name already exists, you will be connected to the existing vault
 
 text_data = 'some data'
 

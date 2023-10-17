@@ -32,10 +32,11 @@ class AI:
             prompt = prompt_template.format(content=user_input)
 
             if history:
+                history_prompt = f"Chat history: {history}"
+                prompt = history_prompt + "\n\n" + prompt
                 response = openai.ChatCompletion.create(
                     model=model,
                     messages=[
-                        {"role": "system", "content": f"Chat history: {history}"},
                         {"role": "user", "content": f"{prompt}"}]
                 )
                 return response['choices'][0]['message']['content']
@@ -149,10 +150,11 @@ class AI:
             prompt = prompt_template.format(content=user_input)
 
         if history:
+            history_prompt = f"Chat history: {history}"
+            prompt = history_prompt + "\n\n" + prompt
             response = openai.ChatCompletion.create(
                 model=model,
                 messages=[
-                    {"role": "system", "content": f"Chat history: {history}"},
                     {"role": "user", "content": f"{prompt}"}]
             )
             for message in response:

@@ -329,19 +329,20 @@ chemistry_vault = Vault(user='YOUR_EMAIL',
                         openai_key='YOUR_OPENAI_KEY', 
                         vault='science/chemistry')
 
+# list the vaults within the current directory with `get_vaults`
 print(chemistry_vault.get_vaults())
 ```
 >> ['reactions', 'formulas', 'lab notes']
 
 
 ```python
-# lab notes vault within chemistry vault
+# lab notes vault, within chemistry vault, within science vault
 lab_notes_vault = Vault(user='YOUR_EMAIL', 
                         api_key='YOUR_API_KEY', 
                         openai_key='YOUR_OPENAI_KEY', 
                         vault='science/chemistry/lab notes')
 ```
-
+Each vault is a seperate and isolated vector database.
 <br>
 <br>
 

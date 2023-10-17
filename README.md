@@ -108,7 +108,7 @@ pip install vector-vault
 ```
 <br>
 
-# Add To The Vault:
+# Upload:
 
 Set your openai key as an envorionment variable
 ```python

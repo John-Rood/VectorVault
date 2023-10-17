@@ -271,10 +271,11 @@ vault.save()
 <br>
 
 ```python
-# Later you can get all those fields
+# Later you can get any of those fields
 similar_data = vault.get_similar("How will the government control you in the future?") 
+# `get_similar` returns 4 results by default
 
-for result in similar_data:
+for result in similar_data: 
     print(result['metadata']['title'])
     print(result['metadata']['author'])
     print(result['metadata']['genre'])
@@ -284,11 +285,13 @@ for result in similar_data:
 <br>
 
 ```python
-# list is always returned, so you can do a for loop like above or numerically like this
+# Results are always returned in a list, so '[0]' pulls the first result
 similar_data = vault.get_similar("How will the government control you in the future?") 
 print(similar_data[0]['metadata']['title'])
+print(similar_data[0]['metadata']['author'])
+print(similar_data[0]['metadata']['genre'])
 ```
->> 1984
+>> 1984 George Orwell Dystopian 
 
 <br>
 <br>

@@ -300,7 +300,7 @@ print(similar_data[0]['metadata']['genre'])
 
 ```python
 # print the list of vaults inside the current vault directory
-science_vault = Vault(user='your_user_id', api_key='your_api_key', vault='science')
+science_vault = Vault(user='YOUR_EMAIL', api_key='YOUR_API_KEY', openai_key='YOUR_OPENAI_KEY', vault='science')
 
 print(science_vault.get_vaults())
 ```
@@ -313,12 +313,12 @@ print(science_vault.get_vaults())
 
 ```python
 # biology vault within science vault
-biology_vault = Vault(user='YOUR_EMAIL', api_key='YOUR_API_KEY', vault='science/biology')
+biology_vault = Vault(user='YOUR_EMAIL', api_key='YOUR_API_KEY', openai_key='YOUR_OPENAI_KEY', vault='science/biology')
 ```
 
 ```python
 # chemistry vault within science vault
-chemistry_vault = Vault(user='YOUR_EMAIL', api_key='YOUR_API_KEY', vault='science/chemistry')
+chemistry_vault = Vault(user='YOUR_EMAIL', api_key='YOUR_API_KEY', openai_key='YOUR_OPENAI_KEY', vault='science/chemistry')
 
 print(chemistry_vault.get_vaults())
 ```
@@ -327,7 +327,7 @@ print(chemistry_vault.get_vaults())
 
 ```python
 # lab notes vault within chemistry vault
-lab_notes_vault = Vault(user='YOUR_EMAIL', api_key='YOUR_API_KEY', vault='science/chemistry/lab notes')
+lab_notes_vault = Vault(user='YOUR_EMAIL', api_key='YOUR_API_KEY', openai_key='YOUR_OPENAI_KEY', vault='science/chemistry/lab notes')
 ```
 
 <br>
@@ -436,7 +436,7 @@ A custom prompt makes the get_chat() function flexible for any use case. Check a
 ## Normal Usage:
 ```python
 # connect to the vault you want to use
-vault = Vault(user='YOUR_EMAIL', api_key='YOUR_API_KEY', vault='philosophy')
+vault = Vault(user='YOUR_EMAIL', api_key='YOUR_API_KEY', openai_key='YOUR_OPENAI_KEY', vault='philosophy')
 
 # text input
 question = "How do you find happiness?"
@@ -600,9 +600,10 @@ In the following code, we will add all of a company's past support conversations
 ```python
 from vectorvault import Vault
 
-os.environ['OPENAI_API_KEY'] = 'your_openai_api_key'
-
-vault = Vault(user='your_email', api_key='your_api_key', vault='Customer Service')
+vault = Vault(user='YOUR_EMAIL', 
+              api_key='YOUR_API_KEY', 
+              openai_key='YOUR_OPENAI_KEY', 
+              vault='Customer Service')
 
 with open('customer_service.txt', 'r') as f:
     vault.add(f.read())

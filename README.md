@@ -121,8 +121,8 @@ from vectorvault import Vault
 
 vault = Vault(user='YOUR_EMAIL',
               api_key='YOUR_API_KEY', 
-              vault='NAME_OF_VAULT',
-              openai_key='YOUR_OPENAI_KEY') 
+              openai_key='YOUR_OPENAI_KEY',
+              vault='NAME_OF_VAULT') 
 # a new vault will be created if the 'vault' name does not already exist 
 # if name already exists, you will be connected to the existing vault
 

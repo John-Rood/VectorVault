@@ -4,7 +4,7 @@ Vector Vault is a cloud-native vector database combined with OpenAI. Easily call
 
 `vectorvault` takes inspiration from LangChain, integrating their most popular chat features and LLM tools. However, by combining vector databases with OpenAI's chat into one single package, `vectorvault` is able to hide most of the complexity, making it simple to build custom chat experiences. It's even easier to use ChatGPT with the `vectorvault` package than OpenAI's default package, and you can customize what ChatGPT says by adding the kind of things you want it to say to the Vault. 
 
-Check out the tutorials in the Examples folder. You don't need a Vector Vault API key to use the tools or chat features, but you will need one to access the Vault Cloud. If you don't already have one, you can sign up for a free account at [VectorVault.io](https://vectorvault.io). While the service is paid at production scale, the first tier is free, and the following tiers are very affordable.
+See tutorials in the Examples folder. You don't need a Vector Vault API key to use the tools or chat features, but you will need one to access the Vault Cloud and create/use vector databases. If you don't already have one, you can sign up for a free at [VectorVault.io](https://vectorvault.io). While the service is paid at production scale, the first tier is free allowing you to develop quickly. Affordability is the best reason to use Vector Vault. Due to our serverless cloud architecture, you are able to create an unlimited number of isolated vetor databases, while only paying for the number of references you make to them. Vector Vault was created in response to the need to have one vector database per client, while having many clients. 
 
 <br>
 

@@ -148,7 +148,7 @@ vault.save()
 # these three lines execute fast and can be called mid-conversation before a reply
 ```
 Small save loads are usually finished in less than a second. Large loads depend on total data size. 
->> A test was done adding the full text of 37 books at once. The `get_vectors()` function took 8 minutes and 56 seconds. (For comparison, processing one at a time via OpenAI's embedding function would take roughly two days)
+>> A test was done adding the full text of 37 books at once. The `get_vectors()` function took 8 minutes and 56 seconds. (For comparison, processing via OpenAI's standard embedding function, that you find in their documentation, would take two to three days)
 
 <br>
 <br>

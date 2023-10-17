@@ -126,9 +126,7 @@ vault = Vault(user='YOUR_EMAIL',
 # a new vault will be created if the 'vault' name does not already exist 
 # if name already exists, you will be connected to the existing vault
 
-text_data = 'some data'
-
-vault.add(text_data)
+vault.add('some text')
 
 vault.get_vectors()
 

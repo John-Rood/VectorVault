@@ -114,7 +114,7 @@ pip install vector-vault
 2. Gather some text data we want to store
 3. Add the data to the Vault
 4. Get vectors embeddings 
-5. Save to the Vault Cloud
+5. Upload to the Cloud
 
 ```python
 from vectorvault import Vault

@@ -97,7 +97,7 @@ print(answer)
 <br>
 <br>
 
-# Access The Vault:
+# Install:
 <p align="center">
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/2acebcaa-f5dd-44c9-8bba-c10723bc7064/Vector+Vault+Vault+2000.png" width="60%" height="60%" />
 </p>
@@ -108,7 +108,7 @@ pip install vector-vault
 ```
 <br>
 
-# Build The Vault:
+# Add To The Vault:
 
 Set your openai key as an envorionment variable
 ```python
@@ -158,7 +158,7 @@ Small save loads are usually finished in less than a second. Large loads depend 
 <br>
 <br>
 
-# Use The Vault:
+# Reference The Vault:
 <p align="center">
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/5ae905b0-43d0-4b86-a965-5b447ee8c7de/Vector+Vault+Vault.jpg?content-type=image%2Fjpeg" width="60%" height="60%" />
 </p>

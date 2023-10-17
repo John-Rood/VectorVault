@@ -136,11 +136,11 @@ class ToolsGPT():
                 print(f"0/1 Answer {loops}: {answer}")
             loops += 1
             
-        return answer
+        return int(answer)
 
     def get_match(self, text: str, list_of_options: list, model='gpt-3.5-turbo', loop_limit=4) -> str:
         '''
-        This function could be used in a variety of Natural Language Processing (NLP) tasks, 
+        This function can be used in a variety of Natural Language Processing (NLP) tasks, 
         such as text classification or intent recognition.
 
         Classify any text input to a single option contained in a list of options. - Returns exact match to one of items on list.
@@ -154,7 +154,7 @@ class ToolsGPT():
         Content to classify: "{content}"  \n\n Classifiy the content above into one of the following options: {list_of_options}"""
         prompt = prompt_template.format(content=text, list_of_options=list_copy)
 
-        answer = self.retry_llm_in_list(prompt, list_copy, model, loop_limit)
+        answer = self.retry_llm(prompt, model, loop_limit)
 
         if self.verbose:
             print(f"Get Answer: {answer}")

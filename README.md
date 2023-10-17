@@ -153,12 +153,26 @@ Small save loads are usually finished in less than a second. Large loads depend 
 <br>
 <br>
 
-# Reference The Vault:
+# Reference:
 <p align="center">
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/5ae905b0-43d0-4b86-a965-5b447ee8c7de/Vector+Vault+Vault.jpg?content-type=image%2Fjpeg" width="60%" height="60%" />
 </p>
 
-From command line:
+
+In Python:
+```python
+similar_data = vault.get_similar("Your text input") 
+
+for result in similar_data:
+    print(result['data'])
+```
+>> NASA Mars Exploration... NASA To Host Briefing... Program studies Mars... A Look at a Steep North Polar...
+
+<br>
+<br>
+<br>
+
+The exact same call, but from command line:
 ```
 curl -X POST "https://api.vectorvault.io/get_similar" \
      -H "Content-Type: application/json" \
@@ -173,27 +187,7 @@ curl -X POST "https://api.vectorvault.io/get_similar" \
     
 <br>
 
-In Python:
-```python
-# The same exact call, but in Python:
-similar_data = vault.get_similar("Your text input") 
-
-for result in similar_data:
-    print(result['data'])
-```
->> NASA Mars Exploration... NASA To Host Briefing... Program studies Mars... A Look at a Steep North Polar...
-
-<br>
-    
-The metadata:
-```python
-print(similar_data[0]['metadata']) # printing from only the first result 
-```
->> {"created_at":"2023-05-29T19:21:20.846023","item_id":0,"name":"webdump-0","updated_at":"2023-05-29T19:21:20.846028"}
-
-<br>
-
-Printing the data and metadata together:
+Back to Python, here's how to print the data and metadata together:
 ```python
 for result in similar_data:
     print(result['data'])
@@ -205,18 +199,18 @@ for result in similar_data:
 <br>
 
 # Metadata Made Easy
-
+Metadata is important for knowing where your data came from, when it was made, and anything else you want to know about data you add to the Vault. The Vault is your vector database, and when you add data in it to be searched, the metadata will always come back with every search result. Add anything you want to the metadata and it will be permenantly saved.
 
 ```python
 # To add metadata to your vault, just include the meta as a parameter in `add()`. Meta is always a dict, and you can add any fields you want.
 
-meta = {
+metadata = {
     'name': 'Lifestyle in LA',
     'country': 'United States',
     'city': 'LA' 
 }
 
-vault.add(text, meta)
+vault.add(text, meta=metadata)
 
 vault.get_vectors()
 
@@ -248,7 +242,7 @@ print(similar_data[0]['metadata']['city'])
 
 <br>
 
-## Any Fields:
+## Add Any Fields:
 
 ```python
 # Add any fields you want to the metadata:
@@ -267,7 +261,7 @@ book_metadata = {
     'page_count': 328
 }
 
-vault.add(text, book_metadata)
+vault.add(text, meta=book_metadata)
 
 vault.get_vectors()
 

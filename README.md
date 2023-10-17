@@ -381,8 +381,7 @@ answer = vault.get_chat(question)
 <br>
 
 Get chat response from OpenAI's ChatGPT. 
-Rate limiting, auto retries, and chat histroy slicing auto-built-in so you can create complex chat capability without getting complicated. 
-Enter your text, optionally add chat history, and optionally choose a summary response instead (default: summmary=False)
+With built-in rate limiting, auto retries, and automatic chat histroy slicing, you can create complex chat capability without getting complicated. All you have to add is the text and Vector Vault takes care of the rest.
 
 <br>
 <br>

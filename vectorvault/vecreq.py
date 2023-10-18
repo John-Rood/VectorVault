@@ -57,6 +57,8 @@ def call_get_similar(user, vault, api_key, openai_key, text, num_items=4, includ
     response = requests.post(url, json=payload)
     return response.json()['results']
 
+def call_proj():
+    return 'vectorvault-361ab'
 
 def call_get_chat(user, vault, api_key, openai_key, text, history=None, summary=False, get_context=False, n_context=4, return_context=False, expansion=False, history_search=False, model='gpt-3.5-turbo', include_context_meta=False):
     url = "https://api.vectorvault.io/get_chat"

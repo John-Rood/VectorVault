@@ -25,7 +25,7 @@ from concurrent.futures import ThreadPoolExecutor
 from .cloudmanager import CloudManager
 from .ai import AI
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name
-from .vecreq import call_get_total_vectors, call_get_vaults, call_get_similar
+from .vecreq import call_get_similar
 from .tools_gpt import ToolsGPT
 
 
@@ -64,30 +64,37 @@ class Vault:
             Returns a list of vaults within the current vault directory 
         '''
         vault = self.vault if vault is None else vault
-        return call_get_vaults(self.user, self.api, vault)
+        return self.cloud_manager.list_vaults(vault)
 
     def get_total_items(self):
         '''
             Returns the total number of vectored items in the Vault
         '''
-        return call_get_total_vectors(self.user, self.vault, self.api)
+        self.check_index()
+        return self.vectors.get_n_items()
     
     def get_distance(self, id1, id2):
+        '''
+            Returns the distance between two vectors - item ids are needed to compare
+        '''
         self.check_index()
         return self.vectors.get_distance(id1, id2)
     
     def get_item_vector(self, item_id):
+        '''
+            Returns the vector from an item id
+        '''
         self.check_index()
         return self.vectors.get_item_vector(item_id)
     
     def save(self, trees=16):
         '''
-            Saves all the data added locally to the Cloud Vault. All Vault references are Cloud Vault references, so
-            to add data to the Vault and access it later, you must call add(), then get_vectors(), then save().
+            Saves all the data added locally to the Cloud. All Vault references are Cloud references.
+            To add data to your Vault and access it later, you must first call add(), then get_vectors(), and finally save().
         '''
         if self.saved_already == True:
             self.clear_cache()
-            print("The last save was aborted before build finished. Clearing cache to start again...")
+            print("The last save was aborted before the build process finished. Clearing cache to start again...")
         self.saved_already = True
         start_time = time.time()
         self.vectors.build(trees)
@@ -287,6 +294,7 @@ class Vault:
     def get_similar_local(self, text, n: int = 4, include_distances=False):
         '''
             Returns similar items from the Vault as the one you entered, but locally
+            (saves a few milliseconds and is sometimes used on production builds)
         '''
         vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
         return self.get_items_by_vector(vector, n, include_distances=include_distances)
@@ -295,8 +303,7 @@ class Vault:
         '''
             Returns similar items from the Vault as the text you enter.
             Sample print out when called:
-            `[{'data': 'Using Cloud Storage
-            with Cloud Run requires some techniques...', 
+            `[{'data': 'sample_data__sample_data...', 
             'metadata': {'name': '', 'item_id': 1, 'created_at':
             '2023-07-16T04:29:00.730754', 'updated_at': '2023-07-16T04:29:00.730758'},
             'distance': 0.7101698517799377}]`

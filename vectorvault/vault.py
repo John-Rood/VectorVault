@@ -32,7 +32,8 @@ from .tools_gpt import ToolsGPT
 class Vault:
     def __init__(self, user: str = None, api_key: str = None, vault: str = None, openai_key: str = None, dims: int = 1536, verbose: bool = False):
         if openai_key:
-            openai.api_key = openai_key
+            self.openai_key = openai_key
+            openai.api_key = self.openai_key
         self.vault = vault.strip() if vault else 'home'
         self.vectors = get_vectors(dims)
         self.api = api_key
@@ -273,7 +274,7 @@ class Vault:
                 if self.verbose == True:
                     print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
 
-            return results
+            return {"results": results}
         else:
             results = []
             vecs, distances = self.vectors.get_nns_by_vector(vector, n, include_distances=include_distances)
@@ -289,7 +290,7 @@ class Vault:
                 if self.verbose == True:
                     print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
 
-            return results
+            return {"results": results}
 
     def get_similar_local(self, text, n: int = 4, include_distances=False):
         '''
@@ -317,7 +318,7 @@ class Vault:
 
 
         '''
-        return call_get_similar(self.user, self.vault, self.api, text, n, include_distances=include_distances)
+        return call_get_similar(self.user, self.vault, self.api, self.openai_key, text, n, include_distances=include_distances)
 
     def add_item(self, text: str, meta: dict = None, name: str = ''):
         """

@@ -55,6 +55,7 @@ def call_get_similar(user, vault, api_key, openai_key, text, num_items=4, includ
         'num_items': num_items
     }
     response = requests.post(url, json=payload)
+    print(response.json())
     return response.json()['results']
 
 def call_proj():

@@ -190,17 +190,21 @@ class Vault:
 
     def split_text(self, text, min_threshold=1000, max_threshold=16000):
         '''
-            Internal function 
+        Internal function
+        Splits the given text into chunks of sentences such that each chunk's length 
+        is at least min_threshold characters but does not exceed max_threshold characters.
+        Sentences are not broken mid-way.
         '''
         segments = []
         sentence_spans = list(re.finditer(r"(?<=[.!?])\s+", text))
-
+        
         current_segment = []
         current_length = 0
-
         sentence_start = 0
+
         for sentence_span in sentence_spans:
             sentence = text[sentence_start:sentence_span.end()]
+
             if current_length + len(sentence) > max_threshold:
                 if current_segment:
                     segments.append(" ".join(current_segment))
@@ -217,16 +221,18 @@ class Vault:
 
             sentence_start = sentence_span.end()
 
+        # Add the remaining sentences or partial sentences to the last segment
         last_sentence = text[sentence_start:]
         if last_sentence:
             current_segment.append(last_sentence)
-
-        if current_segment:
+        
+        # Ensure that even the last segment is long enough if there are prior segments
+        if current_segment and (current_length >= min_threshold or not segments):
             segments.append(" ".join(current_segment))
 
-        if self.verbose == True:
+        if self.verbose:
             print(f'New text chunk of size: {len(current_segment)}') 
-
+        
         return segments
     
     def get_items(self, ids: list = []) -> list:

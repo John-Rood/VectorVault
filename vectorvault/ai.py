@@ -25,7 +25,7 @@ class AI:
                 if history:
                     intokes = self.get_tokens(user_input)
                     tokes_left = max_tokens - intokes
-                    chars_left = int(tokes_left * 4)
+                    chars_left = int(tokes_left * 3)
                     history = history[-chars_left:]
                 else: # no history. If it was overlimit, then it was taken care of above
                     pass
@@ -70,9 +70,9 @@ class AI:
 
         Additional Context: {context}
 
-        Question: {content}
+        Main Question: {content}
 
-        (Answer the question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
+        (Answer the Main Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
         Answer:""" 
 
         max_tokens = max_tokens * 4 if model == 'gpt-3.5-turbo-16k' else max_tokens
@@ -88,11 +88,11 @@ class AI:
             if (intokes + contokes + histokes + promptokes) > max_tokens * .9:
                 tokes_left = max_tokens - intokes
                 if len(history) > 1:
-                    tokes_left = (max_tokens/2) - intokes 
-                    char_left = int(tokes_left * 4)
+                    tokes_left = (max_tokens) - intokes 
+                    char_left = int(tokes_left * 3)
                     history = history[-char_left:]
                     tokes_left_after_hist = max_tokens - self.get_tokens(user_input + history)
-                    char_left_after_hist = int(tokes_left_after_hist * 4)
+                    char_left_after_hist = int(tokes_left_after_hist * 3)
                     context = context[-char_left_after_hist:]
                     double_check = self.get_tokens(user_input+history+context+prompt_template)
                     if double_check > max_tokens: 
@@ -102,7 +102,7 @@ class AI:
                         remove_from_context = int(context_length - char_to_take_away)
                         context = context[-remove_from_context:] 
                 else:
-                    char_left = int(tokes_left * 4) 
+                    char_left = int(tokes_left * 3) 
                     context = context[-char_left:]
                     double_check = self.get_tokens(user_input + context)
                     if double_check > max_tokens:
@@ -180,6 +180,11 @@ class AI:
                         
                     
     def llm_w_context_stream(self, user_input = None, context = None, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
+        '''
+            Want to make a custom prompt? Make sure you add "{history}, {context}, and {content}" fields to the custom promp,
+            and make sure to still enter the user_input and history variables in the function call.
+        '''
+        
         prompt_template = custom_prompt if custom_prompt else """
         Use the following Context to answer the Question at the end. 
         Answer as if you were the modern voice of the context, without referencing the context or mentioning 
@@ -189,9 +194,9 @@ class AI:
 
         Additional Context: {context}
 
-        Question: {content}
+        Main Question: {content}
 
-        (Respond to the Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
+        (Respond to the Main Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
         Answer:""" 
 
         max_tokens = max_tokens * 4 if model == 'gpt-3.5-turbo-16k' else max_tokens
@@ -207,10 +212,10 @@ class AI:
                 tokes_left = max_tokens - intokes
                 if len(history) > 1:
                     tokes_left = (max_tokens/2) - intokes 
-                    char_left = int(tokes_left * 4)
+                    char_left = int(tokes_left * 3)
                     history = history[-char_left:]
                     tokes_left_after_hist = max_tokens - self.get_tokens(user_input + history)
-                    char_left_after_hist = int(tokes_left_after_hist * 4)
+                    char_left_after_hist = int(tokes_left_after_hist * 3)
                     context = context[-char_left_after_hist:]
                     double_check = self.get_tokens(user_input+history+context+prompt_template)
                     if double_check > max_tokens: 
@@ -220,7 +225,7 @@ class AI:
                         remove_from_context = int(context_length - char_to_take_away)
                         context = context[-remove_from_context:] 
                 else:
-                    char_left = int(tokes_left * 4) 
+                    char_left = int(tokes_left * 3) 
                     context = context[-char_left:]
                     double_check = self.get_tokens(user_input + context)
                     if double_check > max_tokens:

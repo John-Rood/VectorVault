@@ -258,39 +258,39 @@ class Vault:
         '''
             Internal function that returns vector similar items. Requires input vector, returns similar items
         '''
-        self.load_vectors()
-        start_time = time.time()
-
-        if not include_distances:
-            results = []
-            vecs = self.vectors.get_nns_by_vector(vector, n)
-            for vec in vecs:
-                # Retrieve the item
-                item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, vec, self.user, self.api, item=True))
-                # Retrieve the metadata
-                meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, vec, self.user, self.api, meta=True))
-                meta = json.loads(meta_data)
-                build_return(results, item_data, meta)
-                if self.verbose == True:
-                    print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
-
-            return {"results": results}
-        else:
-            results = []
-            vecs, distances = self.vectors.get_nns_by_vector(vector, n, include_distances=include_distances)
-            counter = 0
-            for vec in vecs:
-                # Retrieve the item
-                item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, vec, self.user, self.api, item=True))
-                # Retrieve the metadata
-                meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, vec, self.user, self.api, meta=True))
-                meta = json.loads(meta_data)
-                build_return(results, item_data, meta, distances[counter])
-                counter+=1
-                if self.verbose == True:
-                    print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
-
-            return {"results": results}
+        try:
+            self.load_vectors()
+            start_time = time.time()
+            if not include_distances:
+                results = []
+                vecs = self.vectors.get_nns_by_vector(vector, n)
+                for vec in vecs:
+                    # Retrieve the item
+                    item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, vec, self.user, self.api, item=True))
+                    # Retrieve the metadata
+                    meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, vec, self.user, self.api, meta=True))
+                    meta = json.loads(meta_data)
+                    build_return(results, item_data, meta)
+                    if self.verbose == True:
+                        print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
+                return results
+            else:
+                results = []
+                vecs, distances = self.vectors.get_nns_by_vector(vector, n, include_distances=include_distances)
+                counter = 0
+                for vec in vecs:
+                    # Retrieve the item
+                    item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, vec, self.user, self.api, item=True))
+                    # Retrieve the metadata
+                    meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, vec, self.user, self.api, meta=True))
+                    meta = json.loads(meta_data)
+                    build_return(results, item_data, meta, distances[counter])
+                    counter+=1
+                    if self.verbose == True:
+                        print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
+                return results
+        except:
+            return [{'data': "No data has been added", 'metadata': "No metadata has been added"}]
 
     def get_similar_local(self, text, n: int = 4, include_distances=False):
         '''
@@ -452,7 +452,7 @@ class Vault:
         if self.verbose == True:
             print("get vectors time --- %s seconds ---" % (time.time() - start_time))
 
-    def get_chat(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, custom_prompt=False):
+    def get_chat(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, custom_prompt=False, local=False):
         '''
             Chat get response from OpenAI's ChatGPT. 
             Models: ChatGPT = "gpt-3.5-turbo" • GPT4 = "gpt-4" 
@@ -590,10 +590,10 @@ class Vault:
                         if self.ai.get_tokens(user_input) > 4000:
                             user_input = user_input[-14000:]
                         if include_context_meta:
-                            context = self.get_similar(user_input, n=n_context)
+                            context = self.get_similar(user_input, n=n_context) if local == False else self.get_similar_local(user_input, n=n_context)
                             input_ = str(context)
                         else:
-                            context = self.get_similar(user_input, n=n_context)
+                            context = self.get_similar(user_input, n=n_context) if local == False else self.get_similar_local(user_input, n=n_context)
                             input_ = ''
                             for text in context:
                                 input_ += text['data']
@@ -620,7 +620,7 @@ class Vault:
         elif return_context == True:
             return {'response': response, 'context': context}
         
-    def get_chat_stream(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, metatag=False, metatag_prefixes=False, metatag_suffixes=False, custom_prompt=False):
+    def get_chat_stream(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, metatag=False, metatag_prefixes=False, metatag_suffixes=False, custom_prompt=False, local=False):
         '''
             Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream().
             cloud_stream() is for cloud functions, like a flask app serving a front end elsewhere.
@@ -749,10 +749,10 @@ class Vault:
                         if self.ai.get_tokens(user_input) > 4000:
                             user_input = user_input[-14000:]
                         if include_context_meta:
-                            context = self.get_similar(user_input, n=n_context)
+                            context = self.get_similar(user_input, n=n_context) if local == False else self.get_similar_local(user_input, n=n_context)
                             input_ = str(context)
                         else:
-                            context = self.get_similar(user_input, n=n_context)
+                            context = self.get_similar(user_input, n=n_context) if local == False else self.get_similar_local(user_input, n=n_context)
                             input_ = ''
                         for text in context:
                             input_ += text['data']

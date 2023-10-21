@@ -1,7 +1,7 @@
 import requests
 import hashlib
 import json
-
+from requests.exceptions import JSONDecodeError
 
 def call_name_vecs(vault, user_id, api_key, bytesize=None):
     url = f'https://vectors.vectorvault.io/name_vecs'
@@ -58,7 +58,7 @@ def call_buildpath(v, x, user_id, api_key, bytesize=None):
         raise Exception(f"HTTP error: {e}")
     
 
-def call_get_similar(user, vault, api_key, openai_key, text, num_items=4, include_distances=False):
+def call_get_similar(user, vault, api_key, openai_key, text, num_items=4, include_distances=False, verbose=False):
     url = f"https://api.vectorvault.io/get_similar"
     payload = {
         'user': user,
@@ -70,8 +70,15 @@ def call_get_similar(user, vault, api_key, openai_key, text, num_items=4, includ
         'num_items': num_items
     }
     response = requests.post(url, json=payload)
-    print(response.json())
-    return response.json()['results']
+    
+    try:
+        if verbose==True:
+            print(response.json())
+        results = response.json().get('results')
+        return results
+    except JSONDecodeError:
+        print(f"Unexpected response: {response.status_code} | {response.text}")
+        return []
 
 
 def call_proj():

@@ -267,7 +267,7 @@ class Vault:
         try:
             self.load_vectors()
             start_time = time.time()
-            if not include_distances:
+            if include_distances == False:
                 results = []
                 vecs = self.vectors.get_nns_by_vector(vector, n)
                 for vec in vecs:
@@ -296,7 +296,7 @@ class Vault:
                         print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
                 return results
         except:
-            return [{'data': "No data has been added", 'metadata': "No metadata has been added"}]
+            return [{'data': 'No data has been added', 'metadata': {'no meta': 'No metadata has been added'}}]
 
     def get_similar_local(self, text, n: int = 4, include_distances=False):
         '''
@@ -324,7 +324,7 @@ class Vault:
 
 
         '''
-        return call_get_similar(self.user, self.vault, self.api, self.openai_key, text, n, include_distances=include_distances)
+        return call_get_similar(self.user, self.vault, self.api, self.openai_key, text, n, include_distances=include_distances, verbose=self.verbose)
 
     def add_item(self, text: str, meta: dict = None, name: str = ''):
         """
@@ -371,7 +371,7 @@ class Vault:
         if self.verbose == True:
             print("add item time --- %s seconds ---" % (time.time() - start_time))
 
-    def process_batch(self, batch_text_chunks, never_stop, loop_timeout):
+    def process_batch(self, batch_text_chunks, never_stop, loop_timeout, engine):
         '''
             Internal function
         '''
@@ -379,72 +379,44 @@ class Vault:
         exceptions = 0
         while True:
             try:
-                res = openai.Embedding.create(input=batch_text_chunks, engine="text-embedding-ada-002")
+                res = openai.Embedding.create(input=batch_text_chunks, engine=engine)
                 break
             except Exception as e:
-                print(f"API Error: {e}. Sleeping 5 seconds")
-                time.sleep(5)
+                last_exception_time = time.time()
+                exceptions = 1 if time.time() - last_exception_time > 180 else + 1
+                print(f"API Error: {e}. Sleeping {(exceptions * 5)} seconds")
+                time.sleep((exceptions * 5))
+
                 if not never_stop or (time.time() - loop_start_time) > loop_timeout:
                     try:
-                        res = openai.Embedding.create(input=batch_text_chunks, engine="text-embedding-ada-002")
+                        res = openai.Embedding.create(input=batch_text_chunks, engine=engine)
                         break
                     except Exception as e:
                         if exceptions >= 5:
-                            print(f"API Failed too many times, exiting loop: {e}.")
+                            print(f"API has failed for too long. Exiting loop with error: {e}.")
                             break
                         raise TimeoutError("Loop timed out")
         return [record['embedding'] for record in res['data']]
-
-    def get_vectors(self, batch_size: int = 32, never_stop: bool = False, loop_timeout: int = 180):
+    
+    
+    def get_vectors(self, batch_size: int = 32, never_stop: bool = False, loop_timeout: int = 777, model="text-embedding-ada-002"):
         '''
-            Takes text data added to the vault, and gets vectors for them
+        Takes text data added to the vault, and gets vectors for them
         '''
         start_time = time.time()
-        if not self.last_time:
-            self.last_time = start_time - 1
-        
-        if not self.needed_sleep_time:
-            self.needed_sleep_time = 0
-        
-        deduction = self.needed_sleep_time - (time.time() - self.last_time)
-        self.needed_sleep_time = deduction if deduction > 0 else 0
-        time.sleep(self.needed_sleep_time)
-        
-        texts = []
-        text_len = 0
-        for item in self.items:
-            text = item['text']
-            text_len += self.ai.get_tokens(text)
-            texts.append(text)
-        num_batches = int(np.ceil(len(texts) / batch_size))
 
-        # Prepare the text chunks for all batches
+        # If last_time isn't set, assume it's a very old time (e.g., 10 minutes ago)
+        if not self.last_time:
+            self.last_time = start_time - 600
+
+        texts = [item['text'] for item in self.items]
+        num_batches = int(np.ceil(len(texts) / batch_size))
         batches_text_chunks = [
             texts[i * batch_size:min((i + 1) * batch_size, len(texts))]
             for i in range(num_batches)
         ]
-        # max 350,000 tokens per minute - max requests per minute = 3500
-        if self.first_run == False:
-            trip_time = float(start_time - self.last_time)
-            req_min = 60 / trip_time # 1 min (60) / time between requests (trip_time)
-            projected_tokens_per_min = req_min * text_len
-            rate_ratio = projected_tokens_per_min / 350000
-            if self.verbose == True:
-                print(f'Projected Tokens per min:{projected_tokens_per_min} | Rate Limit Ratio: {rate_ratio} | Text Length: {text_len}')
-            # 1 min divided by the cap per min and the total we are sending now and factor in the last trip time
-            self.needed_sleep_time = 60 / (350000 / text_len) - trip_time 
-            if self.needed_sleep_time < 0:
-                self.needed_sleep_time = 0
 
-            if self.verbose == True:
-                print(f"Sleep time needed to stay under Rate Limit: {self.needed_sleep_time}")
-            if req_min > 3500:
-                time.sleep(1)
-
-        # Process the batches in parallel using ThreadPoolExecutor
-        with ThreadPoolExecutor() as executor:
-            process_batch_with_params = lambda batch_text_chunks: self.process_batch(batch_text_chunks, never_stop, loop_timeout)
-            batch_embeddings_list = list(executor.map(process_batch_with_params, batches_text_chunks))
+        batch_embeddings_list = [self.process_batch(batch_text_chunk, never_stop=never_stop, loop_timeout=loop_timeout, engine=model) for batch_text_chunk in batches_text_chunks]
 
         current_item_index = 0
         for batch_embeddings in batch_embeddings_list:
@@ -453,10 +425,10 @@ class Vault:
                 self.vectors.add_item(item_index, embedding)
                 current_item_index += 1
 
-        self.last_time = start_time
-        self.first_run = False
-        if self.verbose == True:
+        self.last_time = time.time()
+        if self.verbose:
             print("get vectors time --- %s seconds ---" % (time.time() - start_time))
+
 
     def get_chat(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, custom_prompt=False, local=False):
         '''
@@ -493,8 +465,8 @@ class Vault:
             `print(vault_response['response'])` 
 
             # print context:
-            for item in vault_response['context']['results']:
-                print("\n\n", f"item {item['metadata']['item_index']}")
+            for item in answer['context']:
+                print("\n\n", f"item {item['metadata']['item_id']}")
                 print(item['data'])
 
             history_search is False by default skip adding the history of the conversation to the text input for similarity search (useful if history contains subject infomation useful for answering the new text input and the text input doesn't contain that info)
@@ -743,29 +715,31 @@ class Vault:
             while True:
                 try:
                     if summary and get_context == False:
-                        for word in self.ai.summarize_stream(segment, model=model, custom_prompt=custom_prompt):
-                            yield word
+                        try:
+                            for word in self.ai.summarize_stream(segment, model=model, custom_prompt=custom_prompt):
+                                yield word
+                        except Exception as e:
+                            raise e
                         yield '!END'
+                    
                     elif text and get_context and not summary:
                         user_input = segment + history if history_search else segment
-                        if self.ai.get_tokens(user_input) > 4000:
-                            user_input = user_input[-16000:]
-                        if self.ai.get_tokens(user_input) > 4000:
-                            user_input = user_input[-15000:]
-                        if self.ai.get_tokens(user_input) > 4000:
-                            user_input = user_input[-14000:]
-                        if include_context_meta:
-                            context = self.get_similar(user_input, n=n_context) if local == False else self.get_similar_local(user_input, n=n_context)
-                            input_ = str(context)
-                        else:
-                            context = self.get_similar(user_input, n=n_context) if local == False else self.get_similar_local(user_input, n=n_context)
-                            input_ = ''
+                        for limit in [16000, 15000, 14000]:
+                            if self.ai.get_tokens(user_input) > 4000:
+                                user_input = user_input[-limit]
+
+                        context = self.get_similar(user_input, n=n_context) if not local else self.get_similar_local(user_input, n=n_context)
+                        input_ = str(context) if include_context_meta else ''
                         for text in context:
                             input_ += text['data']
 
-                        if return_context: # send the ai stream, then the vault data
+                        try:
                             for word in self.ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt):
                                 yield word
+                        except Exception as e:
+                            raise e
+
+                        if return_context:
                             for item in context:
                                 if not metatag:
                                     for tag in item['metadata']:
@@ -780,14 +754,17 @@ class Vault:
                                                 yield str(metatag_prefixes[i]) + str(item['metadata'][f'{metatag[i]}'])
                                 yield item['data']
                             yield '!END'
-                        else: # No context return and just send back the ai stream only 
-                            for word in self.ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt):
-                                yield word
+                        else:
                             yield '!END'
-                    else: # Just a custom prompt
-                        for word in self.ai.llm_stream(segment, history, model=model, custom_prompt=custom_prompt):
-                            yield word
+
+                    else:
+                        try:
+                            for word in self.ai.llm_stream(segment, history, model=model, custom_prompt=custom_prompt):
+                                yield word
+                        except Exception as e:
+                            raise e
                         yield '!END'
+
                     break
                 except Exception as e:
                     exceptions += 1

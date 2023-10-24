@@ -298,12 +298,12 @@ class Vault:
         except:
             return [{'data': 'No data has been added', 'metadata': {'no meta': 'No metadata has been added'}}]
 
-    def get_similar_local(self, text, n: int = 4, include_distances=False):
+    def get_similar_local(self, text, n: int = 4, include_distances=False, model="text-embedding-ada-002"):
         '''
             Returns similar items from the Vault as the one you entered, but locally
             (saves a few milliseconds and is sometimes used on production builds)
         '''
-        vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
+        vector = self.process_batch([text], never_stop=False, loop_timeout=180, engine=model)[0]
         return self.get_items_by_vector(vector, n, include_distances=include_distances)
     
     def get_similar(self, text, n: int = 4, include_distances=False):
@@ -326,7 +326,7 @@ class Vault:
         '''
         return call_get_similar(self.user, self.vault, self.api, self.openai_key, text, n, include_distances=include_distances, verbose=self.verbose)
 
-    def add_item(self, text: str, meta: dict = None, name: str = ''):
+    def add_item(self, text: str, meta: dict = None, name: str = None):
         """
             If your text length is greater than 15000 characters, you should use Vault.split_text(your_text) to 
             get a list of text segments that are the right size
@@ -336,7 +336,7 @@ class Vault:
         self.items.append(new_item)
         self.x += 1
 
-    def add(self, text: str, meta: dict = None, name: str = '', split=False, split_size=1000):
+    def add(self, text: str, meta: dict = None, name: str = None, split=False, split_size=1000):
         """
             If your text length is greater than 4000 tokens, Vault.split_text(your_text)  
             will automatically be added
@@ -371,7 +371,7 @@ class Vault:
         if self.verbose == True:
             print("add item time --- %s seconds ---" % (time.time() - start_time))
 
-    def process_batch(self, batch_text_chunks, never_stop, loop_timeout, engine):
+    def process_batch(self, batch_text_chunks, never_stop, loop_timeout, engine="text-embedding-ada-002"):
         '''
             Internal function
         '''

@@ -18,30 +18,32 @@ from annoy import AnnoyIndex
 import threading
 from copy import deepcopy
 import datetime
+import time
 
 def itemize(vault, x, meta=None, text=None, name=None):
     meta = deepcopy(meta) if meta else {}
-    if 'name' not in meta and name is not None:
+    # If 'name' is not present in meta but name is provided
+    if not meta.get('name') and name:
         meta['name'] = name
-    elif name is None:
+    # If 'name' is not present in meta and name is not provided 
+    elif not meta.get('name') and not name:
         meta['name'] = f'{vault}-{x}'
+
     metaize(meta, name, x)
-    return package(text, meta)
+    return package(text, meta)  
     
 def metaize(meta, name, x):
     meta['name'] = meta.get('name', name)
     meta['item_id'] = x  
-    if 'created_at' not in meta:
-        meta['created_at'] = datetime.datetime.utcnow().isoformat()
-    if 'updated_at' not in meta:
-        meta['updated_at'] = datetime.datetime.utcnow().isoformat()
+    if 'created' not in meta:
+        meta['created'] = datetime.datetime.utcnow().isoformat()
+    if 'updated' not in meta:
+        meta['updated'] = datetime.datetime.utcnow().isoformat()
+    meta['time'] = time.time()
 
 def package(text, meta):
-    item = {
-        "text": text,
-        "meta": meta
-    }
-    return item
+    return {'text': text, 'meta': meta}
+
 
 def append_path_suffix(base_path, is_item, is_meta):
     if is_item:

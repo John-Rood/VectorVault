@@ -85,4 +85,63 @@ class CloudManager:
                     future.result()
                 except Exception as e:
                     print(f"Failed to delete blob: {e}")
+    
+    def delete_item(self, item):
+        item_path = self.cloud_name(self.vault, item, self.user, self.api, item=True)
+        meta_path = self.cloud_name(self.vault, item, self.user, self.api, meta=True)
+        blob = self.cloud.blob(item_path)
+        if blob.exists(self.storage_client):
+            blob.delete()
+        else:
+            print(f"Item at path {item_path} does not exist.")
+        blob = self.cloud.blob(meta_path)
+        if blob.exists(self.storage_client):
+            blob.delete()
+        else:
+            print(f"Item metadata at path {meta_path} does not exist.")
+    
+    def rename_item(self, old_item : int, new_item : int):
+        old_path = self.cloud_name(self.vault, old_item, self.user, self.api, item=True)
+        new_path = self.cloud_name(self.vault, new_item, self.user, self.api, item=True)
+        old_meta_path = self.cloud_name(self.vault, old_item, self.user, self.api, meta=True)
+        new_meta_path = self.cloud_name(self.vault, new_item, self.user, self.api, meta=True)
         
+        old_blob = self.cloud.blob(old_path)
+        new_blob = self.cloud.blob(new_path)
+        old_meta_blob = self.cloud.blob(old_meta_path)
+        new_meta_blob = self.cloud.blob(new_meta_path)
+        
+        if old_blob.exists(self.storage_client):
+            self.cloud.copy_blob(old_blob, self.cloud, new_blob.name)
+            old_blob.delete()
+        else:
+            print(f"Item at path {old_path} does not exist.")
+        if old_meta_blob.exists(self.storage_client):
+            meta_data_string = old_meta_blob.download_as_string()
+            meta_data = json.loads(meta_data_string)
+            meta_data['item_id'] -= 1
+            new_meta_blob.upload_from_string(json.dumps(meta_data))
+            old_meta_blob.delete()
+        else:
+            print(f"Item at path {old_path} does not exist.")
+            
+    def delete_and_rename_all_items_after(self, item_id):
+        # Delete the specified item
+        self.delete_item(item_id)
+        
+        # Start renaming subsequent items
+        current_item_id = item_id + 1
+        while True:
+            next_item_id = current_item_id - 1
+            
+            # Check if the current item exists
+            current_item_path = self.cloud_name(self.vault, current_item_id, self.user, self.api, item=True)
+            current_blob = self.cloud.blob(current_item_path)
+            
+            if current_blob.exists(self.storage_client):
+                # Rename the current item to next_item_id
+                self.rename_item(current_item_id, next_item_id)
+                current_item_id += 1
+            else:
+                # If the blob doesn't exist, break out of the loop
+                break

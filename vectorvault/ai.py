@@ -1,12 +1,13 @@
 import openai
 import tiktoken
+stock_sys_msg = "You are an AI assistant that excels at following instructions exactly."
 
 class AI:
     def __init__(self) -> None:
         pass
 
     # This function returns a ChatGPT completion based on a provided input.
-    def llm(self, user_input: str = None, history: str = None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
+    def llm(self, user_input: str = None, history: str = None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False, temperature=0):
         '''
             If you pass in a custom_prompt with content already fully filled in, and no user_input, 
             it will process your custom_prompt only without changing       
@@ -36,6 +37,7 @@ class AI:
                 prompt = history_prompt + "\n\n" + prompt
                 response = openai.ChatCompletion.create(
                     model=model,
+                    temperature=temperature,
                     messages=[
                         {"role": "user", "content": f"{prompt}"}]
                 )
@@ -46,6 +48,7 @@ class AI:
                 # Each object has a 'role' that can be either 'system', 'user', or 'assistant', and then 'content' is the actual content of the message.
                 response = openai.ChatCompletion.create(
                     model=model,
+                    temperature=temperature,
                     messages=[{"role": "user", "content": f"{prompt}"}]
                 )
                 return response['choices'][0]['message']['content']
@@ -53,27 +56,67 @@ class AI:
             if custom_prompt:
                 response = openai.ChatCompletion.create(
                     model=model,
+                    temperature=temperature,
                     messages=[{"role": "user", "content": f"{custom_prompt}"}]
                 )
                 return response['choices'][0]['message']['content']
             else:
                 raise 'Error: Need custom_prompt if no user_input'
             
-                    
-    def llm_w_context(self, user_input = None, context = None, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
+    def llm_sys(self, content = None, system_message = stock_sys_msg, model='gpt-3.5-turbo', max_tokens=4000, temperature=0):
+        tokens = self.get_tokens(f"{content} {system_message}")
+        if tokens > max_tokens:
+            raise f"Too many tokens: {tokens}"
+        response = openai.ChatCompletion.create(
+            model=model,
+            temperature=temperature,
+            messages=[{
+                    "role": "system",
+                    "content": system_message
+                },
+                {
+                    "role": "user",
+                    "content": content
+                }])
+        return response['choices'][0]['message']['content']
+    
+    def llm_instruct(self, content = str, instructions = str, system_message = stock_sys_msg, model='gpt-3.5-turbo', max_tokens=4000, temperature=0):
+        '''
+            Give instructions on what to do with the content.
+            Usually someone will process content, and the instructions tell how to process it.
+        '''
+        tokens = self.get_tokens(f"{content} {system_message}")
+        if tokens > max_tokens:
+            raise f"Too many tokens: {tokens}"
+        response = openai.ChatCompletion.create(
+            model=model,
+            temperature=temperature,
+            messages=[{
+                    "role": "system",
+                    "content": system_message
+                },
+                {
+                    "role": "user",
+                    "content": f'''Follow this instructions you are provided in order to properly process the following content
+Content: {content}
+Instructions: {instructions}'''
+                }])
+        return response['choices'][0]['message']['content']
+
+    def llm_w_context(self, user_input = None, context = None, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False, temperature=0):
         prompt_template = custom_prompt if custom_prompt else """
-        Use the following Context to answer the Question at the end. 
-        Answer as if you were the modern voice of the context, without referencing the context or mentioning 
-        the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
+Use the following Context to answer the Question at the end. 
+Answer as if you were the modern voice of the context, without referencing the context or mentioning 
+the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
 
-        Chat History (if any): {history}
+Chat History (if any): {history}
 
-        Additional Context: {context}
+Additional Context: {context}
 
-        Main Question: {content}
+Main Question: {content}
 
-        (Answer the Main Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
-        Answer:""" 
+(Answer the Main Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
+Answer:""" 
 
         max_tokens = max_tokens * 4 if model == 'gpt-3.5-turbo-16k' else max_tokens
         max_tokens = max_tokens * 8 if model == 'gpt-4-32k' else max_tokens
@@ -118,13 +161,14 @@ class AI:
 
         response = openai.ChatCompletion.create(
             model=model,
+            temperature=temperature,
             messages=[
                 {"role": "user", "content": f"{prompt}"}],
         )
         return response['choices'][0]['message']['content']
 
 
-    def llm_stream(self, user_input = None, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
+    def llm_stream(self, user_input = None, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False, temperature=0):
         '''
             Stream version of "llm"
         '''
@@ -154,6 +198,7 @@ class AI:
             prompt = history_prompt + "\n\n" + prompt
             response = openai.ChatCompletion.create(
                 model=model,
+                temperature=temperature,
                 messages=[
                     {"role": "user", "content": f"{prompt}"}]
             )
@@ -167,6 +212,7 @@ class AI:
         else: # make no changes, and return response to custom_prompt
             response = openai.ChatCompletion.create(
                 model=model,
+                temperature=temperature,    
                 messages=[{"role": "user", "content": f"{custom_prompt}"}],
                 stream=True
             )
@@ -179,25 +225,25 @@ class AI:
                         yield content
                         
                     
-    def llm_w_context_stream(self, user_input = None, context = None, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False):
+    def llm_w_context_stream(self, user_input = None, context = None, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False, temperature=0):
         '''
             Want to make a custom prompt? Make sure you add "{history}, {context}, and {content}" fields to the custom promp,
             and make sure to still enter the user_input and history variables in the function call.
         '''
         
         prompt_template = custom_prompt if custom_prompt else """
-        Use the following Context to answer the Question at the end. 
-        Answer as if you were the modern voice of the context, without referencing the context or mentioning 
-        the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
+Use the following Context to answer the Question at the end. 
+Answer as if you were the modern voice of the context, without referencing the context or mentioning 
+the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
 
-        Chat History (if any): {history}
+Chat History (if any): {history}
 
-        Additional Context: {context}
+Additional Context: {context}
 
-        Main Question: {content}
+Main Question: {content}
 
-        (Respond to the Main Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
-        Answer:""" 
+(Respond to the Main Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
+Answer:""" 
 
         max_tokens = max_tokens * 4 if model == 'gpt-3.5-turbo-16k' else max_tokens
         max_tokens = max_tokens * 8 if model == 'gpt-4-32k' else max_tokens
@@ -240,6 +286,7 @@ class AI:
         
         response = openai.ChatCompletion.create(
             model=model,
+            temperature=temperature,
             messages=[
                 {"role": "user", "content": f"{prompt}"}],
             stream=True
@@ -253,20 +300,22 @@ class AI:
                     yield content
 
 
-    def summarize(self, user_input, model='gpt-3.5-turbo', custom_prompt=False):   
+    def summarize(self, user_input, model='gpt-3.5-turbo', custom_prompt=False, temperature=0):   
         prompt_template = custom_prompt if custom_prompt else """Summarize the following: {content}"""
         prompt = prompt_template.format(content=user_input)
         response = openai.ChatCompletion.create(
             model=model,
+            temperature=temperature,
             messages=[{"role": "user", "content": f"{prompt}"}]
         )
         return response['choices'][0]['message']['content']
 
-    def summarize_stream(self, user_input, model='gpt-3.5-turbo', custom_prompt=False):   
+    def summarize_stream(self, user_input, model='gpt-3.5-turbo', custom_prompt=False, temperature=0):   
         prompt_template = custom_prompt if custom_prompt else """Summarize the following: {content}"""
         prompt = prompt_template.format(content=user_input)
         response = openai.ChatCompletion.create(
             model=model,
+            temperature=temperature,
             messages=[{"role": "user", "content": f"{prompt}"}],
             stream = True
         )
@@ -278,12 +327,13 @@ class AI:
                         content = delta['content']
                         yield content
     
-    def smart_summary(self, text, previous_summary, model='gpt-3.5-turbo', custom_prompt=False):   
+    def smart_summary(self, text, previous_summary, model='gpt-3.5-turbo', custom_prompt=False, temperature=0):   
         prompt_template = custom_prompt if custom_prompt else """Given the previous summary: {previous_summary} 
-        Continue from where it leaves off by summarizing the next segment content: {content}"""
+Continue from where it leaves off by summarizing the next segment content: {content}"""
         prompt = prompt_template.format(previous_summary=previous_summary, content=text)
         response = openai.ChatCompletion.create(
             model=model,
+            temperature=temperature,
             messages=[{"role": "user", "content": f"{prompt}"}]
         )
         return response['choices'][0]['message']['content']

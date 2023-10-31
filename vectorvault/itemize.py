@@ -55,9 +55,7 @@ def append_path_suffix(base_path, is_item, is_meta):
     return f'{base_path}/{suffix}'
 
 def cloud_name(v, x, user_id, api_key, item=False, meta=False):
-    base_path = f'{v}/{x}'
-    t = threading.Thread(target=call_buildpath, args=(v, x, user_id, api_key))
-    t.start()
+    base_path = call_buildpath(v, x, user_id, api_key)
     final_path = append_path_suffix(base_path, item, meta)
     return final_path
 

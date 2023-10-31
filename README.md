@@ -14,50 +14,50 @@ See tutorials in the Examples folder. You don't need a Vector Vault API key to u
 <br>
 `from vectorvault import Vault` : import
 <br>
-`v = Vault(
+`vault = Vault(
   user='your_eamil', 
   api_key='your_api_key',
   openai_key='your_openai_api_key')` Create Vault Instance and Connect to OpenAI. *(Also call `verbose=True` to print all communications and notifications to the terminal while building)*
 <br>
-`v.add(text, meta=None, name='', split=False, split_size=1000)` : Loads data to be added to the Vault, with automatic text splitting for long texts. `text` is a text string. `meta` is a dictionary. *(`split=True` will split your text input, based on your `split_size`. For each split, a new item will be created. `name` parameter is a shortcut to adding a "name" field to the metadata. If you don't add a name or any metadata, generic info will be added for you. `text` is the only required input)*
+`vault.add(text, meta=None, name='', split=False, split_size=1000)` : Loads data to be added to the Vault, with automatic text splitting for long texts. `text` is a text string. `meta` is a dictionary. *(`split=True` will split your text input, based on your `split_size`. For each split, a new item will be created. `name` parameter is a shortcut to adding a "name" field to the metadata. If you don't add a name or any metadata, generic info will be added for you. `text` is the only required input)*
 <br>
-`v.get_vectors()` : Retrieves vectors embeddings for all loaded data. *(No parameters)*
+`vault.get_vectors()` : Retrieves vectors embeddings for all loaded data. *(No parameters)*
 <br>
-`v.save()` : Saves all loaded data with embeddings to the Vault (cloud), along with any metadata. *(No parameters)*
+`vault.save()` : Saves all loaded data with embeddings to the Vault (cloud), along with any metadata. *(No parameters)*
 <br>
-`v.delete()` : Deletes the current Vault and all contents. *(No parameters)*
+`vault.delete()` : Deletes the current Vault and all contents. *(No parameters)*
 <br>
-`v.get_vaults()` : Retrieves a list of Vaults within the current Vault directory. *(No parameters)*
+`vault.get_vaults()` : Retrieves a list of Vaults within the current Vault directory. *(No parameters)*
 <br>
-`v.get_similar(text, n)` : Retrieves similar texts from the Vault for a given input text - Processes vectors in the cloud. `text` is required. `n` is optional, default = 4.
+`vault.get_similar(text, n)` : Retrieves similar texts from the Vault for a given input text - Processes vectors in the cloud. `text` is required. `n` is optional, default = 4.
 <br>
-`v.get_similar_local(text, n)` : Retrieves similar texts from the Vault for a given input text - Processes vectors locally. `text` is required. `n` is optional, default = 4. Local version for speed optimized local production.
+`vault.get_similar_local(text, n)` : Retrieves similar texts from the Vault for a given input text - Processes vectors locally. `text` is required. `n` is optional, default = 4. Local version for speed optimized local production.
 <br>
-`v.get_total_items()` : Returns the total number of items in the Vault
+`vault.get_total_items()` : Returns the total number of items in the Vault
 <br>
-`v.clear_cache()` : Clears the cache for all the loaded items - *`add()` loads an item*
+`vault.clear_cache()` : Clears the cache for all the loaded items - *`add()` loads an item*
 <br>
-`v.get_items_by_vector(vector, n)` : Returns vector similar items. Requires input vector, returns similar items. `n` is number of items you want returned, default = 4
+`vault.get_items_by_vector(vector, n)` : Returns vector similar items. Requires input vector, returns similar items. `n` is number of items you want returned, default = 4
 <br>
-`v.get_distance(id1, id2)`  : For getting the vector distance between two items `id1` and `id2` in the Vault. 
+`vault.get_distance(id1, id2)`  : For getting the vector distance between two items `id1` and `id2` in the Vault. 
 <br>*Items can be retrieved from the Vault with a nearest neighbor search using `get_similar()` and the item_ids can be found in the metadata. Item_ids are numeric and sequential, so accessing all items in the Vault can be done by iterating from beginning to end - e.g. `for i in range vault.get_total_items():`*
 
-`v.get_item_vector(id)` : returns the vector for item `id` in the Vault.
+`vault.get_item_vector(id)` : returns the vector for item `id` in the Vault.
 <br>
-`v.get_items(ids)` : returns a list containing your item(s). `ids` is a list of ids, one or many
+`vault.get_items(ids)` : returns a list containing your item(s). `ids` is a list of ids, one or many
 <br>
-`v.cloud_stream(function)` : For cloud application yielding the chat stream, like a flask app. Called like *`v.cloud_stream(v.get_chat_stream('some_text'))`* in the return of a flask app.
+`vault.cloud_stream(function)` : For cloud application yielding the chat stream, like a flask app. Called like *`vault.cloud_stream(vault.get_chat_stream('some_text'))`* in the return of a flask app.
 <br>
-`v.print_stream(function)` : For locally printing the chat stream. Called like *`v.print_stream(v.get_chat_stream('some_text'))`*. You can also assign a variable to it like *`reply = v.print_stream()`*  It still streams to the console, but the final complete text will also be available in the *`reply`* variable.
+`vault.print_stream(function)` : For locally printing the chat stream. Called like *`vault.print_stream(vault.get_chat_stream('some_text'))`*. You can also assign a variable to it like *`reply = vault.print_stream()`*  It still streams to the console, but the final complete text will also be available in the *`reply`* variable.
 <br>
-`v.get_chat()` : Retrieves a response from ChatGPT, with parameters for handling conversation history, summarizing responses, and retrieving context-based responses that reference similar data in the vault. *(See dedicated section below on using this function and its' parameters)*
+`vault.get_chat()` : Retrieves a response from ChatGPT, with parameters for handling conversation history, summarizing responses, and retrieving context-based responses that reference similar data in the vault. *(See dedicated section below on using this function and its' parameters)*
 <br>
-`v.get_chat_stream()` : Retrieves a response from ChatGPT in stream format, with parameters for handling conversation history, summarizing responses, and retrieving context-based responses that reference similar data in the Vault. *(See dedicated section below on using this function and its' parameters)*
+`vault.get_chat_stream()` : Retrieves a response from ChatGPT in stream format, with parameters for handling conversation history, summarizing responses, and retrieving context-based responses that reference similar data in the Vault. *(See dedicated section below on using this function and its' parameters)*
 <br>
 <br>
 <br>
 
-### LLM Exclusive Tools (`v.tools`):
+### LLM Exclusive Tools (`vault.tools`):
 • `get_rating`:
  Useful to get a quality rating
 <br>
@@ -79,13 +79,13 @@ See tutorials in the Examples folder. You don't need a Vector Vault API key to u
 
 ```python
 # Tools example 1:
-number_out_of_ten = v.tools.get_rating('how does LeBron James compare to Michael Jordan')
+number_out_of_ten = vault.tools.get_rating('how does LeBron James compare to Michael Jordan')
 
 # Tools example 2: 
-this_or_that = v.tools.get_binary('should I turn right or left, 0 for right, 1 for left')
+this_or_that = vault.tools.get_binary('should I turn right or left, 0 for right, 1 for left')
 
 # Tools example 3: 
-answer = v.tools.get_yes_no('should I use Vector Vault to build my next AI project?')
+answer = vault.tools.get_yes_no('should I use Vector Vault to build my next AI project?')
 
 print(answer)
 ```

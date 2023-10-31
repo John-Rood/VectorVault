@@ -79,21 +79,21 @@ See tutorials in the Examples folder. You don't need a Vector Vault API key to u
 
 ```python
 # Tools example 1:
-number_out_of_ten = vault.tools.get_rating('how does LeBron James compare to Michael Jordan')
+number_out_of_ten = vault.tools.get_rating('How does LeBron James compare to Michael Jordan?')
 print(answer)
 ```
 >> 8
 
 ```python
 # Tools example 2: 
-this_or_that = vault.tools.get_binary('should I turn right or left, 0 for right, 1 for left')
+this_or_that = vault.tools.get_binary('Should I turn right or left?, 0 for right, 1 for left')
 print(answer)
 ```
 >> 0
 
 ```python
 # Tools example 3: 
-answer = vault.tools.get_yes_no('should I use Vector Vault to build my next AI project?')
+answer = vault.tools.get_yes_no('Should I use Vector Vault to build my next AI project?')
 print(answer)
 ```
 >> yes

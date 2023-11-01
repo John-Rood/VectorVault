@@ -57,53 +57,6 @@ See tutorials in the Examples folder. You don't need a Vector Vault API key to u
 <br>
 <br>
 
-### LLM Exclusive Tools (`vault.tools`):
-• `get_rating`:
- Useful to get a quality rating
-<br>
-• `get_yes_no`:
- Useful for getting a difinitive answer 
-<br>
-• `get_binary`:
- Useful for getting a definitive answer in 0/1 format
-<br>
-• `get_match`:
- Useful to get an exact match to a single option within a set of options -> in: (text and list of answers) -> out: (exact match to one answer in list of answer)
-<br>
-• `get_topic`:
- Useful to classify the topic of conversation
-<br>
-• `match_or_make`:
- Get a match to a list of options, or make a new one if unrelated
- Useful if you aren't sure if the input will match one of your existing list options, and need flexibility of creating a new one. When starting from an empty list. - will create it from scratch
-
-```python
-# Tools example 1:
-number_out_of_ten = vault.tools.get_rating('How does LeBron James compare to Michael Jordan?')
-print(answer)
-```
->> 8
-
-```python
-# Tools example 2: 
-this_or_that = vault.tools.get_binary('Should I turn right or left?, 0 for right, 1 for left')
-print(answer)
-```
->> 0
-
-```python
-# Tools example 3: 
-answer = vault.tools.get_yes_no('Should I use Vector Vault to build my next AI project?')
-print(answer)
-```
->> yes
-
-
-
-<br>
-<br>
-<br>
-
 # Install:
 <p align="center">
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/2acebcaa-f5dd-44c9-8bba-c10723bc7064/Vector+Vault+Vault+2000.png" width="60%" height="60%" />
@@ -140,6 +93,18 @@ vault.get_vectors()
 vault.save()
 ```
 
+That's all it takes to save your data to a cloud vector database. Now you can quickly search the database or use it as context for ChatGPT aka RAG (Retrieval Augmented Generation), like so:
+
+```python
+question = "Should I use Vector Vault for my next generative ai application?"
+
+answer = vault.get_chat(question, get_context=True)  
+
+print(answer)
+```
+>> Vector Vault simplifies the process of creating generative AI, making it a compelling choice for your next project involving generative AI. It's essential to consider your specific use cases and the technologies you're currently utilizing. Nevertheless, Vector Vault's seamless integration into various workflows and its ability to operate in a cloud-based environment make it an ideal solution for incorporating generative AI into any application. To achieve this, you can simply input your text into your Vector Vault implementation and retrieve the generated response. Additionally, you have the option to access the Vector Vault API directly from a JavaScript front-end interface, eliminating the need for setting up your own backend implementation. With these advantages in mind, Vector Vault is likely to streamline the development of your next generative AI application, making it faster and more straightforward.
+
+
 <br>
 <br>
 
@@ -155,7 +120,7 @@ vault.save()
 # these three lines execute fast and can be called mid-conversation before a reply
 ```
 Small save loads are usually finished in less than a second. Large loads depend on total data size. 
->> A test was done adding the full text of 37 books at once. The `get_vectors()` function took 8 minutes and 56 seconds. (For comparison, processing via OpenAI's standard embedding function, that you find in their documentation, would take two to three days)
+>> A 2000 page book (e.g. the Bible) would take ~30 seconds. A test was done adding 37 books. The `get_vectors()` function took 8 minutes and 56 seconds. (For comparison, processing via OpenAI's standard embedding function, that you can find in their documentation, would take over two days). This exponentially faster processing time is due to our built in concurrency and internal text uploading methods that are optimized for speed and have built-in rate limiting.
 
 <br>
 <br>
@@ -186,6 +151,7 @@ curl -X POST "https://api.vectorvault.io/get_similar" \
      -d '{
         "user": "your_username",
         "api_key": "your_api_key",
+        "openi_key": "your_openai_api_key",
         "vault": "your_vault_name",
         "text": "Your text input"
      }'
@@ -374,10 +340,59 @@ answer = vault.get_chat(question, get_context=True)
 # this will send to chatgpt only and not interact with the Vault in any way
 answer = vault.get_chat(question) 
 ```
+<br>
+<br>
+
+
+### LLM Exclusive Tools (`vault.tools`):
+• `get_rating: -> int`
+ Useful to get a quality rating (always True: `answer in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]`)
+<br>
+• `get_yes_no: -> 'yes' : 'no'`
+ Useful for getting a difinitive answer (always True: `answer == 'yes' or answer == 'no'`)
+<br>
+• `get_binary: -> 0 : 1`
+ Useful for getting a definitive answer in 0/1 format (always True: `answer == 0 or answer == 1`)
+<br>
+• `get_match: -> exact match to item in list`
+ Useful to get an exact match to a single option within a set of options -> in: (text and list of answers) -> out: (exact match to one answer in list of answer)
+<br>
+• `get_topic: -> 1 to 3 word descriptor`
+ Useful to classify the topic of conversation
+<br>
+• `match_or_make: -> exact match to item in list or creates new string to add to list`
+ Get a match to a list of options, or make a new one if unrelated
+ Useful if you aren't sure if the input will match one of your existing list options, and need flexibility of creating a new one. When starting from an empty list. - will create it from scratch
+
+```python
+# Tools example 1:
+number_out_of_ten = vault.tools.get_rating('How does LeBron James compare to Michael Jordan?')
+print(answer)
+```
+>> 8
+
+```python
+# Tools example 2: 
+this_or_that = vault.tools.get_binary('Should I turn right or left?, 0 for right, 1 for left')
+print(answer)
+```
+>> 0
+
+```python
+# Tools example 3: 
+answer = vault.tools.get_yes_no('Should I use Vector Vault to build my next AI project?')
+print(answer)
+```
+>> yes
+
 
 
 <br>
 <br>
+<br>
+
+
+
 
 # ChatGPT
 ## Use ChatGPT with `get_chat()` 

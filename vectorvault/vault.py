@@ -17,13 +17,15 @@ import numpy as np
 import tempfile
 import os
 import time
+import uuid
 import re
 import json
 import traceback
+from typing import Union, List
 from concurrent.futures import ThreadPoolExecutor
 from .cloudmanager import CloudManager
 from .ai import AI, openai
-from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name
+from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map
 from .vecreq import call_get_similar
 from .tools_gpt import ToolsGPT
 
@@ -45,11 +47,13 @@ class Vault:
         except Exception as e:
             print('API KEY NOT FOUND! Using Vault without cloud access. `get_chat()` will still work', e)
             # user can still use the get_chat() function without an api key
-            pass
+            self.cloud_manager = None
         self.user = user
         self.x = 0
         self.x_checked = False
         self.vecs_loaded = False
+        self.map = {}
+        self.mapping = 0
         self.items = []
         self.last_time = None
         self.last_chat_time = None
@@ -104,7 +108,7 @@ class Vault:
         with ThreadPoolExecutor() as executor:
             for item in self.items:
                 item_text, item_id, item_meta = get_item(item)
-                executor.submit(self.cloud_manager.upload, item_id, item_text, item_meta)
+                executor.submit(self.cloud_manager.upload, self.map.get(str(item_id)), item_text, item_meta)
                 total_saved_items += 1
 
         self.upload_vectors()
@@ -130,22 +134,23 @@ class Vault:
         # Clear the local vector data
         self.vectors = get_vectors(self.dims)
         self.items.clear()
-        self.x = 0
         self.cloud_manager.delete()
+        self.x = 0
         print('Vault deleted')
-
-    def delete_items(self, item_ids : list[int]) -> None:
+    
+    def remap(self, item_id):
+        for i in range(item_id, len(self.map) - 1):
+            self.map[str(i)] = self.map[str(i + 1)]
+        self.map.popitem()
+    
+    def delete_items(self, item_ids : Union[int, List[int]], trees = 16) -> None:
         '''
             Deletes one or more items from item_id(s) passed in.
-            item_ids is a list of one or more integers
+            item_ids is an int or a list of integers
         '''
-        if self.verbose:
-            print('Deleting item and rebuilding database...')
-
-        for item_id in item_ids:
-            self.load_vectors()
+        def rebuild_vectors(item_id):
+            '''Deletes target vector and rebuilds the database'''
             num_existing_items = self.vectors.get_n_items()
-            self.cloud_manager.delete_and_rename_all_items_after(item_id)
             new_index = get_vectors(self.dims)
             plus_one = 0
 
@@ -158,47 +163,51 @@ class Vault:
                     new_index.add_item(i - plus_one, vector)
 
             self.vectors = new_index
-            self.vectors.build(16)
+            self.vectors.build(trees)
             self.upload_vectors()
 
+        item_ids = [item_ids] if isinstance(item_ids, int) else item_ids
+        for item_id in item_ids:
+            self.load_vectors()
+            self.cloud_manager.delete_item(self.map[str(item_id)])
+            self.remap(item_id)
+            rebuild_vectors(item_id)
+
         if self.verbose:
             print(f'Item {item_id} deleted')
 
-    def edit_item(self, item_id : int) -> None:
+    def edit_item(self, item_id : int, new_text : str, metadata : dict = None, trees = 16) -> None:
         '''
-            Deletes one or more items from item_id(s) passed in.
-            item_ids is a list of one or more integers
+            Edits any item. Enter the new text and new vectors will automatically be created.
+            New data and vectors will be uploaded and the old data will be deleted
         '''
-        if self.verbose:
-            print('Editing item and rebuilding database...')
+        def edit_vector(item_id, new_vector):
+            '''Replaces old vector with new content vector'''
+            num_existing_items = self.vectors.get_n_items()
+            new_index = get_vectors(self.dims)
+
+            for i in range(num_existing_items):
+                if i == item_id:
+                    new_index.add_item(i, new_vector)
+                else: 
+                    vector = self.vectors.get_item_vector(i) 
+                    new_index.add_item(i, vector)
+
+            self.vectors = new_index
+            self.vectors.build(trees)
+            self.upload_vectors()
 
         self.load_vectors()
-        num_existing_items = self.vectors.get_n_items()
-        self.cloud_manager.delete_and_rename_all_items_after(item_id)
-        new_index = get_vectors(self.dims)
-        plus_one = 0
-        count = 0
+        self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, item=True), new_text)
+        edit_vector(item_id, self.process_batch([new_text], never_stop=False, loop_timeout=180)[0])
 
-        for i in range(num_existing_items):
-            if i == item_id:
-                # equals 0 until the item being deleting has been removed
-                plus_one += 1 
-            else: 
-                count += 1
-                vector = self.vectors.get_item_vector(i - plus_one) 
-                new_index.add_item(i - plus_one, vector)
-
-        self.vectors = new_index
-        self.vectors.build(16)
-        self.upload_vectors()
+        if metadata:
+            self.cloud_manager.upload_to_cloud(self.cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, meta=True), json.dumps(metadata))
 
         if self.verbose:
-            print(f'Item {item_id} deleted')
+            print(f'Item {item_id} edited')
 
     def check_index(self):
-        '''
-            Internal function use only
-        '''
         if not self.x_checked:
             start_time = time.time()
             if self.cloud_manager.vault_exists(name_vecs(self.vault, self.user, self.api)):
@@ -210,22 +219,39 @@ class Vault:
             if self.verbose:
                 print("initialize index --- %s seconds ---" % (time.time() - start_time))
 
+    def load_mapping(self):
+        '''Internal only!'''
+        try: # try to get the map
+            temp_file_path = self.cloud_manager.download_to_temp_file(name_map(self.vault, self.user, self.api))
+            with open(temp_file_path, 'r') as json_file:
+                self.map = json.load(json_file)
+            os.remove(temp_file_path)
+            if self.verbose:
+                print("mapping connected")
+        except: # it doesn't exist
+            if self.cloud_manager.vault_exists(name_vecs(self.vault, self.user, self.api)): # but if the vault does
+                self.map = {str(i): str(i) for i in range(self.vectors.get_n_items())}
+                if self.verbose:
+                    print("mapping 2 connected")
+            else: # otherwise no map
+                if self.verbose:
+                    print("mapping does not exist")
+
+    def add_to_map(self):
+        self.map[str(self.x)] = str(uuid.uuid4())
+        self.x +=1
+    
     def load_vectors(self):
-        '''
-            Internal function 
-        '''
         start_time = time.time()
         temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(self.vault, self.user, self.api))
         self.vectors.load(temp_file_path)
+        self.load_mapping()
         os.remove(temp_file_path)
         self.vecs_loaded = True
         if self.verbose:
             print("get load vectors --- %s seconds ---" % (time.time() - start_time))
     
     def reload_vectors(self):
-        '''
-            Internal function 
-        '''
         num_existing_items = self.vectors.get_n_items()
         new_index = get_vectors(self.dims)
         count = -1
@@ -235,20 +261,36 @@ class Vault:
             new_index.add_item(i, vector)
         self.x = count + 1
         self.vectors = new_index
-    
-    def upload_vectors(self):
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            self.vectors.save(temp_file.name)
-            byte = os.path.getsize(temp_file.name)
-            self.cloud_manager.upload_temp_file(temp_file.name, name_vecs(self.vault, self.user, self.api, byte))
 
+    def upload_vectors(self):
+        # upload the vectors
+        vector_temp_file_path = None
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            vector_temp_file_path = temp_file.name
+            self.vectors.save(vector_temp_file_path)
+            byte = os.path.getsize(vector_temp_file_path)
+            self.cloud_manager.upload_temp_file(vector_temp_file_path, name_vecs(self.vault, self.user, self.api, byte))
+
+        if os.path.exists(vector_temp_file_path):
+            os.remove(vector_temp_file_path)
+
+        # upload the map
+        map_temp_file_path = None
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+            map_temp_file_path = temp_file.name
+            json.dump(self.map, temp_file, indent=2)
+        
+        self.cloud_manager.upload_temp_file(map_temp_file_path, name_map(self.vault, self.user, self.api, byte))
+        if os.path.exists(map_temp_file_path):
+            os.remove(map_temp_file_path)
+            
         self.items.clear()
         self.vectors = get_vectors(self.dims)
         self.x_checked = False
         self.vecs_loaded = False
         self.saved_already = False
 
-    def split_text(self, text, min_threshold=1000, max_threshold=16000, summary=False, summary_final_length=1000):
+    def split_text(self, text, min_threshold=1000, max_threshold=16000):
         '''
         Internal function
         Splits the given text into chunks of sentences such that each chunk's length 
@@ -261,16 +303,6 @@ class Vault:
         current_segment = []
         current_length = 0
         sentence_start = 0
-        if summary: # generate a summary of the text being passed in, and add it to the text
-            summation = text # copy text into a variable that can change
-            while True: # start a loop to get summaries until it fits inside a single 1000 character window
-                summation = self.get_chat(summation, summary=True)
-                if len(summation) > summary_final_length:
-                    text = summation + "\n" + text # add the summary of the text to the front of the text
-                    # then keep looping, further summarizing the summary until the final summary is at the desired length
-                else:
-                    text = summation + "\n" + text # add the final summary to the front of the text
-                    break
 
         for sentence_span in sentence_spans:
             sentence = text[sentence_start:sentence_span.end()]
@@ -328,9 +360,9 @@ class Vault:
 
         for i in ids:
             # Retrieve the item
-            item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, i, self.user, self.api, item=True))
+            item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(i)], self.user, self.api, item=True))
             # Retrieve the metadata
-            meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, i, self.user, self.api, meta=True))
+            meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(i)], self.user, self.api, meta=True))
             meta = json.loads(meta_data)
             build_return(results, item_data, meta)
             if self.verbose:
@@ -354,9 +386,9 @@ class Vault:
                 vecs = self.vectors.get_nns_by_vector(vector, n)
                 for vec in vecs:
                     # Retrieve the item
-                    item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, vec, self.user, self.api, item=True))
+                    item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(vec)], self.user, self.api, item=True))
                     # Retrieve the metadata
-                    meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, vec, self.user, self.api, meta=True))
+                    meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(vec)], self.user, self.api, meta=True))
                     meta = json.loads(meta_data)
                     build_return(results, item_data, meta)
                     if self.verbose:
@@ -368,9 +400,9 @@ class Vault:
                 counter = 0
                 for vec in vecs:
                     # Retrieve the item
-                    item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, vec, self.user, self.api, item=True))
+                    item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(vec)], self.user, self.api, item=True))
                     # Retrieve the metadata
-                    meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, vec, self.user, self.api, meta=True))
+                    meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(vec)], self.user, self.api, meta=True))
                     meta = json.loads(meta_data)
                     build_return(results, item_data, meta, distances[counter])
                     counter+=1
@@ -416,9 +448,9 @@ class Vault:
         self.check_index()
         new_item = itemize(self.vault, self.x, meta, text, name)
         self.items.append(new_item)
-        self.x += 1
+        self.add_to_map()
 
-    def add(self, text: str, meta: dict = None, name: str = None, split=False, split_size=1000, generate_summary=False):
+    def add(self, text: str, meta: dict = None, name: str = None, split=False, split_size=1000, max_threshold=16000):
         """
             If your text length is greater than 4000 tokens, Vault.split_text(your_text)  
             will automatically be added
@@ -427,7 +459,7 @@ class Vault:
         if len(text) > 15000 or split:
             if self.verbose:
                 print('Using the built-in "split_text()" function to get a list of texts') 
-            texts = self.split_text(text, min_threshold=split_size, summary=generate_summary) # returns list of text segments
+            texts = self.split_text(text, min_threshold=split_size, max_threshold=max_threshold) # returns list of text segments
         else:
             texts = [text]
         for text in texts:
@@ -447,8 +479,7 @@ class Vault:
         # Add vector to vectorspace
         self.vectors.add_item(self.x, vector)
         self.items.append(itemize(self.vault, self.x, meta, text, name))
-
-        self.x += 1
+        self.add_to_map()
 
         if self.verbose:
             print("add item time --- %s seconds ---" % (time.time() - start_time))
@@ -611,8 +642,6 @@ class Vault:
                     inputs = text[-16000:]
             else:
                 inputs = [text]
-        else:
-            inputs = [text]
         response = ''
         for segment in inputs:
             start_time = time.time()
@@ -768,10 +797,12 @@ class Vault:
                     inputs = text[-16000:]
             else:
                 inputs = [text]
-        else:
-            inputs = [text]
         response = ''
+        counter = 0
         for segment in inputs:
+            if self.verbose:
+                print(f"segments: {len(inputs)}")
+            counter += 1
             start_time = time.time()
             if text:
                 seg_len = self.ai.get_tokens(segment)
@@ -801,7 +832,8 @@ class Vault:
                                 yield word
                         except Exception as e:
                             raise e
-                        yield '!END'
+                        if counter == len(inputs):
+                            yield '!END'
                     
                     elif text and get_context and not summary:
                         user_input = segment + history if history_search else segment

@@ -24,11 +24,11 @@ import traceback
 import random
 from typing import Union, List
 from concurrent.futures import ThreadPoolExecutor
-from cloudmanager import CloudManager
-from ai import AI, openai
-from itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map
-from vecreq import call_get_similar
-from tools_gpt import ToolsGPT
+from .cloudmanager import CloudManager
+from .ai import AI, openai
+from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map
+from .vecreq import call_get_similar
+from .tools_gpt import ToolsGPT
 
 
 class Vault:

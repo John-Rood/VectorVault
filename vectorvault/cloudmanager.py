@@ -16,9 +16,9 @@
 import tempfile
 import os
 import json
-from creds import CustomCredentials
-from vecreq import call_proj
-from itemize import cloud_name
+from .creds import CustomCredentials
+from .vecreq import call_proj
+from .itemize import cloud_name
 from google.cloud import storage
 from concurrent.futures import ThreadPoolExecutor, as_completed
 

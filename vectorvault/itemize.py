@@ -13,7 +13,7 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Vector Vault. See license for consent.import datetime 
 
-from vecreq import call_name_vecs, call_buildpath
+from .vecreq import call_name_vecs, call_buildpath
 from annoy import AnnoyIndex
 import threading
 from copy import deepcopy

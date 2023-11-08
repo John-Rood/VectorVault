@@ -21,13 +21,14 @@ import uuid
 import re
 import json
 import traceback
+import random
 from typing import Union, List
 from concurrent.futures import ThreadPoolExecutor
-from .cloudmanager import CloudManager
-from .ai import AI, openai
-from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map
-from .vecreq import call_get_similar
-from .tools_gpt import ToolsGPT
+from cloudmanager import CloudManager
+from ai import AI, openai
+from itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map
+from vecreq import call_get_similar
+from tools_gpt import ToolsGPT
 
 
 class Vault:
@@ -53,15 +54,12 @@ class Vault:
         self.x_checked = False
         self.vecs_loaded = False
         self.map = {}
-        self.mapping = 0
         self.items = []
         self.last_time = None
-        self.last_chat_time = None
-        self.first_run = True
-        self.needed_sleep_time = None
         self.saved_already = False
         self.ai = AI()
         self.tools = ToolsGPT(verbose=verbose)
+        self.rate_limiter = RateLimiter(max_attempts=30)
 
     def get_vaults(self, vault: str = None):
         '''
@@ -618,67 +616,32 @@ class Vault:
             ```
 
         '''
-
         model = model.lower()
         start_time = time.time()
-        if not self.last_chat_time:
-            self.last_chat_time = start_time - 20
-        
-        if not self.needed_sleep_time:
-            self.needed_sleep_time = 0
-        
         if not history:
             history = ''
-        
-        deduction = self.needed_sleep_time - (time.time() - self.last_chat_time)
-        self.needed_sleep_time = deduction if deduction > 0 else 0
-        time.sleep(self.needed_sleep_time)
 
         if text: 
-            if self.ai.get_tokens(text) > 4000:
+            if not self.ai.within_context_window(text, model):
                 if summary:
-                    inputs = self.split_text(text, 14500)
+                    inputs = self.split_text(text, self.ai.model_token_limits.get(model, 15000) * 3)
                 else:
-                    inputs = text[-16000:]
+                    inputs = text[-(self.ai.model_token_limits.get(model, 15000) * 3):]
             else:
                 inputs = [text]
         else:
             raise ValueError("No input text provided. Please enter text to proceed.")
+        
         response = ''
         for segment in inputs:
-            start_time = time.time()
-            if text:
-                seg_len = self.ai.get_tokens(segment)
-            else:
-                seg_len = len(custom_prompt)
-            # max 90,000 tokens per minute | max requests per minute = 3500
-            trip_time = float(start_time - self.last_chat_time)
-            req_min = 60 / trip_time # 1 min (60) / time between requests (trip_time)
-            projected_tokens_per_min = req_min * seg_len
-            rate_ratio = projected_tokens_per_min / 90000
-            if self.verbose:
-                print(f'Projected Tokens per min:{projected_tokens_per_min} | Rate Limit Ratio: {rate_ratio} | Text Length: {seg_len}')
-            # 1 min divided by the cap per min and the total we are sending now and factor in the last trip time
-            if seg_len == 0:
-                raise('No input. Add text input to continue')
-            self.needed_sleep_time = 60 / (90000 / seg_len) - trip_time 
-            if self.needed_sleep_time < 0:
-                self.needed_sleep_time = 0
-            if self.verbose:
-                print(f"Time calc'd to sleep: {self.needed_sleep_time}")
-            exceptions = 0
+            attempts = 0
             while True:
                 try:
+                    # Make your API call here
                     if summary and not get_context:
                         response += self.ai.summarize(segment, model=model, custom_prompt=custom_prompt)
                     elif text and get_context and not summary:
                         user_input = segment + history if history_search else segment
-                        if self.ai.get_tokens(user_input) > 4000:
-                            user_input = user_input[-16000:]
-                        if self.ai.get_tokens(user_input) > 4000:
-                            user_input = user_input[-15000:]
-                        if self.ai.get_tokens(user_input) > 4000:
-                            user_input = user_input[-14000:]
                         if include_context_meta:
                             context = self.get_similar(user_input, n=n_context) if not local else self.get_similar_local(user_input, n=n_context)
                             input_ = str(context)
@@ -690,17 +653,19 @@ class Vault:
                         response = self.ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt)
                     else: # Custom prompt only
                         response = self.ai.llm(segment, history, model=model, custom_prompt=custom_prompt)
+
+                    # If the call is successful, reset the backoff
+                    self.rate_limiter.on_success()
                     break
                 except Exception as e:
-                    exceptions += 1
+                    # If the call fails, apply the backoff
+                    attempts += 1
                     print(traceback.format_exc())
-                    print(f"API Error: {e}. Sleeping 5 seconds")
-                    if exceptions >= 5:
+                    print(f"API Error: {e}. Backing off for {self.rate_limiter.current_delay} seconds.")
+                    self.rate_limiter.on_failure()
+                    if attempts >= self.rate_limiter.max_attempts:
                         print(f"API Failed too many times, exiting loop: {e}.")
                         break
-                    time.sleep(5)
-                    
-            self.last_chat_time = start_time
 
         if self.verbose:
             print("get chat time --- %s seconds ---" % (time.time() - start_time))
@@ -778,25 +743,15 @@ class Vault:
 
         model = model.lower()
         start_time = time.time()
-        if not self.last_chat_time:
-            self.last_chat_time = start_time - 20
-        
-        if not self.needed_sleep_time:
-            self.needed_sleep_time = 0
-        
         if not history:
             history = ''
-        
-        deduction = self.needed_sleep_time - (time.time() - self.last_chat_time)
-        self.needed_sleep_time = deduction if deduction > 0 else 0
-        time.sleep(self.needed_sleep_time)
-        
+
         if text:
-            if self.ai.get_tokens(text) > 4000:
+            if not self.ai.within_context_window(text, model):
                 if summary:
-                    inputs = self.split_text(text, 15000)
+                    inputs = self.split_text(text, self.ai.model_token_limits.get(model, 15000) * 3)
                 else:
-                    inputs = text[-16000:]
+                    inputs = text[-(self.ai.model_token_limits.get(model, 15000) * 3):]
             else:
                 inputs = [text]
         else:
@@ -805,44 +760,24 @@ class Vault:
         for segment in inputs:
             if self.verbose:
                 print(f"segments: {len(inputs)}")
-            counter += 1
             start_time = time.time()
-            if text:
-                seg_len = self.ai.get_tokens(segment)
-            else:
-                seg_len = len(custom_prompt)
-            # max 90,000 tokens per minute | max requests per minute = 3500
-            trip_time = float(start_time - self.last_chat_time)
-            req_min = 60 / trip_time # 1 min (60) / time between requests (trip_time)
-            projected_tokens_per_min = req_min * seg_len
-            rate_ratio = projected_tokens_per_min / 90000
-            if self.verbose:
-                print(f'Projected Tokens per min:{projected_tokens_per_min} | Rate Limit Ratio: {rate_ratio} | Text Length: {seg_len}')
-            # 1 min divided by the cap per min and the total we are sending now and factor in the last trip time
-            if seg_len == 0:
-                raise('No input. Add text input to continue')
-            self.needed_sleep_time = 60 / (90000 / seg_len) - trip_time 
-            if self.needed_sleep_time < 0:
-                self.needed_sleep_time = 0
-            if self.verbose:
-                print(f"Time calc'd to sleep: {self.needed_sleep_time}")
             exceptions = 0
+
             while True:
                 try:
                     if summary and not get_context:
                         try:
                             for word in self.ai.summarize_stream(segment, model=model, custom_prompt=custom_prompt):
                                 yield word
+                            self.rate_limiter.on_success()
                         except Exception as e:
                             raise e
                         if counter == len(inputs):
                             yield '!END'
+                            self.rate_limiter.on_success()
                     
                     elif text and get_context and not summary:
                         user_input = segment + history 
-                        for limit in [16000, 15000, 14000]:
-                            if self.ai.get_tokens(user_input) > 4000:
-                                user_input = user_input[-limit]
 
                         context = self.get_similar(user_input, n=n_context) if not local else self.get_similar_local(user_input, n=n_context)
                         input_ = str(context) if include_context_meta else ''
@@ -852,6 +787,7 @@ class Vault:
                         try:
                             for word in self.ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt):
                                 yield word
+                            self.rate_limiter.on_success()
                         except Exception as e:
                             raise e
 
@@ -870,27 +806,28 @@ class Vault:
                                                 yield str(metatag_prefixes[i]) + str(item['metadata'][f'{metatag[i]}'])
                                 yield item['data']
                             yield '!END'
+                            self.rate_limiter.on_success()
                         else:
                             yield '!END'
+                            self.rate_limiter.on_success()
 
                     else:
                         try:
                             for word in self.ai.llm_stream(segment, history, model=model, custom_prompt=custom_prompt):
                                 yield word
+                            self.rate_limiter.on_success()
                         except Exception as e:
                             raise e
                         yield '!END'
-
+                    self.rate_limiter.on_success()
                     break
                 except Exception as e:
                     exceptions += 1
-                    print(f"API Error: {e}. Sleeping 5 seconds")
-                    if exceptions >= 5:
+                    print(f"API Error: {e}. Applying backoff.")
+                    self.rate_limiter.on_failure()
+                    if exceptions >= self.rate_limiter.max_attempts:
                         print(f"API Failed too many times, exiting loop: {e}.")
                         break
-                    time.sleep(5)
-                     
-            self.last_chat_time = start_time
 
         if self.verbose:
             print("get chat time --- %s seconds ---" % (time.time() - start_time))
@@ -919,3 +856,20 @@ class Vault:
         '''
         for word in function:
             yield f"data: {json.dumps({'data': word})} \n\n"
+
+class RateLimiter:
+    def __init__(self, max_attempts=30):
+        self.base_delay = 1  # Base delay of 1 second
+        self.max_delay = 60  # Maximum delay of 60 seconds
+        self.backoff_factor = 2
+        self.current_delay = self.base_delay
+        self.max_attempts = max_attempts
+
+    def on_success(self):
+        # Reset delay after a successful call
+        self.current_delay = self.base_delay
+
+    def on_failure(self):
+        # Apply exponential backoff with a random jitter
+        self.current_delay = min(self.max_delay, random.uniform(self.base_delay, self.current_delay * self.backoff_factor))
+        time.sleep(self.current_delay)

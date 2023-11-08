@@ -11,6 +11,9 @@ class AI:
         'gpt-4-1106-preview': 128000,
     }
         
+    def within_context_window(self, text : str = None, model='gpt-3.5-turbo'):
+        return self.get_tokens(text) < self.model_token_limits.get(model, 4000)
+
     # This function returns a ChatGPT completion based on a provided input.
     def llm(self, user_input: str = None, history: str = None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False, temperature=0):
         '''
@@ -25,13 +28,11 @@ class AI:
 
             # Calculate the total tokens and determine how many tokens are available.
             total_tokens = intokes + histokes
-            tokens_available = max_tokens - total_tokens
 
             # Truncate history if the total token count exceeds the max token limit.
-            if histokes > tokens_available:
-                history = self.truncate_text(history, tokens_available)
-                histokes = self.get_tokens(history)
-                tokens_available = max_tokens - (intokes + histokes)
+            if total_tokens > max_tokens:
+                excess_tokens = total_tokens - max_tokens
+                history = self.truncate_text(history, excess_tokens)
 
             # Construct the prompt with any remaining user input.
             prompt = prompt_template.format(content=user_input or '')
@@ -46,7 +47,7 @@ class AI:
         else:
             raise ValueError('Error: Need custom_prompt if no user_input')
 
-        # Call the API to get a response.
+        # Return the call
         return openai.chat.completions.create(
             model=model,
             temperature=temperature,
@@ -112,7 +113,7 @@ Additional Context: {context}
 
 Main Question: {content}
 
-(Answer the Main Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
+(Answer the Main Question directly. Be the voice of the context, and most importantly, be helpful) 
 Answer:""" 
         
         max_tokens = self.model_token_limits.get(model, 4000)
@@ -131,16 +132,14 @@ Answer:"""
 
             # If the total token count exceeds the max token limit, start truncating.
             if total_tokens > max_tokens:
-                # Start by truncating history, then context.
-                if histokes > tokens_available:
-                    history = self.truncate_text(history, tokens_available)
-                    histokes = self.get_tokens(history)
-                    tokens_available = max_tokens - (intokes + contokes + histokes + promptokes)
-
-                if contokes > tokens_available:
-                    context = self.truncate_text(context, tokens_available)
-                    contokes = self.get_tokens(context)
-                    tokens_available = max_tokens - (intokes + contokes + histokes + promptokes)
+                excess_tokens = total_tokens - self.max_tokens
+                tokens_to_remove = excess_tokens // 2
+                
+                history = self.truncate_text(history, tokens_to_remove)
+                context = self.truncate_text(context, tokens_to_remove)
+                
+                histokes = self.get_tokens(history)
+                contokes = self.get_tokens(context)
 
                 # Double check that we are within the limit.
                 assert self.get_tokens(history + context + user_input + prompt_template) <= max_tokens, "Token limit exceeded."
@@ -174,16 +173,12 @@ Answer:"""
 
             # Calculate the total tokens used and the remaining tokens available.
             total_tokens = intokes + histokes + promptokes
-            tokens_available = max_tokens - total_tokens
 
             # If the total token count exceeds the max token limit, start truncating.
             if total_tokens > max_tokens:
-                # If there's history, prioritize truncating history before input.
-                if history and histokes > tokens_available:
-                    history = self.truncate_text(history, tokens_available)
-                    histokes = self.get_tokens(history)
-                    tokens_available = max_tokens - (intokes + histokes + promptokes)
-
+                excess_tokens = total_tokens - max_tokens
+                history = self.truncate_text(history, excess_tokens)
+                histokes = self.get_tokens(history)
                 # Double check that we are within the limit.
                 assert self.get_tokens(history + user_input + prompt_template) <= max_tokens, "Token limit exceeded."
 
@@ -193,7 +188,6 @@ Answer:"""
             history_prompt = f"Chat history: {history}"
             prompt = history_prompt + "\n\n" + prompt
 
-        # API call to stream the completion.
         response = openai.chat.completions.create(
             model=model,
             temperature=temperature,
@@ -221,7 +215,7 @@ Additional Context: {context}
 
 Main Question: {content}
 
-(Respond to the Main Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
+(Respond to the Main Question directly. Be the voice of the context, and most importantly, be helpful) 
 Answer:"""
 
         # Determine the token limit for the selected model.
@@ -235,28 +229,24 @@ Answer:"""
 
         # Calculate the total tokens used and the remaining tokens available.
         total_tokens = intokes + contokes + histokes + promptokes
-        tokens_available = max_tokens - total_tokens
 
         # If the total token count exceeds the max token limit, start truncating.
         if total_tokens > max_tokens:
-            # Start by truncating history, then context.
-            if histokes > tokens_available:
-                history = self.truncate_text(history, tokens_available)
-                histokes = self.get_tokens(history)
-                tokens_available = max_tokens - (intokes + contokes + histokes + promptokes)
-
-            if contokes > tokens_available:
-                context = self.truncate_text(context, tokens_available)
-                contokes = self.get_tokens(context)
-                tokens_available = max_tokens - (intokes + contokes + histokes + promptokes)
-
+            excess_tokens = total_tokens - self.max_tokens
+            tokens_to_remove = excess_tokens // 2
+            
+            history = self.truncate_text(history, tokens_to_remove)
+            context = self.truncate_text(context, tokens_to_remove)
+            
+            histokes = self.get_tokens(history)
+            contokes = self.get_tokens(context)
+            
             # Double check that we are within the limit.
             assert self.get_tokens(history + context + user_input + prompt_template) <= max_tokens, "Token limit exceeded."
 
         # Construct the final prompt.
         prompt = prompt_template.format(context=context, history=history, content=user_input)
 
-        # API call (mocked here, replace with actual API call and handle the response).
         response = openai.chat.completions.create(
             model=model,
             temperature=temperature,
@@ -316,11 +306,6 @@ Continue from where it leaves off by summarizing the next segment content: {cont
         except Exception as e:
             raise Exception(f"An unexpected error occurred: {e}")
     
-    def truncate_text(self, text, max_length_in_tokens):
-        # A utility method to truncate text to a certain length in tokens.
-        tokens = self.get_tokens(text)
-        if tokens > max_length_in_tokens:
-            # Truncate the text based on the tokens. This is a simplified version.
-            # You might need a more sophisticated method to handle tokenization correctly.
-            return text[:max_length_in_tokens]
-        return text
+    def truncate_text(self, text, tokens_to_remove):          
+        return text[(tokens_to_remove * 4):]
+

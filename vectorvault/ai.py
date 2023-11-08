@@ -51,7 +51,7 @@ class AI:
             model=model,
             temperature=temperature,
             messages=[{"role": "user", "content": prompt}]
-        )['choices'][0]['message']['content']
+        ).choices[0].message.content
             
 
     def llm_sys(self, content = None, system_message = stock_sys_msg, model='gpt-3.5-turbo', max_tokens=4000, temperature=0):
@@ -71,7 +71,7 @@ class AI:
                 {
                     "role": "user",
                     "content": content
-                }])['choices'][0]['message']['content']
+                }]).choices[0].message.content
     
     
     def llm_instruct(self, content = str, instructions = str, system_message = stock_sys_msg, model='gpt-3.5-turbo', max_tokens=4000, temperature=0):
@@ -97,7 +97,7 @@ class AI:
                     "content": f'''Follow this instructions you are provided in order to properly process the following content
 Content: {content}
 Instructions: {instructions}'''
-                }])['choices'][0]['message']['content']
+                }]).choices[0].message.content
 
 
     def llm_w_context(self, user_input = None, context = None, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False, temperature=0):
@@ -154,7 +154,7 @@ Answer:"""
             temperature=temperature,
             messages=[
                 {"role": "user", "content": f"{prompt}"}],
-        )['choices'][0]['message']['content']
+        ).choices[0].message.content
 
 
     def llm_stream(self, user_input=None, history=None, model='gpt-3.5-turbo', custom_prompt=False, temperature=0):
@@ -278,7 +278,7 @@ Answer:"""
             temperature=temperature,
             messages=[{"role": "user", "content": f"{prompt}"}]
         )
-        return response['choices'][0]['message']['content']
+        return response.choices[0].message.content
 
     def summarize_stream(self, user_input, model='gpt-3.5-turbo', custom_prompt=False, temperature=0):   
         prompt_template = custom_prompt if custom_prompt else """Summarize the following: {content}"""
@@ -303,7 +303,7 @@ Continue from where it leaves off by summarizing the next segment content: {cont
             temperature=temperature,
             messages=[{"role": "user", "content": f"{prompt}"}]
         )
-        return response['choices'][0]['message']['content']
+        return response.choices[0].message.content
         
 
     def get_tokens(self, string: str, encoding_name: str = "cl100k_base") -> int:

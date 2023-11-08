@@ -391,8 +391,8 @@ class Vault:
                     meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(vec)], self.user, self.api, meta=True))
                     meta = json.loads(meta_data)
                     build_return(results, item_data, meta)
-                    if self.verbose:
-                        print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
+                if self.verbose:
+                    print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
                 return results
             else:
                 results = []
@@ -406,8 +406,8 @@ class Vault:
                     meta = json.loads(meta_data)
                     build_return(results, item_data, meta, distances[counter])
                     counter+=1
-                    if self.verbose:
-                        print(f"Retrieved {n} items --- %s seconds ---" % (time.time() - start_time))
+                if self.verbose:
+                    print(f"Retrieved {n} items --- %s seconds ---" % (time.time() - start_time))
                 return results
         except:
             return [{'data': 'No data has been added', 'metadata': {'no meta': 'No metadata has been added'}}]
@@ -417,7 +417,7 @@ class Vault:
             Returns similar items from the Vault as the one you entered, but locally
             (saves a few milliseconds and is sometimes used on production builds)
         '''
-        vector = self.process_batch([text], never_stop=False, loop_timeout=180, engine=model)[0]
+        vector = self.process_batch([text], never_stop=False, loop_timeout=180, model=model)[0]
         return self.get_items_by_vector(vector, n, include_distances=include_distances)
     
     def get_similar(self, text, n: int = 4, include_distances=False):
@@ -484,7 +484,7 @@ class Vault:
         if self.verbose:
             print("add item time --- %s seconds ---" % (time.time() - start_time))
 
-    def process_batch(self, batch_text_chunks, never_stop, loop_timeout, engine="text-embedding-ada-002"):
+    def process_batch(self, batch_text_chunks, never_stop, loop_timeout, model="text-embedding-ada-002"):
         '''
             Internal function
         '''
@@ -492,7 +492,7 @@ class Vault:
         exceptions = 0
         while True:
             try:
-                res = openai.Embedding.create(input=batch_text_chunks, engine=engine)
+                res = openai.embeddings.create(input=batch_text_chunks, model=model)
                 break
             except Exception as e:
                 last_exception_time = time.time()
@@ -502,14 +502,14 @@ class Vault:
 
                 if not never_stop or (time.time() - loop_start_time) > loop_timeout:
                     try:
-                        res = openai.Embedding.create(input=batch_text_chunks, engine=engine)
+                        res = openai.embeddings.create(input=batch_text_chunks, model=model)
                         break
                     except Exception as e:
                         if exceptions >= 5:
                             print(f"API has failed for too long. Exiting loop with error: {e}.")
                             break
                         raise TimeoutError("Loop timed out")
-        return [record['embedding'] for record in res['data']]
+        return [record.embedding for record in res.data]
         
     def get_vectors(self, batch_size: int = 32, never_stop: bool = False, loop_timeout: int = 777, model="text-embedding-ada-002"):
         '''
@@ -528,7 +528,7 @@ class Vault:
             for i in range(num_batches)
         ]
 
-        batch_embeddings_list = [self.process_batch(batch_text_chunk, never_stop=never_stop, loop_timeout=loop_timeout, engine=model) for batch_text_chunk in batches_text_chunks]
+        batch_embeddings_list = [self.process_batch(batch_text_chunk, never_stop=never_stop, loop_timeout=loop_timeout, model=model) for batch_text_chunk in batches_text_chunks]
 
         current_item_index = 0
         for batch_embeddings in batch_embeddings_list:
@@ -642,6 +642,8 @@ class Vault:
                     inputs = text[-16000:]
             else:
                 inputs = [text]
+        else:
+            raise ValueError("No input text provided. Please enter text to proceed.")
         response = ''
         for segment in inputs:
             start_time = time.time()
@@ -792,12 +794,13 @@ class Vault:
         if text:
             if self.ai.get_tokens(text) > 4000:
                 if summary:
-                    inputs = self.split_text(text, 14500)
+                    inputs = self.split_text(text, 15000)
                 else:
                     inputs = text[-16000:]
             else:
                 inputs = [text]
-        response = ''
+        else:
+            raise ValueError("No input text provided. Please enter text to proceed.")
         counter = 0
         for segment in inputs:
             if self.verbose:
@@ -836,7 +839,7 @@ class Vault:
                             yield '!END'
                     
                     elif text and get_context and not summary:
-                        user_input = segment + history if history_search else segment
+                        user_input = segment + history 
                         for limit in [16000, 15000, 14000]:
                             if self.ai.get_tokens(user_input) > 4000:
                                 user_input = user_input[-limit]
@@ -899,7 +902,7 @@ class Vault:
         full_text= ''
         newlinetime=1
         for word in function:
-            if word != '!END':
+            if word != '!END' and word:
                 full_text += word
                 if printing:
                     if len(full_text) / 80 > newlinetime:

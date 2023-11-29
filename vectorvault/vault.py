@@ -32,7 +32,43 @@ from .tools_gpt import ToolsGPT
 
 
 class Vault:
-    def __init__(self, user: str = None, api_key: str = None, vault: str = None, openai_key: str = None, dims: int = 1536, verbose: bool = False):
+    def __init__(self, user: str = None, api_key: str = None, vault: str = None, openai_key: str = None, dims: int = 1536, verbose: bool = False, personality_message: str = 'Answer the Question directly and be helpful'):
+        ''' 
+        ### Create a vector database instance like this:
+        ```
+        vault = Vault(user='YOUR_EMAIL',
+              api_key='VECTOR_VAULT_API_KEY',
+              openai_key='OPENAI_API_KEY',
+              vault='VAULT_NAME',
+              verbose=True)
+        ```
+
+        ### Add data to the vector database aka "the Vault":
+        ```
+        vault.add('some text')
+        vault.get_vectors()
+        vault.save()
+        ```
+
+        ### Basic ChatGPT response:
+        `basic_chatgpt_answer = vault.get_chat('some question')`
+
+        ### Advanced RAG response: (Retrieval Augemented Generation) -> (uses 'get_context=True' to reference the Vault - [which will internally pulls 4 vector similar search results from the database to be used as context before responding])
+        `rag_answer = vault.get_chat('some question', get_context=True)`
+
+        ### Change the model to GPT4 with the `model` param in get_chat:
+        `gpt4_rag_answer = vault.get_chat('some question', get_context=True, model='gpt-4')`
+
+        ### Change the personality of your bot with the personality_message:
+        ```
+        vault = Vault(user='YOUR_EMAIL',
+              api_key='VECTOR_VAULT_API_KEY',
+              openai_key='OPENAI_API_KEY',
+              vault='VAULT_NAME',
+              personality_message='Answer like you are Snoop Dogg',
+              verbose=False)
+        ```
+        '''
         if openai_key:
             self.openai_key = openai_key
             openai.api_key = self.openai_key
@@ -57,7 +93,7 @@ class Vault:
         self.items = []
         self.last_time = None
         self.saved_already = False
-        self.ai = AI()
+        self.ai = AI(personality_message)
         self.tools = ToolsGPT(verbose=verbose)
         self.rate_limiter = RateLimiter(max_attempts=30)
 
@@ -540,7 +576,7 @@ class Vault:
             print("get vectors time --- %s seconds ---" % (time.time() - start_time))
 
 
-    def get_chat(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, custom_prompt=False, local=False):
+    def get_chat(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, custom_prompt=False, local=False, temperature=0):
         '''
             Chat get response from OpenAI's ChatGPT. 
             Models: ChatGPT = "gpt-3.5-turbo" • GPT4 = "gpt-4" 
@@ -630,8 +666,11 @@ class Vault:
             else:
                 inputs = [text]
         else:
-            raise ValueError("No input text provided. Please enter text to proceed.")
-        
+            if not custom_prompt:
+                raise ValueError("No input text provided. Please enter text to proceed.")
+            else:
+                inputs = []
+
         response = ''
         for segment in inputs:
             attempts = 0
@@ -639,7 +678,7 @@ class Vault:
                 try:
                     # Make your API call here
                     if summary and not get_context:
-                        response += self.ai.summarize(segment, model=model, custom_prompt=custom_prompt)
+                        response += self.ai.summarize(segment, model=model, custom_prompt=custom_prompt, temperature=temperature)
                     elif text and get_context and not summary:
                         user_input = segment + history if history_search else segment
                         if include_context_meta:
@@ -650,9 +689,9 @@ class Vault:
                             input_ = ''
                             for text in context:
                                 input_ += text['data']
-                        response = self.ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt)
+                        response = self.ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature)
                     else: # Custom prompt only
-                        response = self.ai.llm(segment, history, model=model, custom_prompt=custom_prompt)
+                        response = self.ai.llm(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature)
 
                     # If the call is successful, reset the backoff
                     self.rate_limiter.on_success()
@@ -675,7 +714,7 @@ class Vault:
         elif return_context:
             return {'response': response, 'context': context}
         
-    def get_chat_stream(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, metatag=False, metatag_prefixes=False, metatag_suffixes=False, custom_prompt=False, local=False):
+    def get_chat_stream(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, metatag=False, metatag_prefixes=False, metatag_suffixes=False, custom_prompt=False, local=False, temperature=0):
         '''
             Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream().
             cloud_stream() is for cloud functions, like a flask app serving a front end elsewhere.
@@ -755,7 +794,11 @@ class Vault:
             else:
                 inputs = [text]
         else:
-            raise ValueError("No input text provided. Please enter text to proceed.")
+            if not custom_prompt:
+                raise ValueError("No input text provided. Please enter text to proceed.")
+            else:
+                inputs = []
+                
         counter = 0
         for segment in inputs:
             if self.verbose:
@@ -767,7 +810,7 @@ class Vault:
                 try:
                     if summary and not get_context:
                         try:
-                            for word in self.ai.summarize_stream(segment, model=model, custom_prompt=custom_prompt):
+                            for word in self.ai.summarize_stream(segment, model=model, custom_prompt=custom_prompt, temperature=temperature):
                                 yield word
                             self.rate_limiter.on_success()
                         except Exception as e:
@@ -785,7 +828,7 @@ class Vault:
                             input_ += text['data']
 
                         try:
-                            for word in self.ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt):
+                            for word in self.ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature):
                                 yield word
                             self.rate_limiter.on_success()
                         except Exception as e:
@@ -813,7 +856,7 @@ class Vault:
 
                     else:
                         try:
-                            for word in self.ai.llm_stream(segment, history, model=model, custom_prompt=custom_prompt):
+                            for word in self.ai.llm_stream(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature):
                                 yield word
                             self.rate_limiter.on_success()
                         except Exception as e:

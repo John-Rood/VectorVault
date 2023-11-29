@@ -77,7 +77,7 @@ that this number has been carefully considered given your concept. My rating out
             Your content will be injected into this prompt: 
             `...User: The following content should be a number - Content: "{content}"`
         '''
-        def retry_until_its_a_number():
+        def retry_until_its_a_number(content):
             prompt_template = """Respond only with a number in integer format...
 Example content: 'The revenue for the last fiscal year was $1,200,000.' Example answer: '1200000'
 Example content 2: 'The company has been in business for twenty years.' Example answer 2: '20'
@@ -94,7 +94,8 @@ User: The following content should be a number - Content: "{content}"
             if self.verbose: 
                 print("Extracted Number: ", response)
             return response
-        
+        loops = 0
+        answer = content
         while True:
             if loops >= loop_limit:
                 break
@@ -110,12 +111,12 @@ User: The following content should be a number - Content: "{content}"
 
         return answer # return the integer
     
-    def get_yes_no(self, text: str, question: str, model='gpt-3.5-turbo', loop_limit=20) -> str:
+    def get_yes_no(self, text: str, question: str = None, model='gpt-3.5-turbo', loop_limit=20) -> str:
         '''
             Get an exact "yes" or "no" to any question, given an input. 
             Be sure to input text to get a yes or no to, then ask the question to answer
         '''
-        answer = self.yay_or_nay(text, question, model=model)
+        answer = self.yay_or_nay(text, question, model=model) if question else self.yay_or_nay_question_in_content(text, model=model) 
         if self.verbose == True:
             print(f"Y/N Initial Answer: {answer}")
 
@@ -298,6 +299,23 @@ Example question 5: 'Will this happen if it's 19 percent likely to happen?' Exam
         return self.retry_llm(custom_prompt=prompt, model=model)
     
     # internal function 
+    def yay_or_nay_question_in_content(self, content: str, model='gpt-3.5-turbo'):
+        '''Not recommended for external use. Internal function'''
+        prompt_template = """Do not respond with anything before the yes or no. Do not add anything after the "yes" or "no". 
+Example question 1: 'Is the Eiffel tower located in Paris?' Example answer 1: 'Yes' Example question 2: 'Do you think I am fat?' 
+Example answer 2: 'No' Example question 3: 'Should I use Matplotlib in Python to draw a graph of csv information I have' Example answer 3: 'Yes'
+Example question 4: 'As an ai language model, I can't tell you yes or no, but I it does have a tendency to work sometimes.' Example answer 4: 'Yes'
+Example question 5: 'Will this happen if it's 19 percent likely to happen?' Example answer 5: 'No'
+User: "{content}"
+
+Respond with a "yes" or "no" 
+Agent:"""
+
+        prompt = prompt_template.format(content=content)
+
+        return self.retry_llm(custom_prompt=prompt, model=model)
+    
+    # internal function 
     def zero_or_one(self, content, zero_if: str, one_if: str, model='gpt-3.5-turbo'):
         '''Not recommended for external use. Internal function'''
         prompt_template = """Do not respond with anything before the 1 or 0. Do not add anything after the "1" or "0". 
@@ -342,16 +360,20 @@ Example question 5: 'Will this happen if it's 19 percent likely to happen?' Exam
         output = self.get_binary(content, 
                                 zero_if=f"This output matches these instructions: {instructions}", 
                                 one_if="This output has additional commentary or does not match the instructions exactly")
-        new_intstructions = f'''The following content does not match the instructions exactly. Your job is to return the content exactly as the instructions direct:
+        
+        while output != 0:
+            new_intstructions = f'''The following content does not match the instructions exactly. Your job is to return the content exactly as the instructions direct:
 Instructions: {instructions}
 
 Content: {content}
 
 Return the content exactly as the instructions direct'''
-        while output != 0:
+            
             content = self.llm(new_intstructions, model=model)
             if self.verbose == True:
                 print("Content:", content)
             output = self.get_binary(content, 
                                     zero_if=f"This output matches these instructions: {instructions}", 
                                     one_if="This output has additional commentary or does not match the instructions exactly")
+        
+        return content

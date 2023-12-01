@@ -669,7 +669,7 @@ class Vault:
             if not custom_prompt:
                 raise ValueError("No input text provided. Please enter text to proceed.")
             else:
-                inputs = []
+                inputs = [0]
 
         response = ''
         for segment in inputs:
@@ -691,8 +691,11 @@ class Vault:
                                 input_ += text['data']
                         response = self.ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature)
                     else: # Custom prompt only
-                        response = self.ai.llm(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature)
-
+                        if inputs[0] == 0:
+                            response = self.ai.llm(model=model, custom_prompt=custom_prompt, temperature=temperature)
+                        else:
+                            response = self.ai.llm(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature)
+                            
                     # If the call is successful, reset the backoff
                     self.rate_limiter.on_success()
                     break

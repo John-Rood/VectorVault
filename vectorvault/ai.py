@@ -69,6 +69,8 @@ Question: {content}
         '''
         prompt_template = custom_prompt if custom_prompt else self.prompt 
         max_tokens = self.model_token_limits.get(model, 4000)
+        user_input = '' if user_input is None else user_input
+        history = '' if history is None else history
         tokens = self.get_tokens(history + user_input + prompt_template)
         if tokens >= max_tokens:
             if model == 'gpt-3.5-turbo' or model == 'gtp-4':

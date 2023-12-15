@@ -6,37 +6,38 @@ import queue
 stock_sys_msg = "You are an AI assistant that excels at following instructions exactly."
 
 class AI:
-    def __init__(self, personality_message: str = None) -> None:
+    def __init__(self, personality_message: str = None, main_prompt: str = None) -> None:
         self.model_token_limits = {
         'gpt-3.5-turbo': 4000,
         'gpt-3.5-turbo-16k': 16000,
         'gpt-4-32k': 32000,
         'gpt-4-1106-preview': 128000,
     }
-        self.main_prompt = """
-Chat History (if any): {history}
+        self.no_context_prompt = """
+    Chat History (if any): {history}
 
-Question: {content}
-""" 
+    Question: {content}
+    """ 
         self.main_prompt_with_context = """Use the following Context to answer the Question at the end. 
-Answer as if you were the modern voice of the context, without referencing the context or mentioning 
-the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
+    Answer as if you were the modern voice of the context, without referencing the context or mentioning 
+    the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
 
-Chat History (if any): {history}
+    Chat History (if any): {history}
 
-Additional Context: {context}
+    Additional Context: {context}
 
-Question: {content}
-""" 
+    Question: {content}
+    """ if not main_prompt else main_prompt
+        
         self.context_message = personality_message if personality_message else """Be the voice of the context. """
         self.personality_message = personality_message if personality_message else """Answer the Question directly and be helpful"""
         self.context_prompt = self.main_prompt_with_context + '\n' + self.context_message + f'({self.personality_message})' + '\n' + '''Answer:'''
-        self.prompt = self.main_prompt + '\n' + f'({self.personality_message})' + '\n' + '''Answer:'''
+        self.prompt = self.no_context_prompt + '\n' + f'({self.personality_message})' + '\n' + '''Answer:'''
         
     def within_context_window(self, text : str = None, model='gpt-3.5-turbo'):
         return self.get_tokens(text) < self.model_token_limits.get(model, 4000)
 
-    def make_call(self, prompt, model, temperature):
+    def make_call(self, prompt, model, temperature, timeout=45):
         # This function will be run in a separate thread
         def call_api(response_queue):
             try:
@@ -54,7 +55,7 @@ Question: {content}
         api_thread.start()
         try:
             # Wait for the response with a timeout
-            return response_queue.get(timeout=45)  # Timeout in seconds
+            return response_queue.get(timeout=timeout)  # Timeout in seconds
         except queue.Empty:
             # Handle timeout
             print("Request timed out")
@@ -113,7 +114,7 @@ Question: {content}
 
         # Return the call
         for _ in range(max_retries):
-            response = self.make_call(prompt, model, temperature)
+            response = self.make_call(prompt, model, temperature, timeout)
             if response is not None:
                 return response
             print("Retrying...")
@@ -178,8 +179,8 @@ Question: {content}
                 {
                     "role": "user",
                     "content": f'''Follow this instructions you are provided in order to properly process the following content
-Content: {content}
-Instructions: {instructions}'''
+        Content: {content}
+        Instructions: {instructions}'''
                 }]).choices[0].message.content
 
 
@@ -210,7 +211,7 @@ Instructions: {instructions}'''
 
             # If the total token count exceeds the max token limit, start truncating.
             if total_tokens > max_tokens:
-                excess_tokens = total_tokens - self.max_tokens
+                excess_tokens = total_tokens - max_tokens
                 tokens_to_remove = excess_tokens // 2
                     
                 history = self.truncate_text(history, tokens_to_remove) if history else None
@@ -228,7 +229,7 @@ Instructions: {instructions}'''
             prompt = prompt_template.format(context=context, history=history, content=user_input)
 
         for _ in range(max_retries):
-            response = self.make_call(prompt, model, temperature)
+            response = self.make_call(prompt, model, temperature, timeout)
             if response is not None:
                 return response
             print("Retrying...")
@@ -319,7 +320,7 @@ Instructions: {instructions}'''
                     print('model switch:', model)
                     max_tokens = self.model_token_limits.get(model, 4000)
 
-            excess_tokens = total_tokens - self.max_tokens
+            excess_tokens = total_tokens - max_tokens
             tokens_to_remove = excess_tokens // 2
             
             history = self.truncate_text(history, tokens_to_remove) if history else None
@@ -375,7 +376,7 @@ Instructions: {instructions}'''
 
     def smart_summary(self, text, previous_summary, model='gpt-3.5-turbo', custom_prompt=False, temperature=0):   
         prompt_template = custom_prompt if custom_prompt else """Given the previous summary: {previous_summary} 
-Continue from where it leaves off by summarizing the next segment content: {content}"""
+        Continue from where it leaves off by summarizing the next segment content: {content}"""
         prompt = prompt_template.format(previous_summary=previous_summary, content=text)
         response = openai.chat.completions.create(
             model=model,

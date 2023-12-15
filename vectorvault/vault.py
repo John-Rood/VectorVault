@@ -85,6 +85,7 @@ class Vault:
             print('API KEY NOT FOUND! Using Vault without cloud access. `get_chat()` will still work', e)
             # user can still use the get_chat() function without an api key
             self.cloud_manager = None
+            main_prompt = None
         self.user = user
         self.x = 0
         self.x_checked = False
@@ -93,7 +94,7 @@ class Vault:
         self.items = []
         self.last_time = None
         self.saved_already = False
-        self.ai = AI(personality_message)
+        self.ai_loaded = False
         self.tools = ToolsGPT(verbose=verbose)
         self.rate_limiter = RateLimiter(max_attempts=30)
 
@@ -124,6 +125,48 @@ class Vault:
         '''
         self.check_index()
         return self.vectors.get_item_vector(item_id)
+    
+    def fetch_personality_message(self):
+        '''
+            Retrieves personality_message from the vault to use by default
+        '''
+        return self.cloud_manager.download_text_from_cloud(f'{self.vault}/personality_message')
+
+    def load_ai(self):
+        try:
+            main_prompt = self.fetch_custom_prompt()
+        except:
+            main_prompt = None
+        try:
+            personality_message = self.fetch_personality_message()
+        except:
+            personality_message = None
+        self.ai = AI(personality_message, main_prompt)
+        self.ai_loaded = True
+
+    def save_personality_message(self, personality_message):
+        '''
+            Saves personality_message to the vault and use it by default from now on
+        '''
+        self.cloud_manager.upload_personality_message(personality_message)
+
+        if self.verbose:
+            print(f"Personality message saved")
+    
+    def fetch_custom_prompt(self):
+        '''
+            Retrieves custom_prompt from the vault to use by default
+        '''
+        return self.cloud_manager.download_text_from_cloud(f'{self.vault}/prompt')
+
+    def save_custom_prompt(self, prompt):
+        '''
+            Saves custom_prompt to the vault and use it by default from now on
+        '''
+        self.cloud_manager.upload_custom_prompt(prompt)
+
+        if self.verbose:
+            print(f"Custom prompt saved")
     
     def save(self, trees=16):
         '''
@@ -576,7 +619,7 @@ class Vault:
             print("get vectors time --- %s seconds ---" % (time.time() - start_time))
 
 
-    def get_chat(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, custom_prompt=False, local=False, temperature=0):
+    def get_chat(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, smart_history_search = False, model='gpt-3.5-turbo', include_context_meta=False, custom_prompt=False, local=False, temperature=0, timeout=45):
         '''
             Chat get response from OpenAI's ChatGPT. 
             Models: ChatGPT = "gpt-3.5-turbo" • GPT4 = "gpt-4" 
@@ -652,6 +695,8 @@ class Vault:
             ```
 
         '''
+        if not self.ai_loaded:
+            self.load_ai()
         model = model.lower()
         start_time = time.time()
         if not history:
@@ -676,25 +721,30 @@ class Vault:
             attempts = 0
             while True:
                 try:
-                    # Make your API call here
+                    # Make API call
                     if summary and not get_context:
                         response += self.ai.summarize(segment, model=model, custom_prompt=custom_prompt, temperature=temperature)
                     elif text and get_context and not summary:
-                        user_input = segment + history if history_search else segment
+                        if smart_history_search:
+                            custom_entry = f"Using the current message, with the message history, what subject is the user is focused on. \nCurrent message: {text}. \n\nPrevious messages: {history}."
+                            search_input = self.ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
+                        else:
+                            search_input = segment + history if history_search else segment
+                            
                         if include_context_meta:
-                            context = self.get_similar(user_input, n=n_context) if not local else self.get_similar_local(user_input, n=n_context)
+                            context = self.get_similar(search_input, n=n_context) if not local else self.get_similar_local(search_input, n=n_context)
                             input_ = str(context)
                         else:
-                            context = self.get_similar(user_input, n=n_context) if not local else self.get_similar_local(user_input, n=n_context)
+                            context = self.get_similar(search_input, n=n_context) if not local else self.get_similar_local(search_input, n=n_context)
                             input_ = ''
                             for text in context:
                                 input_ += text['data']
-                        response = self.ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature)
+                        response = self.ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
                     else: # Custom prompt only
                         if inputs[0] == 0:
-                            response = self.ai.llm(model=model, custom_prompt=custom_prompt, temperature=temperature)
+                            response = self.ai.llm(model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
                         else:
-                            response = self.ai.llm(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature)
+                            response = self.ai.llm(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
                             
                     # If the call is successful, reset the backoff
                     self.rate_limiter.on_success()
@@ -717,7 +767,7 @@ class Vault:
         elif return_context:
             return {'response': response, 'context': context}
         
-    def get_chat_stream(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, metatag=False, metatag_prefixes=False, metatag_suffixes=False, custom_prompt=False, local=False, temperature=0):
+    def get_chat_stream(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, smart_history_search = False, model='gpt-3.5-turbo', include_context_meta=False, metatag=False, metatag_prefixes=False, metatag_suffixes=False, custom_prompt=False, local=False, temperature=0, timeout=45):
         '''
             Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream().
             cloud_stream() is for cloud functions, like a flask app serving a front end elsewhere.
@@ -782,7 +832,8 @@ class Vault:
             response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True, custom_prompt=my_prompt))
             ```
         '''
-
+        if not self.ai_loaded:
+            self.load_ai()
         model = model.lower()
         start_time = time.time()
         if not history:
@@ -823,9 +874,13 @@ class Vault:
                             self.rate_limiter.on_success()
                     
                     elif text and get_context and not summary:
-                        user_input = segment + history 
+                        if smart_history_search:
+                            custom_entry = f"Using the current message, with the message history, what is the user is focused on. \nCurrent message: {text}. \n\nPrevious messages: {history}."
+                            search_input = self.ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
+                        else:                        
+                            search_input = segment 
 
-                        context = self.get_similar(user_input, n=n_context) if not local else self.get_similar_local(user_input, n=n_context)
+                        context = self.get_similar(search_input, n=n_context) if not local else self.get_similar_local(search_input, n=n_context)
                         input_ = str(context) if include_context_meta else ''
                         for text in context:
                             input_ += text['data']

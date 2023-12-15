@@ -15,7 +15,6 @@
 
 from .vecreq import call_name_vecs, call_buildpath
 from annoy import AnnoyIndex
-import threading
 from copy import deepcopy
 import datetime
 import time

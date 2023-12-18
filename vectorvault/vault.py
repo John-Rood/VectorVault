@@ -85,7 +85,6 @@ class Vault:
             print('API KEY NOT FOUND! Using Vault without cloud access. `get_chat()` will still work', e)
             # user can still use the get_chat() function without an api key
             self.cloud_manager = None
-            main_prompt = None
         self.user = user
         self.x = 0
         self.x_checked = False
@@ -112,7 +111,14 @@ class Vault:
         self.check_index()
         return self.vectors.get_n_items()
     
-    def get_distance(self, id1, id2):
+    def get_tokens(self, text: str):
+        '''
+            Returns the distance between two vectors - item ids are needed to compare 916-324-7308
+        '''
+        self.load_ai()
+        return self.ai.get_tokens(text)
+    
+    def get_distance(self, id1: int, id2: int):
         '''
             Returns the distance between two vectors - item ids are needed to compare
         '''
@@ -144,7 +150,7 @@ class Vault:
         self.ai = AI(personality_message, main_prompt)
         self.ai_loaded = True
 
-    def save_personality_message(self, personality_message):
+    def save_personality_message(self, personality_message: str):
         '''
             Saves personality_message to the vault and use it by default from now on
         '''
@@ -159,7 +165,7 @@ class Vault:
         '''
         return self.cloud_manager.download_text_from_cloud(f'{self.vault}/prompt')
 
-    def save_custom_prompt(self, prompt):
+    def save_custom_prompt(self, prompt: str):
         '''
             Saves custom_prompt to the vault and use it by default from now on
         '''
@@ -168,7 +174,7 @@ class Vault:
         if self.verbose:
             print(f"Custom prompt saved")
     
-    def save(self, trees=16):
+    def save(self, trees: int = 16):
         '''
             Saves all the data added locally to the Cloud. All Vault references are Cloud references.
             To add data to your Vault and access it later, you must first call add(), then get_vectors(), and finally save().
@@ -220,7 +226,7 @@ class Vault:
             self.map[str(i)] = self.map[str(i + 1)]
         self.map.popitem()
     
-    def delete_items(self, item_ids : Union[int, List[int]], trees = 16) -> None:
+    def delete_items(self, item_ids : List[int], trees: int = 16) -> None:
         '''
             Deletes one or more items from item_id(s) passed in.
             item_ids is an int or a list of integers
@@ -253,7 +259,7 @@ class Vault:
         if self.verbose:
             print(f'Item {item_id} deleted')
 
-    def edit_item(self, item_id : int, new_text : str, metadata : dict = None, trees = 16) -> None:
+    def edit_item(self, item_id : int, new_text : str, metadata : dict = None, trees: int = 16) -> None:
         '''
             Edits any item. Enter the new text and new vectors will automatically be created.
             New data and vectors will be uploaded and the old data will be deleted
@@ -297,7 +303,7 @@ class Vault:
                 print("initialize index --- %s seconds ---" % (time.time() - start_time))
 
     def load_mapping(self):
-        '''Internal only!'''
+        '''Internal function only'''
         try: # try to get the map
             temp_file_path = self.cloud_manager.download_to_temp_file(name_map(self.vault, self.user, self.api))
             with open(temp_file_path, 'r') as json_file:
@@ -367,7 +373,7 @@ class Vault:
         self.vecs_loaded = False
         self.saved_already = False
 
-    def split_text(self, text, min_threshold=1000, max_threshold=16000):
+    def split_text(self, text: str, min_threshold: int = 1000, max_threshold: int = 16000):
         '''
         Internal function
         Splits the given text into chunks of sentences such that each chunk's length 
@@ -414,7 +420,7 @@ class Vault:
         
         return segments
     
-    def get_items(self, ids: list = [], include_total=False) -> list:
+    def get_items(self, ids: List[int] = [], include_total: bool = False) -> list:
         '''
             Get one or more items from the database. 
             Input the item id(s) in a list. -> Returns the items 
@@ -451,7 +457,7 @@ class Vault:
             return results
 
 
-    def get_items_by_vector(self, vector, n: int = 4, include_distances=False):
+    def get_items_by_vector(self, vector: list, n: int = 4, include_distances: bool = False):
         '''
             Internal function that returns vector similar items. Requires input vector, returns similar items
         '''
@@ -489,7 +495,7 @@ class Vault:
         except:
             return [{'data': 'No data has been added', 'metadata': {'no meta': 'No metadata has been added'}}]
 
-    def get_similar_local(self, text, n: int = 4, include_distances=False, model="text-embedding-ada-002"):
+    def get_similar_local(self, text: str, n: int = 4, include_distances: bool = False, model: str = "text-embedding-ada-002"):
         '''
             Returns similar items from the Vault as the one you entered, but locally
             (saves a few milliseconds and is sometimes used on production builds)
@@ -497,7 +503,7 @@ class Vault:
         vector = self.process_batch([text], never_stop=False, loop_timeout=180, model=model)[0]
         return self.get_items_by_vector(vector, n, include_distances=include_distances)
     
-    def get_similar(self, text, n: int = 4, include_distances=False):
+    def get_similar(self, text: str, n: int = 4, include_distances: bool = False):
         '''
             Returns similar items from the Vault as the text you enter.
             Sample return when called:
@@ -527,7 +533,7 @@ class Vault:
         self.items.append(new_item)
         self.add_to_map()
 
-    def add(self, text: str, meta: dict = None, name: str = None, split=False, split_size=1000, max_threshold=16000):
+    def add(self, text: str, meta: dict = None, name: str = None, split: bool = False, split_size: int = 1000, max_threshold: int = 16000):
         """
             If your text length is greater than 4000 tokens, Vault.split_text(your_text)  
             will automatically be added
@@ -588,7 +594,7 @@ class Vault:
                         raise TimeoutError("Loop timed out")
         return [record.embedding for record in res.data]
         
-    def get_vectors(self, batch_size: int = 32, never_stop: bool = False, loop_timeout: int = 777, model="text-embedding-ada-002"):
+    def get_vectors(self, batch_size: int = 32, never_stop: bool = False, loop_timeout: int = 777, model: str = "text-embedding-ada-002"):
         '''
         Takes text data added to the vault, and gets vectors for them
         '''
@@ -619,12 +625,17 @@ class Vault:
             print("get vectors time --- %s seconds ---" % (time.time() - start_time))
 
 
-    def get_chat(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, smart_history_search = False, model='gpt-3.5-turbo', include_context_meta=False, custom_prompt=False, local=False, temperature=0, timeout=45):
+    def get_chat(self, text: str = None, history: str = None, summary: bool = False, get_context: bool = False, 
+                 n_context: int = 4, return_context: bool = False, smart_history_search: bool = False, 
+                 model: str = 'gpt-3.5-turbo', include_context_meta: bool = False, custom_prompt: bool = False, 
+                 local: bool =False, temperature: int = 0, timeout: int = 45):
         '''
             Chat get response from OpenAI's ChatGPT. 
             Models: ChatGPT = "gpt-3.5-turbo" • GPT4 = "gpt-4" 
             Large Context Models: ChatGPT 16k = "gpt-3.5-turbo-16k" • GPT4 32k = "gpt-4-32k"
             Best Versions: "gpt-3.5-turbo-0301" is March 2023 ChatGPT (best version) - "gpt-4-0314" (best version)
+
+            include_context_meta (bool): If True, will also include context metadata, rather than just the context text string
 
             Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
             Enter your text, add optional chat history, and optionally choose a summary response (default: summmary = False)
@@ -658,7 +669,7 @@ class Vault:
                 print("\n\n", f"item {item['metadata']['item_id']}")
                 print(item['data'])
 
-            history_search is False by default skip adding the history of the conversation to the text input for similarity search (useful if history contains subject infomation useful for answering the new text input and the text input doesn't contain that info)
+            smart_history_search is False by default skip adding the history of the conversation to the text input for similarity search (useful if history contains subject infomation useful for answering the new text input and the text input doesn't contain that info)
             
             - Example Custom Prompt:
             `response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)`
@@ -703,13 +714,7 @@ class Vault:
             history = ''
 
         if text: 
-            if not self.ai.within_context_window(text, model):
-                if summary:
-                    inputs = self.split_text(text, self.ai.model_token_limits.get(model, 15000) * 3)
-                else:
-                    inputs = text[-(self.ai.model_token_limits.get(model, 15000) * 3):]
-            else:
-                inputs = [text]
+            inputs = [text]
         else:
             if not custom_prompt:
                 raise ValueError("No input text provided. Please enter text to proceed.")
@@ -729,16 +734,16 @@ class Vault:
                             custom_entry = f"Using the current message, with the message history, what subject is the user is focused on. \nCurrent message: {text}. \n\nPrevious messages: {history}."
                             search_input = self.ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
                         else:
-                            search_input = segment + history if history_search else segment
+                            search_input = segment
                             
                         if include_context_meta:
                             context = self.get_similar(search_input, n=n_context) if not local else self.get_similar_local(search_input, n=n_context)
-                            input_ = str(context)
+                            input_ = str(context) # all of the metadata included
                         else:
                             context = self.get_similar(search_input, n=n_context) if not local else self.get_similar_local(search_input, n=n_context)
                             input_ = ''
                             for text in context:
-                                input_ += text['data']
+                                input_ += text['data'] # just the text data, no metadata
                         response = self.ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
                     else: # Custom prompt only
                         if inputs[0] == 0:
@@ -767,7 +772,12 @@ class Vault:
         elif return_context:
             return {'response': response, 'context': context}
         
-    def get_chat_stream(self, text: str = None, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, smart_history_search = False, model='gpt-3.5-turbo', include_context_meta=False, metatag=False, metatag_prefixes=False, metatag_suffixes=False, custom_prompt=False, local=False, temperature=0, timeout=45):
+        
+    def get_chat_stream(self, text: str = None, history: str = None, summary: bool = False, get_context: bool = False,
+                        n_context: int = 4, return_context: bool = False, smart_history_search: bool  = False, 
+                        model: str ='gpt-3.5-turbo', include_context_meta: bool = False, metatag: bool = False,
+                        metatag_prefixes: bool = False, metatag_suffixes: bool = False, custom_prompt: bool = False, 
+                        local: bool = False, temperature: int = 0, timeout: int = 45):
         '''
             Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream().
             cloud_stream() is for cloud functions, like a flask app serving a front end elsewhere.
@@ -840,13 +850,7 @@ class Vault:
             history = ''
 
         if text:
-            if not self.ai.within_context_window(text, model):
-                if summary:
-                    inputs = self.split_text(text, self.ai.model_token_limits.get(model, 15000) * 3)
-                else:
-                    inputs = text[-(self.ai.model_token_limits.get(model, 15000) * 3):]
-            else:
-                inputs = [text]
+            inputs = [text]
         else:
             if not custom_prompt:
                 raise ValueError("No input text provided. Please enter text to proceed.")

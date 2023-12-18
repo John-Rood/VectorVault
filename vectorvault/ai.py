@@ -29,9 +29,8 @@ class AI:
     Question: {content}
     """ if not main_prompt else main_prompt
         
-        self.context_message = personality_message if personality_message else """Be the voice of the context. """
-        self.personality_message = personality_message if personality_message else """Answer the Question directly and be helpful"""
-        self.context_prompt = self.main_prompt_with_context + '\n' + self.context_message + f'({self.personality_message})' + '\n' + '''Answer:'''
+        self.personality_message = personality_message if personality_message else """Be the voice of the context. Answer the Question directly and be helpful"""
+        self.context_prompt = self.main_prompt_with_context + '\n' + f'({self.personality_message})' + '\n' + '''Answer:'''
         self.prompt = self.no_context_prompt + '\n' + f'({self.personality_message})' + '\n' + '''Answer:'''
         
     def within_context_window(self, text : str = None, model='gpt-3.5-turbo'):
@@ -186,7 +185,6 @@ class AI:
 
     def llm_w_context(self, user_input = None, context = None, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False, temperature=0, timeout=45, max_retries=5):
         prompt_template = custom_prompt if custom_prompt else self.context_prompt
-        
         max_tokens = self.model_token_limits.get(model, 4000)
         tokens = self.get_tokens(history + user_input + context + prompt_template)
         if tokens >= max_tokens:
@@ -227,7 +225,7 @@ class AI:
 
             # Format the prompt
             prompt = prompt_template.format(context=context, history=history, content=user_input)
-
+            
         for _ in range(max_retries):
             response = self.make_call(prompt, model, temperature, timeout)
             if response is not None:
@@ -268,12 +266,15 @@ class AI:
             # If the total token count exceeds the max token limit, start truncating.
             if total_tokens > max_tokens:
                 excess_tokens = total_tokens - max_tokens
-                history = self.truncate_text(history, excess_tokens)
-                histokes = self.get_tokens(history)
+                history = self.truncate_text(history, excess_tokens) if history else 0
+                histokes = self.get_tokens(history) if history else 0
                 # Double check that we are within the limit.
-                assert self.get_tokens(history + user_input + prompt_template) <= max_tokens, "Token limit exceeded."
+                if history:
+                    assert self.get_tokens(history + user_input + prompt_template) <= max_tokens, "Token limit exceeded."
+                else:
+                    assert self.get_tokens(user_input + prompt_template) <= max_tokens, "Token limit exceeded."
 
-            prompt = prompt_template.format(content=user_input)
+            prompt = prompt_template.format(content=user_input, history=history)
 
         if history:
             history_prompt = f"Chat history: {history}"

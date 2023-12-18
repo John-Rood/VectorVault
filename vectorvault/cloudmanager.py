@@ -38,12 +38,15 @@ class CloudManager:
         return storage.Blob(bucket=self.cloud, name=vault_name).exists(self.storage_client)
     
     def list_vaults(self, vault):
-        blobs = self.gcloud.list_blobs(prefix=f'{vault}')
+        blobs = self.cloud.list_blobs(prefix=f'{vault}')
         directories = set()
         for blob in blobs:
             parts = blob.name.split('/')
-            if len(parts) > 2 and not parts[1][0].isdigit():
-                directories.add(parts[1])
+            if len(parts) == 2:
+                vault_name = parts[1]
+                if vault_name.endswith('.ann'):
+                    clean_vault_name = vault_name.replace('.ann', '')
+                    directories.add(clean_vault_name)
         return list(directories)
     
     def upload_to_cloud(self, vault_name, content):

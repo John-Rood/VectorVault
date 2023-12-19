@@ -226,8 +226,9 @@ class AI:
                 if self.get_tokens(history + context + user_input + prompt_template) >= max_tokens:
                     prompt_template = self.truncate_text(prompt_template, tokens_to_remove * 2)
 
-            # Format the prompt
-            prompt = prompt_template.format(context=context, history=history, content=user_input)
+        # Format the prompt
+        prompt = prompt_template.format(context=context, history=history, content=user_input)
+
             
         for _ in range(max_retries):
             response = self.make_call(prompt, model, temperature, timeout)

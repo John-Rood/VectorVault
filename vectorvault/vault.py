@@ -15,6 +15,7 @@
 
 import numpy as np
 import tempfile
+import math
 import os
 import time
 import uuid
@@ -136,7 +137,11 @@ class Vault:
         '''
             Retrieves personality_message from the vault to use by default
         '''
-        return self.cloud_manager.download_text_from_cloud(f'{self.vault}/personality_message')
+        try:
+            personality_message = self.cloud_manager.download_text_from_cloud(f'{self.vault}/personality_message')
+        except:
+            personality_message = "Answer directly and be helpful"
+        return personality_message
 
     def load_ai(self):
         try:
@@ -161,10 +166,23 @@ class Vault:
     
     def fetch_custom_prompt(self):
         '''
-            Retrieves custom_prompt from the vault to use by default
+            Retrieves custom_prompt from the vault to use by default - (used for get_context = True responses)
         '''
-        return self.cloud_manager.download_text_from_cloud(f'{self.vault}/prompt')
+        try:
+            prompt = self.cloud_manager.download_text_from_cloud(f'{self.vault}/prompt')
+        except:
+            prompt = """Use the following Context to answer the Question at the end. 
+        Answer as if you were the modern voice of the context, without referencing the context or mentioning 
+        the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
 
+        Chat History (if any): {history}
+
+        Additional Context: {context}
+
+        Question: {content}
+        """
+        return prompt
+    
     def save_custom_prompt(self, prompt: str):
         '''
             Saves custom_prompt to the vault and use it by default from now on
@@ -237,13 +255,20 @@ class Vault:
             new_index = get_vectors(self.dims)
             plus_one = 0
 
-            for i in range(num_existing_items):
-                if i == item_id:
-                    # plus_one equals 0 until the item being deleting has been removed
-                    plus_one += 1 
-                else: 
-                    vector = self.vectors.get_item_vector(i - plus_one) 
-                    new_index.add_item(i - plus_one, vector)
+            def download_and_upload(i, plus_one):
+                if plus_one == 1:
+                    metadata = json.loads(self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.old_map[str(i)], self.user, self.api, meta=True)))
+                    metadata['item_id'] = i - plus_one
+                    self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.old_map[str(i - plus_one)], self.user, self.api, meta=True), json.dumps(metadata))
+
+            with ThreadPoolExecutor() as executor:
+                for i in range(num_existing_items):
+                    if i == item_id: # the item being deleted 
+                        plus_one += 1 
+                    else: 
+                        vector = self.vectors.get_item_vector(i - plus_one) 
+                        new_index.add_item(i - plus_one, vector)
+                        executor.submit(download_and_upload, i, plus_one)
 
             self.vectors = new_index
             self.vectors.build(trees)
@@ -253,6 +278,7 @@ class Vault:
         for item_id in item_ids:
             self.load_vectors()
             self.cloud_manager.delete_item(self.map[str(item_id)])
+            self.old_map = self.map
             self.remap(item_id)
             rebuild_vectors(item_id)
 
@@ -285,7 +311,7 @@ class Vault:
         edit_vector(item_id, self.process_batch([new_text], never_stop=False, loop_timeout=180)[0])
 
         if metadata:
-            self.cloud_manager.upload_to_cloud(self.cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, meta=True), json.dumps(metadata))
+            self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, meta=True), json.dumps(metadata))
 
         if self.verbose:
             print(f'Item {item_id} edited')
@@ -728,7 +754,20 @@ class Vault:
                 try:
                     # Make API call
                     if summary and not get_context:
-                        response += self.ai.summarize(segment, model=model, custom_prompt=custom_prompt, temperature=temperature)
+                        token_limit = self.ai.model_token_limits.get(model, 4000)
+                        total_tokens = self.ai.get_tokens(segment)
+                        response = ""
+
+                        for i in range(math.ceil(total_tokens / token_limit)):
+                            # Calculate start and end indices for the current chunk
+                            start_index = i * token_limit
+                            end_index = min((i + 1) * token_limit, total_tokens)
+                            # Extract the current chunk from the segment
+                            current_chunk = segment[start_index:end_index]
+                            # Process the current chunk and concatenate the response
+                            response += ' ' + self.ai.summarize(current_chunk, model=model, custom_prompt=custom_prompt, temperature=temperature)
+                            self.rate_limiter.on_success()
+
                     elif text and get_context and not summary:
                         if smart_history_search:
                             custom_entry = f"Using the current message, with the message history, what subject is the user is focused on. \nCurrent message: {text}. \n\nPrevious messages: {history}."
@@ -867,8 +906,20 @@ class Vault:
                 try:
                     if summary and not get_context:
                         try:
-                            for word in self.ai.summarize_stream(segment, model=model, custom_prompt=custom_prompt, temperature=temperature):
-                                yield word
+                            token_limit = self.ai.model_token_limits.get(model, 4000)
+                            total_tokens = self.ai.get_tokens(segment)
+
+                            for i in range(math.ceil(total_tokens / token_limit)):
+                                # Calculate start and end indices for the current chunk
+                                start_index = i * token_limit
+                                end_index = min((i + 1) * token_limit, total_tokens)
+                                # Extract the current chunk from the segment
+                                current_chunk = segment[start_index:end_index]
+                                # Process the current chunk and concatenate the response
+                                for word in self.ai.summarize_stream(current_chunk, model=model, custom_prompt=custom_prompt, temperature=temperature):
+                                    yield word
+                                yield ' '
+
                             self.rate_limiter.on_success()
                         except Exception as e:
                             raise e

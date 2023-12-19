@@ -10,6 +10,7 @@ class AI:
         self.model_token_limits = {
         'gpt-3.5-turbo': 4000,
         'gpt-3.5-turbo-16k': 16000,
+        'gpt-4': 8000,
         'gpt-4-32k': 32000,
         'gpt-4-1106-preview': 128000,
     }
@@ -29,7 +30,7 @@ class AI:
     Question: {content}
     """ if not main_prompt else main_prompt
         
-        self.personality_message = personality_message if personality_message else """Be the voice of the context. Answer the Question directly and be helpful"""
+        self.personality_message = personality_message if personality_message else """Answer directly and be helpful"""
         self.context_prompt = self.main_prompt_with_context + '\n' + f'({self.personality_message})' + '\n' + '''Answer:'''
         self.prompt = self.no_context_prompt + '\n' + f'({self.personality_message})' + '\n' + '''Answer:'''
         
@@ -186,6 +187,8 @@ class AI:
     def llm_w_context(self, user_input = None, context = None, history=None, model='gpt-3.5-turbo', max_tokens=4000, custom_prompt=False, temperature=0, timeout=45, max_retries=5):
         prompt_template = custom_prompt if custom_prompt else self.context_prompt
         max_tokens = self.model_token_limits.get(model, 4000)
+        user_input = '' if user_input is None else user_input
+        history = '' if history is None else history
         tokens = self.get_tokens(history + user_input + context + prompt_template)
         if tokens >= max_tokens:
             if model == 'gpt-3.5-turbo' or model == 'gtp-4':
@@ -243,6 +246,8 @@ class AI:
 
         # Determine the token limit for the selected model.
         max_tokens = self.model_token_limits.get(model, 4000)
+        user_input = '' if user_input is None else user_input
+        history = '' if history is None else history
         tokens = self.get_tokens(history + user_input + prompt_template)
         if tokens >= max_tokens:
             if model == 'gpt-3.5-turbo' or model == 'gtp-4':
@@ -300,6 +305,8 @@ class AI:
 
         # Determine the token limit for the selected model.
         max_tokens = self.model_token_limits.get(model, 4000)
+        user_input = '' if user_input is None else user_input
+        history = '' if history is None else history
 
         # Token calculation for each part.
         intokes = self.get_tokens(user_input) if user_input else 0

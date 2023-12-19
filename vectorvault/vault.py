@@ -626,7 +626,7 @@ class Vault:
 
 
     def get_chat(self, text: str = None, history: str = None, summary: bool = False, get_context: bool = False, 
-                 n_context: int = 4, return_context: bool = False, smart_history_search: bool = False, 
+                 n_context: int = 4, return_context: bool = False, history_search: bool = False, smart_history_search: bool = False, 
                  model: str = 'gpt-3.5-turbo', include_context_meta: bool = False, custom_prompt: bool = False, 
                  local: bool =False, temperature: int = 0, timeout: int = 45):
         '''
@@ -734,7 +734,7 @@ class Vault:
                             custom_entry = f"Using the current message, with the message history, what subject is the user is focused on. \nCurrent message: {text}. \n\nPrevious messages: {history}."
                             search_input = self.ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
                         else:
-                            search_input = segment
+                            search_input = segment + history if history_search else segment
                             
                         if include_context_meta:
                             context = self.get_similar(search_input, n=n_context) if not local else self.get_similar_local(search_input, n=n_context)
@@ -772,9 +772,8 @@ class Vault:
         elif return_context:
             return {'response': response, 'context': context}
         
-        
     def get_chat_stream(self, text: str = None, history: str = None, summary: bool = False, get_context: bool = False,
-                        n_context: int = 4, return_context: bool = False, smart_history_search: bool  = False, 
+                        n_context: int = 4, return_context: bool = False, history_search: bool = False, smart_history_search: bool = False, 
                         model: str ='gpt-3.5-turbo', include_context_meta: bool = False, metatag: bool = False,
                         metatag_prefixes: bool = False, metatag_suffixes: bool = False, custom_prompt: bool = False, 
                         local: bool = False, temperature: int = 0, timeout: int = 45):
@@ -881,8 +880,8 @@ class Vault:
                         if smart_history_search:
                             custom_entry = f"Using the current message, with the message history, what is the user is focused on. \nCurrent message: {text}. \n\nPrevious messages: {history}."
                             search_input = self.ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
-                        else:                        
-                            search_input = segment 
+                        else:
+                            search_input = segment + history if history_search else segment
 
                         context = self.get_similar(search_input, n=n_context) if not local else self.get_similar_local(search_input, n=n_context)
                         input_ = str(context) if include_context_meta else ''

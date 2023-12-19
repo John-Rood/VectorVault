@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VectorVault Demo Interface</title>
+    <body>
+        <h1>VectorVault Demo Interface</h1>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f4;
+                padding: 20px;
+                text-align: center;
+            }
+    
+            h1 {
+                color: #333;
+            }
+    
+            #responseContainer {
+                height: 300px;
+                overflow-y: auto;
+                border: 1px solid #ccc;
+                padding: 10px;
+                margin: 20px auto;
+                width: 80%;
+                background-color: white;
+                text-align: left;
+            }
+    
+            .container {
+                width: 90%;
+                margin: auto;
+                text-align: left;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+            }
+
+            table, th, td {
+                border: 1px solid #ddd;
+            }
+
+            th, td {
+                padding: 8px;
+                text-align: left;
+            }
+
+            th {
+                background-color: #f4f4f4;
+            }
+
+            tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+
+            #pagination {
+                margin-top: 20px;
+                text-align: center;
+            }
+
+            #pagination button {
+                padding: 5px 10px;
+                margin: 0 5px;
+                background-color: rgb(69, 103, 226);
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+
+            #pagination button:hover {
+                background-color: rgb(52, 78, 172);
+            }
+
+            #pagination button:disabled {
+                background-color: #ccc;
+                cursor: not-allowed;
+            }
+
+            .input-group {
+                margin-top: 10px;
+                text-align: center;
+            }
+
+            .input-field, .input-textarea, .action-button {
+                padding: 10px;
+                margin-right: 5px; /* Adjust spacing between elements */
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                box-sizing: border-box;
+            }
+
+            .input-field {
+                width: calc(20% - 12px); /* Adjust width as necessary, subtracting padding and margin */
+                display: inline-block;
+            }
+
+            .input-textarea {
+                width: calc(60% - 12px); /* Adjust width as necessary, subtracting padding and margin */
+                display: inline-block;
+                vertical-align: top;
+            }
+
+            .personality-textarea {
+                width: calc(50% - 12px); /* Adjust width as necessary, subtracting padding and margin */
+                display: inline-block;
+                vertical-align: top;
+            }
+
+            .action-button {
+                width: calc(20% - 12px); /* Adjust width as necessary, subtracting padding and margin */
+                display: inline-block;
+                background-color: rgb(69, 103, 226);
+                color: white;
+                border: none;
+                cursor: pointer;
+            }
+
+            .action-button:hover {
+                background-color: rgb(52, 78, 172);
+            }
+
+        </style>
+        <div>
+            <input type="text" id="user" placeholder="User Email">
+            <input type="text" id="vault" placeholder="Vault Name">
+            <input type="text" id="api" placeholder="API Key">
+            <input type="text" id="openai_key" placeholder="OpenAI Key">
+            <button onclick="connectToVault()">Connect</button>
+        </div>
+        
+        <div class="input-group">
+            <textarea id="data" class="input-textarea" placeholder="Enter data to save in vault"></textarea>
+            <button onclick="saveDataToVault()">Save Data</button>
+        </div>
+        <div class="input-group">
+            <textarea id="personalityMessage" class="personality-textarea" placeholder="Enter personality message" rows="1"></textarea>
+            <button onclick="savePersonalityMessageToVault()">Save Personality Message</button>
+        </div>
+        <div id="responseContainer" style="height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+        </div>
+        
+        <div class="input-group">
+            <textarea id="message" class="input-textarea" placeholder="Type your message here"></textarea>
+            <button class="action-button" onclick="sendMessage()">Send Message</button>
+        </div>
+
+        <div class="container">
+            <h2 id="vaultHeadline">Items</h2>
+            <table id="itemsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Created</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Items will be added here dynamically -->
+                </tbody>
+            </table>
+            <div id="pagination">
+                <input type="number" id="pageInput" min="1" placeholder="Page No" style="width: 60px;">
+                <button onclick="goToPage()">Go</button>
+                <span id="pageInfo"></span>
+            </div>
+        </div>
+    
+        <script>
+            let vectorVault;
+
+            async function connectToVault() {
+                const user = document.getElementById('user').value;
+                const vault = document.getElementById('vault').value;
+                const api = document.getElementById('api').value;
+                const openai_key = document.getElementById('openai_key').value;
+    
+                try {
+                    // Clear the data table 
+                    document.getElementById('tableBody').innerHTML = '';
+
+                    vectorVault = new VectorVaultAPI(user, vault, api, openai_key);
+                    console.log("Connected to VectorVault");
+                    alert("Connection successful!");
+                    // Now that we're connected, fetch the total items and display them
+                    fetchTotalItems().then(() => {
+                        fetchAndDisplayItems();
+                    });
+                    updateHeadline(vault); 
+
+                    try { // Fetch personality message if it exists
+                        const personalityMessage = await vectorVault.fetchPersonalityMessage();
+                        document.getElementById('personalityMessage').value = personalityMessage; 
+                    } catch (fetchError) {
+                        console.error("Error fetching personality message:", fetchError);
+                        // Handle the error - maybe set the textarea to empty or display a default message
+                        document.getElementById('personalityMessage').value = 'Say everything like Snoop Dogg'; // Set to standard string if fetching fails
+                    }
+
+                } catch (error) {
+                    console.error("Connection failed:", error);
+                    alert("Connection failed!");
+                }
+            }
+
+            async function sendMessage() {
+                const message = document.getElementById('message').value;
+                if (!message) {
+                    alert("Please enter a message.");
+                    return;
+                }
+
+                // Retrieve the conversation history from the DOM
+                const history = Array.from(document.getElementById('responseContainer').children)
+                                    .map(p => p.textContent.replace(/^You: /, 'User: ').replace(/^AI: /, 'Agent: '))
+                                    .join('\n');
+                console.log('>>>> HISTORY >>>>', history)
+
+                try {
+                    // Get the chat response with the history included
+                    const response = await vectorVault.getChat({ text: message, get_context: true, history: history });
+
+                    displayUserMessage(message);
+                    displayResponse(response);
+                    document.getElementById('message').value = ''; // Clearing the message field
+                } catch (error) {
+                    console.error("Error:", error);
+                }
+            }
+    
+            function updateHeadline(vaultName) {
+                const headline = document.getElementById('vaultHeadline');
+                headline.textContent = vaultName + " Items"; // Change the text content of the h2 element
+            }
+
+            function displayUserMessage(message) {
+                const responseContainer = document.getElementById('responseContainer');
+                const userMessage = document.createElement('p');
+                userMessage.textContent = "You: " + message;
+                responseContainer.appendChild(userMessage);
+            }
+    
+            function displayResponse(response) {
+                const responseContainer = document.getElementById('responseContainer');
+                const newResponse = document.createElement('p');
+                newResponse.textContent = "AI: " + response;
+                responseContainer.appendChild(newResponse);
+            }
+    
+            async function saveDataToVault() {
+                const data = document.getElementById('data').value;
+                if (!data) {
+                    alert("Please enter data to save.");
+                    return;
+                }
+    
+                try {
+                    const saveResponse = await vectorVault.addCloud({ text: data });
+                    console.log("Data saved to vault:", saveResponse);
+                    alert("Data saved successfully!");
+                    document.getElementById('data').value = ''; // Clearing the data field
+                } catch (error) {
+                    console.error("Error saving data:", error);
+                    alert("Error saving data.");
+                }
+            }
+
+            let currentPage = 1;
+            const itemsPerPage = 10;
+            let totalItems = 0;
+
+            async function fetchTotalItems() {
+                try {
+                    const total = await vectorVault.getTotalItems();
+                    totalItems = total;
+                    updatePageInfo();
+                } catch (error) {
+                    console.error("Error fetching total items:", error);
+                }
+            }
+
+            function updatePageInfo() {
+                const totalPages = Math.ceil(totalItems / itemsPerPage);
+                document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages} (${totalItems} items)`;
+            }
+
+            async function fetchAndDisplayItems() {
+                try {
+                    // Adjust for zero-based indexing by subtracting 1
+                    const startId = (currentPage - 1) * itemsPerPage;
+
+                    // Determine the number of items to display on the current page
+                    let numberOfItemsToDisplay;
+                    if (currentPage * itemsPerPage > totalItems) {
+                        // If on the last page, calculate the remaining items
+                        numberOfItemsToDisplay = totalItems % itemsPerPage;
+                    } else {
+                        // Otherwise, display the full set of items per page
+                        numberOfItemsToDisplay = itemsPerPage;
+                    }
+
+                    // If the number of items to display is zero and we're not on the first page, 
+                    // it means there are no items to display on the last page, so set the number to itemsPerPage
+                    if (numberOfItemsToDisplay === 0 && currentPage > 1) {
+                        numberOfItemsToDisplay = itemsPerPage;
+                    }
+
+                    // Generate the item IDs based on the current page and number of items to display
+                    const itemIds = Array.from({ length: numberOfItemsToDisplay }, (_, i) => startId + i);
+
+                    // Fetch the items based on the calculated item IDs
+                    const items = await vectorVault.getItems(itemIds);
+                    document.getElementById('tableBody').innerHTML = '';
+
+                    // Populate the table with the fetched items
+                    items.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.metadata.item_id}</td>
+                            <td>${item.metadata.name}</td>
+                            <td>${formatTimestamp(item.metadata.created)}</td>
+                            <td>${item.data}</td>
+                        `;
+                        document.getElementById('tableBody').appendChild(row);
+                    });
+                } catch (error) {
+                    console.error("Error fetching items:", error);
+                }
+            }
+
+            async function savePersonalityMessageToVault() {
+                const personalityMessage = document.getElementById('personalityMessage').value;
+                if (!personalityMessage) {
+                    alert("Please enter a personality message.");
+                    return;
+                }
+                
+                try {
+                    await vectorVault.savePersonalityMessage(personalityMessage);
+                    console.log("Personality message saved:", personalityMessage);
+                    alert("Personality message saved successfully!");
+                } catch (error) {
+                    console.error("Error saving personality message:", error);
+                    alert("Error saving personality message.");
+                }
+            }
+
+            function formatTimestamp(timestamp) {
+                if (!timestamp) return '';
+
+                const date = new Date(timestamp);
+                const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                return date.toLocaleString('en-US', options);
+            }
+
+            function changePage(delta) {
+                const totalPages = Math.ceil(totalItems / itemsPerPage);
+                currentPage = Math.max(1, Math.min(currentPage + delta, totalPages));
+                fetchAndDisplayItems();
+                updatePageInfo();
+            }
+
+            function goToPage() {
+                const pageInput = document.getElementById('pageInput');
+                const page = parseInt(pageInput.value, 10);
+
+                if (!Number.isNaN(page)) {
+                    const totalPages = Math.ceil(totalItems / itemsPerPage);
+                    if (page >= 1 && page <= totalPages) {
+                        currentPage = page;
+                        fetchAndDisplayItems(); // This function must be defined and working correctly
+                        updatePageInfo();      // This function updates the displayed page info
+                    } else {
+                        alert('Invalid page number. Total pages: ' + totalPages);
+                    }
+                } else {
+                    alert('Please enter a valid page number.');
+                }
+
+                pageInput.value = ''; // Clear the page input field
+            }
+            
+
+        // Intitialize Vector Vault API - DO NOT EDIT 
+        // This class connects to the Vector Vault Cloud API and is a copy of the official Vector Vault npm package
+        class VectorVaultAPI {
+            constructor(user, vault, apiKey, openAIKey) {
+                this.user = user;
+                this.vault = vault;
+                this.apiKey = apiKey;
+                this.openAIKey = openAIKey;
+            }
+
+            getChat(params) {
+                const url = "https://api.vectorvault.io/get_chat";
+                
+                const data = {
+                    user: this.user, 
+                    vault: this.vault,
+                    api_key: this.apiKey,
+                    openai_key: this.openAIKey,
+                    text: '',
+                    history: null,
+                    summary: false,
+                    get_context: false,
+                    n_context: 4,
+                    return_context: false,
+                    smart_history_search: false,
+                    model: "gpt-3.5-turbo",
+                    include_context_meta: false,
+                    custom_prompt: false,
+                    temperature: 0,
+                    timeout: 45,
+                    ...params
+                };
+
+                // Send the POST request
+                return fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json());
+            }
+
+            async getChatStream(params, callback) {
+
+                const url = "https://api.vectorvault.io/stream";
+
+                const data = {
+                    user: this.user,
+                    vault: this.vault,
+                    api_key: this.apiKey,
+                    openai_key: this.openAIKey,
+                    text: '',
+                    history: null,
+                    summary: false,
+                    get_context: false,
+                    n_context: 4,
+                    return_context: false,
+                    smart_history_search: false,
+                    model: "gpt-3.5-turbo",
+                    include_context_meta: false,
+                    metatag: [],
+                    metatag_prefixes: [],
+                    metatag_suffixes: [],
+                    custom_prompt: false,
+                    temperature: 0,
+                    timeout: 45,
+                    ...params
+                };
+
+                const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+                });
+
+                const reader = response.body.getReader();
+
+                while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const textChunk = new TextDecoder().decode(value, { stream: true });
+                const lines = textChunk.split('\n');
+                for (let line of lines) {
+                    if (line.startsWith('data:')) {
+                        const json_data = JSON.parse(line.substring('data: '.length));
+                        const word = json_data['data'] 
+                        if (word != '!END') {
+                            callback(word); // Call the callback function with the data
+                            }
+                        }
+                    }
+                }
+            }
+
+            getItems(itemIds) {
+                // itemIds must be a list of integers
+                const url = "https://api.vectorvault.io/get_items";
+
+                const data = {
+                    user: this.user,
+                    api_key: this.apiKey,
+                    vault: this.vault,
+                    item_ids: itemIds
+                };
+
+                // Send the POST request
+                return fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return response.json().then(json => {
+                            throw new Error("Failed: " + JSON.stringify(json));
+                        });
+                    }
+                });
+            }
+
+            editItem(itemId, newText) {
+                const url = "https://api.vectorvault.io/edit_item";
+
+                const data = {
+                    user: this.user,
+                    vault: this.vault,
+                    api_key: this.apiKey,
+                    openai_key: this.openAIKey,
+                    item_id: itemId,
+                    text: newText
+                };
+
+                // Send the POST request
+                return fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json());
+            }
+
+            getTotalItems() {
+                const url = "https://api.vectorvault.io/get_total_items";
+
+                const data = {
+                    user: this.user,
+                    api_key: this.apiKey,
+                    vault: this.vault
+                };
+
+                // Send the POST request
+                return fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return response.json().then(json => {
+                            throw new Error("Failed: " + JSON.stringify(json));
+                        });
+                    }
+                });
+            }
+
+            deleteItems(itemId) {
+                const url = "https://api.vectorvault.io/delete_items";
+
+                const data = {
+                    user: this.user,
+                    vault: this.vault,
+                    api_key: this.apiKey,
+                    item_id: itemId
+                };
+
+                // Send the POST request
+                return fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json());
+            }
+
+            addCloud(params) {
+                const url = "https://api.vectorvault.io/add_cloud";
+
+                const data = {
+                    user: this.user,
+                    vault: this.vault,
+                    api_key: this.apiKey,
+                    openai_key: this.openAIKey,
+                    text: '',
+                    meta: null,
+                    name: null,
+                    split: false,
+                    split_size: 1000,
+                    gen_sum: false,
+                    ...params
+                };
+
+                // Send the POST request
+                return fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json());
+            }
+
+            getVaults() {
+                const url = "https://api.vectorvault.io/get_vaults";
+
+                const data = {
+                    user: this.user,
+                    vault: this.vault,
+                    api_key: this.apiKey
+                };
+
+                // Send the POST request
+                return fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json());
+            }
+            
+            getDistance(id1, id2) {
+                const url = "https://api.vectorvault.io/get_distance";
+
+                const data = {
+                    user: this.user,
+                    vault: this.vault,
+                    api_key: this.apiKey,
+                    id1: id1,
+                    id2: id2
+                };
+
+                // Send the POST request
+                return fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json());
+            }
+
+            getSimilar(params) {
+                const url = "https://api.vectorvault.io/get_similar";
+
+                const data = {
+                    user: this.user,
+                    vault: this.vault,
+                    api_key: this.apiKey,
+                    openai_key: this.openAIKey,
+                    text: '',
+                    num_items: 4,
+                    include_distances: false,
+                    ...params 
+                };
+
+                // Send the POST request
+                return fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json());
+            }
+
+            savePersonalityMessage(personalityMessage) {
+                const url = "https://api.vectorvault.io/save_personality_message";
+
+                const data = {
+                    user: this.user,
+                    vault: this.vault,
+                    api_key: this.apiKey,
+                    personality_message: personalityMessage
+                };
+
+                // Send the POST request
+                return fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json());
+            }
+
+            saveCustomPrompt(customPrompt) {
+                const url = "https://api.vectorvault.io/save_custom_prompt";
+
+                const data = {
+                    user: this.user,
+                    vault: this.vault,
+                    api_key: this.apiKey,
+                    prompt: customPrompt
+                };
+
+                // Send the POST request
+                return fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json());
+            }
+
+            fetchPersonalityMessage() {
+                const url = "https://api.vectorvault.io/fetch_personality_message";
+
+                const data = {
+                    user: this.user,
+                    vault: this.vault,
+                    api_key: this.apiKey,
+                };
+
+                // Send the POST request
+                return fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json());
+            }
+
+            fetchCustomPrompt() {
+                const url = "https://api.vectorvault.io/fetch_custom_prompt";
+
+                const data = {
+                    user: this.user,
+                    vault: this.vault,
+                    api_key: this.apiKey,
+                };
+
+                // Send the POST request
+                return fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json());
+            }
+        }
+
+        function handleStreamedData(data) {
+            // Here you can process the data, update UI, store in a database, etc.
+            console.log(data);
+        }
+        </script>
+</body>
+</html>

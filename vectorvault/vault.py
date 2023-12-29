@@ -23,7 +23,7 @@ import re
 import json
 import traceback
 import random
-from typing import Union, List
+from typing import List
 from concurrent.futures import ThreadPoolExecutor
 from .cloudmanager import CloudManager
 from .ai import AI, openai
@@ -213,6 +213,7 @@ class Vault:
                 total_saved_items += 1
 
         self.upload_vectors()
+        self.x_checked = False
 
         if self.verbose:
             print(f"upload time --- {(time.time() - start_time)} seconds --- {total_saved_items} items saved")
@@ -564,6 +565,7 @@ class Vault:
             If your text length is greater than 4000 tokens, Vault.split_text(your_text)  
             will automatically be added
         """
+        self.check_index()
 
         if len(text) > 15000 or split:
             if self.verbose:
@@ -573,6 +575,16 @@ class Vault:
             texts = [text]
         for text in texts:
             self.add_item(text, meta, name)
+
+    def add_n_save(self, text: str, meta: dict = None, name: str = None, split: bool = False, split_size: int = 1000, max_threshold: int = 16000):
+        """
+            Adds, gets vectors, then saves your data to the cloud in a single call
+            If your text length is greater than 4000 tokens, your text will automatically be split by
+            Vault.split_text(your_text).
+        """
+        self.add(text=text, meta=meta, name=name, split=split, split_size=split_size, max_threshold=max_threshold)
+        self.get_vectors()
+        self.save()
 
     def add_item_with_vector(self, text: str, vector: list, meta: dict = None, name: str = None):
         """
@@ -624,6 +636,7 @@ class Vault:
         '''
         Takes text data added to the vault, and gets vectors for them
         '''
+        self.check_index()
         start_time = time.time()
 
         # If last_time isn't set, assume it's a very old time (e.g., 10 minutes ago)

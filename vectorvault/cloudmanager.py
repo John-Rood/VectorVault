@@ -41,13 +41,19 @@ class CloudManager:
         blobs = self.cloud.list_blobs(prefix=f'{vault}')
         directories = set()
         for blob in blobs:
-            parts = blob.name.split('/')
-            if len(parts) == 2:
-                vault_name = parts[1]
-                if vault_name.endswith('.ann'):
+            if blob.name.endswith('.ann'):
+                if vault:
+                    parts = blob.name.split('/')
+                    if len(parts) == 2:
+                        vault_name = parts[1]
+                        if vault_name.endswith('.ann'):
+                            clean_vault_name = vault_name.replace('.ann', '')
+                            directories.add(clean_vault_name)
+                else:
+                    vault_name = blob.name.split('/')[0] 
                     clean_vault_name = vault_name.replace('.ann', '')
                     directories.add(clean_vault_name)
-        return list(directories)
+        return sorted(list(directories))
     
     def upload_to_cloud(self, vault_name, content):
         blob = self.cloud.blob(vault_name)

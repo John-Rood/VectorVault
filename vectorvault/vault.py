@@ -23,6 +23,7 @@ import re
 import json
 import traceback
 import random
+from datetime import datetime
 from typing import List
 from concurrent.futures import ThreadPoolExecutor
 from .cloudmanager import CloudManager
@@ -105,13 +106,23 @@ class Vault:
         vault = self.vault if vault is None else vault
         return self.cloud_manager.list_vaults(vault)
 
-    def get_total_items(self):
+    def get_total_items(self, vault: str = None):
         '''
             Returns the total number of vectored items in the Vault
         '''
-        self.check_index()
-        return self.vectors.get_n_items()
-    
+        if not vault:
+            self.load_mapping()
+            return len(self.map)
+        else:
+            try:
+                temp_file_path = self.cloud_manager.download_to_temp_file(name_map(vault, self.user, self.api))
+                with open(temp_file_path, 'r') as json_file:
+                    _map = json.load(json_file)
+                os.remove(temp_file_path)
+                return len(_map)
+            except: # it doesn't exist
+                return 0
+
     def get_tokens(self, text: str):
         '''
             Returns the distance between two vectors - item ids are needed to compare 916-324-7308
@@ -191,8 +202,8 @@ class Vault:
 
         if self.verbose:
             print(f"Custom prompt saved")
-    
-    def save(self, trees: int = 16):
+
+    def save(self, trees: int = 10):
         '''
             Saves all the data added locally to the Cloud. All Vault references are Cloud references.
             To add data to your Vault and access it later, you must first call add(), then get_vectors(), and finally save().
@@ -244,8 +255,42 @@ class Vault:
         for i in range(item_id, len(self.map) - 1):
             self.map[str(i)] = self.map[str(i + 1)]
         self.map.popitem()
+
+    def update_vault_data(self):
+        try:
+            vault_data = self.cloud_manager.get_mapping()
+            all_vaults = self.get_vaults('')
+            _data = [vault for vault in vault_data if vault['vault'] in all_vaults]
+            nary = []
+            for i in all_vaults:
+                total_items = self.get_total_items(i)
+                print(i)
+                time.sleep(.01)
+                item = self.get_items([ total_items - 1 ], i)[0]['metadata']
+                try: 
+                    time_for_last_item = item['updated']
+                except:
+                    time_for_last_item = item['updated_at']
+
+                vault_dict = { 'vault': f'{i}', 'total_items': total_items, 'last_update': time_for_last_item }
+
+                for original_data in _data: 
+                    if original_data['vault'] == f'{i}' and 'last_use' in original_data:
+                        vault_dict['last_use'] = original_data['last_use']
+                    elif original_data['vault'] == f'{i}' and 'total_use' in original_data:
+                        vault_dict['total_use'] = original_data['total_use']
+
+                nary.append(vault_dict)
+        except:
+            nary.append({ 'vault' : 'demo', 'total_items' : 0, 'last_update' : time.time(), 'last_use' : time.time(), 'total_use' : 0 })
+
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+            nary_temp_file_path = temp_file.name
+            json.dump(nary, temp_file, indent=2)
+
+        self.cloud_manager.upload_temp_file(nary_temp_file_path, f'{self.cloud_manager.username}.json')
     
-    def delete_items(self, item_ids : List[int], trees: int = 16) -> None:
+    def delete_items(self, item_ids : List[int], trees: int = 10) -> None:
         '''
             Deletes one or more items from item_id(s) passed in.
             item_ids is an int or a list of integers
@@ -286,7 +331,7 @@ class Vault:
         if self.verbose:
             print(f'Item {item_id} deleted')
 
-    def edit_item(self, item_id : int, new_text : str, metadata : dict = None, trees: int = 16) -> None:
+    def edit_item(self, item_id : int, new_text : str, metadata : dict = None, trees: int = 10) -> None:
         '''
             Edits any item. Enter the new text and new vectors will automatically be created.
             New data and vectors will be uploaded and the old data will be deleted
@@ -336,16 +381,9 @@ class Vault:
             with open(temp_file_path, 'r') as json_file:
                 self.map = json.load(json_file)
             os.remove(temp_file_path)
-            if self.verbose:
-                print("mapping connected")
         except: # it doesn't exist
             if self.cloud_manager.vault_exists(name_vecs(self.vault, self.user, self.api)): # but if the vault does
                 self.map = {str(i): str(i) for i in range(self.vectors.get_n_items())}
-                if self.verbose:
-                    print("mapping 2 connected")
-            else: # otherwise no map
-                if self.verbose:
-                    print("mapping does not exist")
 
     def add_to_map(self):
         self.map[str(self.x)] = str(uuid.uuid4())
@@ -373,26 +411,14 @@ class Vault:
         self.vectors = new_index
 
     def upload_vectors(self):
-        # upload the vectors
-        vector_temp_file_path = None
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             vector_temp_file_path = temp_file.name
             self.vectors.save(vector_temp_file_path)
             byte = os.path.getsize(vector_temp_file_path)
             self.cloud_manager.upload_temp_file(vector_temp_file_path, name_vecs(self.vault, self.user, self.api, byte))
 
-        if os.path.exists(vector_temp_file_path):
-            os.remove(vector_temp_file_path)
-
-        # upload the map
-        map_temp_file_path = None
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
-            map_temp_file_path = temp_file.name
             json.dump(self.map, temp_file, indent=2)
-        
-        self.cloud_manager.upload_temp_file(map_temp_file_path, name_map(self.vault, self.user, self.api, byte))
-        if os.path.exists(map_temp_file_path):
-            os.remove(map_temp_file_path)
             
         self.items.clear()
         self.vectors = get_vectors(self.dims)
@@ -447,7 +473,7 @@ class Vault:
         
         return segments
     
-    def get_items(self, ids: List[int] = [], include_total: bool = False) -> list:
+    def get_items(self, ids: List[int] = [], vault: str = None) -> list:
         '''
             Get one or more items from the database. 
             Input the item id(s) in a list. -> Returns the items 
@@ -459,29 +485,45 @@ class Vault:
                 items = vault.get_items([132, 128, 393, 74, 644, 71])
 
             Sample return when called:
-            `[{'data': 'sample_data__sample_data...', 
-            'metadata': {'name': '', 'item_id': 1, 'created_at':
-            '2023-07-16T04:29:00.730754', 'updated_at': '2023-07-16T04:29:00.730758'},
-            'distance': 0.7101698517799377}]`
+            `[
+                {
+                'data': 'The Project Gutenberg eBook of The Prince...',
+                'metadata': 
+                    {
+                        'name': 'hey-0',
+                        'item_id': 0,
+                        'created': '2023-12-28T19:55:26.406048',
+                        'updated': '2023-12-28T19:55:26.406053',
+                        'time': 1703793326.4060538
+                    }
+                }
+            ]`
         '''
         results = []
-        self.load_vectors()
         start_time = time.time()
 
+        if vault: # if custom vault, get custom mapping
+            temp_file_path = self.cloud_manager.download_to_temp_file(name_map(vault, self.user, self.api))
+            with open(temp_file_path, 'r') as json_file:
+                _map = json.load(json_file)
+            os.remove(temp_file_path)
+        else:
+            self.load_mapping()
+            vault = self.vault
+            _map = self.map
+
+            
         for i in ids:
             # Retrieve the item
-            item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(i)], self.user, self.api, item=True))
+            item_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault, _map[str(i)], self.user, self.api, item=True))
             # Retrieve the metadata
-            meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(i)], self.user, self.api, meta=True))
+            meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault, _map[str(i)], self.user, self.api, meta=True))
             meta = json.loads(meta_data)
             build_return(results, item_data, meta)
             if self.verbose:
                 print(f"Retrieved {len(ids)} items --- %s seconds ---" % (time.time() - start_time))
 
-        if include_total:
-            return [results, self.get_total_items()]
-        else:
-            return results
+        return results
 
 
     def get_items_by_vector(self, vector: list, n: int = 4, include_distances: bool = False):
@@ -533,18 +575,10 @@ class Vault:
     def get_similar(self, text: str, n: int = 4, include_distances: bool = False):
         '''
             Returns similar items from the Vault as the text you enter.
-            Sample return when called:
-            `[{'data': 'sample_data__sample_data...', 
-            'metadata': {'name': '', 'item_id': 1, 'created_at':
-            '2023-07-16T04:29:00.730754', 'updated_at': '2023-07-16T04:29:00.730758'},
-            'distance': 0.7101698517799377}]`
 
-            (Usually there are four items, but in this sample print out, we have removed the other 3 
-            and shortened this one's data for brevity)
-
-            This sample was called with "include_distances=True", which adds the "distance" field to the return.
+            Param `include_distances = True` adds the "distance" field to the return.
             The distance can be useful for assessing similarity differences in the items returned. 
-            Each item has its' own distance number.
+            Each item has its' own distance number, and this changes the structure of the output.
 
 
         '''
@@ -578,7 +612,7 @@ class Vault:
 
     def add_n_save(self, text: str, meta: dict = None, name: str = None, split: bool = False, split_size: int = 1000, max_threshold: int = 16000):
         """
-            Adds, gets vectors, then saves your data to the cloud in a single call
+            Adds data, gets vectors, then saves the data to the cloud in one call
             If your text length is greater than 4000 tokens, your text will automatically be split by
             Vault.split_text(your_text).
         """
@@ -604,7 +638,7 @@ class Vault:
 
         if self.verbose:
             print("add item time --- %s seconds ---" % (time.time() - start_time))
-
+        
     def process_batch(self, batch_text_chunks, never_stop, loop_timeout, model="text-embedding-ada-002"):
         '''
             Internal function
@@ -749,6 +783,7 @@ class Vault:
             self.load_ai()
         model = model.lower()
         start_time = time.time()
+        self.cloud_manager.update()
         if not history:
             history = ''
 
@@ -897,6 +932,7 @@ class Vault:
             self.load_ai()
         model = model.lower()
         start_time = time.time()
+        self.cloud_manager.update()
         if not history:
             history = ''
 
@@ -1017,7 +1053,41 @@ class Vault:
                         print(word, end='', flush=True) 
             else:
                 return full_text
-    
+        
+    def print_vault_data(self, print_data: bool = True, return_data: bool = False):
+        ''' 
+            Function to print vault data 
+        ''' 
+        vd = self.cloud_manager.get_mapping()
+        # Function to format datetime
+        def format_datetime(dt, is_timestamp=False):
+            if is_timestamp:
+                return datetime.fromtimestamp(dt).strftime("%m/%d/%y, %H:%M")
+            else:
+                return datetime.fromisoformat(dt).strftime("%m/%d/%y, %H:%M")
+
+        # Formatting and storing data
+        formatted_data = []
+        for record in vd:
+            vr = record['vault']
+            total_items = record['total_items']
+            last_update = format_datetime(record['last_update'])
+            last_use = format_datetime(record['last_use'], is_timestamp=True) if 'last_use' in record else ''
+            total_use = record.get('total_use', '')  # Default to empty string if 'total_use' is not present
+            formatted_data.append([vr, total_items, last_update, last_use, total_use])
+
+        # Calculate the maximum length for the 'vault' field
+        max_vault_length = max(len(record[0]) for record in formatted_data)
+
+        if print: # Print formatted data
+            header = f"{'| Vault':<{max_vault_length}}   | Total Items | Last Update      | Last Use        | Total Use |"
+            print(header)
+            print("-" * len(header))
+            for row in formatted_data:
+                print(f"| {row[0]:<{max_vault_length}} | {row[1]:<11} | {row[2]:<16} | {row[3]:<15} | {row[4]:<8}  |")
+        
+            return vd if return_data else None
+        
     def cloud_stream(self, function):
         '''
             For cloud application yielding the chat stream, like a flask app

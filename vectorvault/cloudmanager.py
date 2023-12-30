@@ -16,6 +16,7 @@
 import tempfile
 import os
 import json
+import time
 from .creds import CustomCredentials
 from .vecreq import call_proj
 from .itemize import cloud_name
@@ -27,12 +28,14 @@ class CloudManager:
         self.user = user
         self.api = api_key
         self.vault = vault
-        # Creates the credentials
+        # Create credentials
         self.credentials = CustomCredentials(user, self.api)
-        # Instantiates the client 
+        # Instantiate the client 
         self.storage_client = storage.Client(project=call_proj(), credentials=self.credentials)
-        self.cloud = self.storage_client.bucket(self.get_bkt(self.user))
+        self.username = self.username(self.user)
+        self.cloud = self.storage_client.bucket(self.username)
         self.cloud_name = cloud_name
+        self.req_count = 0 
 
     def vault_exists(self, vault_name):
         return storage.Blob(bucket=self.cloud, name=vault_name).exists(self.storage_client)
@@ -84,7 +87,7 @@ class CloudManager:
             # Close the file descriptor
             os.close(temp_file_descriptor)
         return temp_file_path
-
+    
     def upload(self, item, text, meta):
         self.upload_to_cloud(self.cloud_name(self.vault, item, self.user, self.api, item=True), text)
         self.upload_to_cloud(self.cloud_name(self.vault, item, self.user, self.api, meta=True), json.dumps(meta))
@@ -98,8 +101,32 @@ class CloudManager:
     def delete_blob(self, blob):
         blob.delete()
      
-    def get_bkt(self, input_string):
+    def username(self, input_string):
         return input_string.replace("@", "_at_").replace(".", "_dot_") + '_vvclient'
+
+    def get_mapping(self):
+        temp_file_path = self.download_to_temp_file(f'{self.username}.json')
+        with open(temp_file_path, 'r') as json_file:
+            _map = json.load(json_file)
+        os.remove(temp_file_path)
+        return _map
+    
+    def update(self):
+        _map = self.get_mapping()
+        for i in range(len(_map)):
+            if _map[i]['vault'] == self.vault:
+                _map[i]['last_use'] = time.time()
+                try:
+                    _map[i]['total_use'] += 1
+                except:
+                    _map[i]['total_use'] = 1
+
+
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+            _path = temp_file.name
+            json.dump(_map, temp_file, indent=2)
+            
+        self.upload_temp_file(_path, f'{self.username}.json')
 
     def delete(self):
         blobs = self.cloud.list_blobs(prefix=self.vault)

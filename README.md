@@ -1,10 +1,10 @@
 ![alt text](https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/297fde6c-f5b4-4076-83bc-81dcfdbffebe/Vector+Vault+Header+5000.jpg)
 
-Vector Vault is a cloud-native vector database. This Python package combines our cloud vector database with OpenAI embeddings and API calls. Easily call ChatGPT or GPT4 and customize how they respond. Take any text data, vectorize it, and add it to a cloud vector database 1 line of code. Vector Vault enables you to quickly and securely create and interact with your cloud vector databases - aka "Vaults". Our cloud is hosted on a serverless distributed cloud architecture backed by Google, making Vector Vault scalable to any project size. 
+Vector Vault is a cloud-native vector database. This Python package combines our cloud vector database with OpenAI embeddings and API calls. Easily call ChatGPT or GPT4 and customize how they respond. Take any text data, vectorize it, and add it to the cloud vector database in 1 line of code. Vector Vault enables you to easily create and interact with your cloud vector databases - aka "Vaults". Our cloud is hosted on a serverless distributed cloud architecture backed by Google, making Vector Vault scalable to any project size. 
 
-Vector Vault takes inspiration from LangChain by integrating their most popular features and tools into our package. However, by combining vector databases with OpenAI's API into a single package, `vectorvault` is able keep the complexity in the background, making it simple and easy to build powerful chat experiences. It's easier to use ChatGPT with `vectorvault` than OpenAI's default package, plus you can customize what ChatGPT says by adding things you want it to know to the Vault, and save a custom personality message to make it sound just right. 
+Vector Vault takes inspiration from LangChain by integrating their most popular features and tools into our package. However, by combining vector databases with OpenAI's API into a single package, `vectorvault` is able keep the complexity in the background, making it simple and easy to build powerful chat experiences. It's even easier to use ChatGPT with `vectorvault` than with OpenAI's default package, plus you can customize what ChatGPT says by adding things you want it to know to the Vault, and save a custom personality message to make it sound just right. 
 
-You will need a Vector Vault API key to use vector databases, so pick one up for free at [VectorVault.io](https://vectorvault.io). The first tier is free so you can start building right away. Vector Vault is the first vector database platfrom to go fully serverless. This architecture makes Vector Vault the most affordable and scalable cloud vector database platform in the world. Due to our serverless nature, you are able to create an unlimited number of vector databases, while only paying for the number of references you make to them. `This make Vector Vault the only real solution to multi-tenet applications, where you need an isolated vector database for each user.`  No matter what tier you are on, you will always be able to create and access an infinite number of isolated vector databases. See tutorials in the Examples folder. 
+You will need a Vector Vault API key to create and interact with vector databases, so pick one up for free at [VectorVault.io](https://vectorvault.io). The first tier is free so you can start building right away. Vector Vault is the first vector database platfrom to go fully serverless. This architecture makes Vector Vault the most affordable and scalable cloud vector database platform in the world. Due to our serverless nature, you are able to create an unlimited number of vector databases, while only paying for the number of references you make to them. `This makes Vector Vault the only real solution for multi-tenet applications, where you need an isolated vector database for each user.`  No matter what tier you are on, you will always be able to create and access an infinite number of isolated vector databases. See tutorials in the Examples folder. 
 
 
 <br>
@@ -14,34 +14,33 @@ You will need a Vector Vault API key to use vector databases, so pick one up for
 
 # Full Python API:
 
-`pip install vector-vault` : install
+Install:
 <br>
+`pip install vector-vault` 
 
+Connect:
 ```python
-# Import 
 from vectorvault import Vault
 
-# Connect 
 vault = Vault(user='your_eamil', 
               api_key='your_api_key',
               openai_key='your_openai_api_key',
               vault='any_vault_name')
 ``` 
-<br>
 
 `vault.add("text string")` : Loads data to be added to the Vault, with automatic text splitting for long texts. 
 <br>
-`vault.get_vectors()` : Retrieves vectors embeddings for all loaded data. *(No parameters)*
+`vault.get_vectors()` : Retrieves vectors embeddings for all loaded data. 
 <br>
-`vault.save()` : Saves all loaded data with embeddings to the Vault (cloud), along with any metadata. *(No parameters)*
+`vault.save()` : Saves all loaded data with embeddings to the Vault (cloud), along with any metadata. 
 <br>
 `vault.add_n_save("text string")` : Combines the above three functions into a sinlge call -> *add(), get_vectors(), and save()* 
 <br>
-`vault.delete()` : Deletes the current Vault and all contents. *(No parameters)*
+`vault.delete()` : Deletes the current Vault and all contents. 
 <br>
-`vault.delete_items(item_ids = [id1, id2, id3, ...])` : `item_ids` is a list of integers to delete from the vault
+`vault.delete_items(item_ids)` : "item_ids" is a list of integers to delete from the vault - *i.e. [id1, id2, id3, ...]*
 <br>
-`vault.edit_item(item_id = 1, next_text = "some new text")` : `item_id` is an integer and `new_text` is the new text data you want to replace the old item data with. You can also set new metadata, or leave as is. It's recommended not to overwrite existing metadata, but adding to it will always be fine.
+`vault.edit_item(item_id, next_text)` : "item_id" is an integer and "new_text" is the new text data you want to replace the old item data with. You can also set new metadata, or leave as is. It's recommended not to overwrite existing metadata, but adding to it will always be fine.
 <br>
 `vault.get_vaults()` : Retrieves a list of Vaults within the current Vault directory.
 <br>
@@ -51,28 +50,28 @@ vault = Vault(user='your_eamil',
 <br>
 `vault.get_total_items()` : Returns the total number of items in the Vault
 <br>
+`vault.get_items([id1, id2, id3, ...])` : returns a list containing your item(s) data. Input a list of ids, one or more, no limit
+<br>
 `vault.get_items_by_vector(vector, n)` : Vector similarity search. Requires an input vector, then returns similar items. `n` is number of similar items to return, default is 4
 <br>
-`vault.get_distance(id1, id2)`  : Get the vector distance between two items `id1` and `id2` in the Vault. 
-<br>*Items can be retrieved from the Vault with a nearest neighbor search using `get_similar()` and the item_ids can be found in the metadata. Item_ids are numeric and sequential, so accessing all items in the Vault can be done by iterating from beginning to end - e.g. `for i in range vault.get_total_items():`*
-
-`vault.get_item_vector(id)` : Returns the vector for item `id` in the Vault.
+`vault.get_item_vector(id)` : Returns the vector for item "id" in the Vault.
 <br>
+`vault.get_distance(id1, id2)`  : Get the vector distance between the two items in the Vault. 
+<br>*Items can be retrieved from the Vault with a nearest neighbor search using "get_similar()" and the item_ids can be found in the metadata. Item_ids are numeric and sequential, so accessing all items in the Vault can be done by iterating from beginning to end - i.e. "for i in range vault.get_total_items():"*
+
 `vault.get_tokens("text string")` : Returns the number of tokens for any input text
 <br>
-`vault.save_custom_prompt(text = '''your custom prompt''')` : Saves prompt to the Vault as default. Whenever you call `get_chat()` with `get_context=True`, the custom prompt you saved will be used 
+`vault.save_custom_prompt('''your custom prompt here''')` : Saves prompt to the Vault as default. Whenever you call "get_chat()" with param "get_context=True", the custom prompt you saved will be used 
 <br>
 `vault.fetch_custom_prompt()` : Retrieves the default prompt from the Vault
 <br>
-`vault.save_personality(text = 'Say everything ominously like Darth Vader')` : Saves a personality to the Vault to be used anytime you chat with it. Whenever you call `get_chat()`, the personality will be used in the reply
+`vault.save_personality('Say everything ominously like Darth Vader')` : Saves a new personality as Vault default to be used anytime you chat with it. Now, whenever you call "get_chat()", the personality you saved will be used in the response
 <br>
 `vault.fetch_personality()` : Retrieves the default personality from the Vault
 <br>
-`vault.get_items([id1, id2, id3, ...])` : returns a list containing your item(s) data. Input a list of ids, one or more, no limit
+`vault.get_chat_stream()` : All the same params as "get_chat()", but it streams.
 <br>
-`vault.get_chat()` : Retrieves a response from ChatGPT, with parameters for handling conversation history, summarizing responses, and retrieving context-based responses that reference similar data in the vault. *(See dedicated section below on using this function and its' parameters)*
-<br>
-`vault.get_chat_stream()` : Retrieves a response from ChatGPT in stream format, with parameters for handling conversation history, summarizing responses, and retrieving context-based responses that reference similar data in the Vault. *(See dedicated section below on using this function and its' parameters)*
+`vault.get_chat()` : A cutting-edge function designed for Retrieval Augmented Generation (RAG), enabling you to effortlessly manage conversational history and seamlessly integrate knowledge from the Vault for context-based responses. 
 <br>
 <br>
 <br>
@@ -435,51 +434,51 @@ Each vault is a seperate and isolated vector database.
 <br>
 <br>
 <br>
+<br>
+<br>
 
 
-## LLM Exclusive Tools (`vault.tools`):
-• `get_rating: -> int`
- Useful to get a quality rating (always True: `answer in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]`)
+# LLM Tools (`vault.tools`):
+### Vector Vault's arsenal of exclusive LLM tools that allow you to generate structured and dependable outputs from unstructured and variable data:
+
+`get_rating`: Generate quality ratings (1-10)
 <br>
-• `get_yes_no: -> 'yes' : 'no'`
- Useful for getting a difinitive answer (always True: `answer == 'yes' or answer == 'no'`)
+`get_yes_no`: Generate a definitive 'yes' or 'no' response
 <br>
-• `get_binary: -> 0 : 1`
- Useful for getting a definitive answer in 0/1 format (always True: `answer == 0 or answer == 1`)
+`get_binary`: Generate binary (0/1) response
 <br>
-• `get_match: -> exact match to item in list`
- Useful to get an exact match to a single option within a set of options -> in: (text and list of answers) -> out: (exact match to one answer in list of answer)
+`get_match`: Generate an exact match to one item within a list
 <br>
-• `get_topic: -> 1 to 3 word descriptor`
- Useful to classify the topic of conversation
+`get_topic`: Classify any text into a 1-3 word topic
 <br>
-• `match_or_make: -> exact match to item in list or creates new string to add to list`
- Get a match to a list of options, or make a new one if unrelated
- Useful if you aren't sure if the input will match one of your existing list options, and need flexibility of creating a new one. When starting from an empty list. - will create it from scratch
+`match_or_make`: Match or create new list options for flexibility, even from scratch
 
 ```python
 # Tools example 1:
 number_out_of_ten = vault.tools.get_rating('How does LeBron James compare to Michael Jordan?')
-print(answer)
+print(number_out_of_ten)
 ```
 >> 8
 
 ```python
 # Tools example 2: 
-this_or_that = vault.tools.get_binary('Should I turn right or left?, 0 for right, 1 for left')
-print(answer)
+binary_answer = vault.tools.get_binary('Should I turn right or left?, 0 for right, 1 for left')
+print(binary_answer)
 ```
 >> 0
 
 ```python
 # Tools example 3: 
-answer = vault.tools.get_yes_no('Should I use Vector Vault to build my next AI project?')
-print(answer)
+yes_or_no = vault.tools.get_yes_no('Should I use Vector Vault to build my next AI project?')
+print(yes_or_no)
 ```
 >> yes
 
 
 
+<br>
+<br>
+<br>
 <br>
 <br>
 <br>

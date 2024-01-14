@@ -381,7 +381,7 @@ print(similar_data[0]['metadata']['genre'])
 <br>
 <br>
 
-# Vaults
+# Vaults:
 Vault names are case sensitive. They can have spaces as well.
 
 ```python

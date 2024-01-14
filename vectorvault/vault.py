@@ -25,7 +25,8 @@ import traceback
 import random
 from datetime import datetime
 from typing import List
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from threading import Thread as T
 from .cloudmanager import CloudManager
 from .ai import AI, openai
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map
@@ -74,20 +75,20 @@ class Vault:
         if openai_key:
             self.openai_key = openai_key
             openai.api_key = self.openai_key
+        self.user = user.lower()
         self.vault = vault.strip() if vault else 'home'
         self.vectors = get_vectors(dims)
         self.api = api_key
         self.dims = dims
         self.verbose = verbose
         try:
-            self.cloud_manager = CloudManager(user, api_key, self.vault)
+            self.cloud_manager = CloudManager(self.user, self.api, self.vault)
             if self.verbose:
                 print(f'Connected vault: {self.vault}')
         except Exception as e:
             print('API KEY NOT FOUND! Using Vault without cloud access. `get_chat()` will still work', e)
             # user can still use the get_chat() function without an api key
             self.cloud_manager = None
-        self.user = user
         self.x = 0
         self.x_checked = False
         self.vecs_loaded = False
@@ -125,7 +126,7 @@ class Vault:
 
     def get_tokens(self, text: str):
         '''
-            Returns the distance between two vectors - item ids are needed to compare 916-324-7308
+            Returns the number of tokens for any given text
         '''
         self.load_ai()
         return self.ai.get_tokens(text)
@@ -143,16 +144,6 @@ class Vault:
         '''
         self.check_index()
         return self.vectors.get_item_vector(item_id)
-    
-    def fetch_personality_message(self):
-        '''
-            Retrieves personality_message from the vault to use by default
-        '''
-        try:
-            personality_message = self.cloud_manager.download_text_from_cloud(f'{self.vault}/personality_message')
-        except:
-            personality_message = "Answer directly and be helpful"
-        return personality_message
 
     def load_ai(self):
         try:
@@ -166,14 +157,33 @@ class Vault:
         self.ai = AI(personality_message, main_prompt)
         self.ai_loaded = True
 
-    def save_personality_message(self, personality_message: str):
+    def save_personality_message(self, text: str):
         '''
             Saves personality_message to the vault and use it by default from now on
         '''
-        self.cloud_manager.upload_personality_message(personality_message)
+        self.cloud_manager.upload_personality_message(text)
 
         if self.verbose:
             print(f"Personality message saved")
+    
+    def fetch_personality_message(self):
+        '''
+            Retrieves personality_message from the vault to use by default
+        '''
+        try:
+            personality_message = self.cloud_manager.download_text_from_cloud(f'{self.vault}/personality_message')
+        except:
+            personality_message = "Answer directly and be helpful"
+        return personality_message
+    
+    def save_custom_prompt(self, text: str):
+        '''
+            Saves custom_prompt to the vault and use it by default from now on
+        '''
+        self.cloud_manager.upload_custom_prompt(text)
+
+        if self.verbose:
+            print(f"Custom prompt saved")
     
     def fetch_custom_prompt(self):
         '''
@@ -193,15 +203,6 @@ class Vault:
         Question: {content}
         """
         return prompt
-    
-    def save_custom_prompt(self, prompt: str):
-        '''
-            Saves custom_prompt to the vault and use it by default from now on
-        '''
-        self.cloud_manager.upload_custom_prompt(prompt)
-
-        if self.verbose:
-            print(f"Custom prompt saved")
 
     def save(self, trees: int = 10):
         '''
@@ -224,7 +225,6 @@ class Vault:
                 total_saved_items += 1
 
         self.upload_vectors()
-        self.x_checked = False
 
         if self.verbose:
             print(f"upload time --- {(time.time() - start_time)} seconds --- {total_saved_items} items saved")
@@ -257,14 +257,13 @@ class Vault:
         self.map.popitem()
 
     def update_vault_data(self):
+        nary = []
         try:
             vault_data = self.cloud_manager.get_mapping()
             all_vaults = self.get_vaults('')
             _data = [vault for vault in vault_data if vault['vault'] in all_vaults]
-            nary = []
             for i in all_vaults:
                 total_items = self.get_total_items(i)
-                print(i)
                 time.sleep(.01)
                 item = self.get_items([ total_items - 1 ], i)[0]['metadata']
                 try: 
@@ -274,14 +273,17 @@ class Vault:
 
                 vault_dict = { 'vault': f'{i}', 'total_items': total_items, 'last_update': time_for_last_item }
 
-                for original_data in _data: 
-                    if original_data['vault'] == f'{i}' and 'last_use' in original_data:
-                        vault_dict['last_use'] = original_data['last_use']
-                    elif original_data['vault'] == f'{i}' and 'total_use' in original_data:
-                        vault_dict['total_use'] = original_data['total_use']
+                for original_data in _data:  
+                    if original_data['vault'] == f'{i}':
+                        if 'last_use' in original_data:
+                            vault_dict['last_use'] = original_data['last_use']
+                        if 'total_use' in original_data:
+                            vault_dict['total_use'] = original_data['total_use']
 
                 nary.append(vault_dict)
-        except:
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
             nary.append({ 'vault' : 'demo', 'total_items' : 0, 'last_update' : time.time(), 'last_use' : time.time(), 'total_use' : 0 })
 
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
@@ -289,7 +291,7 @@ class Vault:
             json.dump(nary, temp_file, indent=2)
 
         self.cloud_manager.upload_temp_file(nary_temp_file_path, f'{self.cloud_manager.username}.json')
-    
+
     def delete_items(self, item_ids : List[int], trees: int = 10) -> None:
         '''
             Deletes one or more items from item_id(s) passed in.
@@ -355,6 +357,7 @@ class Vault:
         self.load_vectors()
         self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, item=True), new_text)
         edit_vector(item_id, self.process_batch([new_text], never_stop=False, loop_timeout=180)[0])
+        self.cloud_manager.up
 
         if metadata:
             self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, meta=True), json.dumps(metadata))
@@ -391,10 +394,12 @@ class Vault:
     
     def load_vectors(self):
         start_time = time.time()
+        t = T(target=self.load_mapping())
+        t.start()
         temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(self.vault, self.user, self.api))
         self.vectors.load(temp_file_path)
-        self.load_mapping()
         os.remove(temp_file_path)
+        t.join()
         self.vecs_loaded = True
         if self.verbose:
             print("get load vectors --- %s seconds ---" % (time.time() - start_time))
@@ -416,9 +421,15 @@ class Vault:
             self.vectors.save(vector_temp_file_path)
             byte = os.path.getsize(vector_temp_file_path)
             self.cloud_manager.upload_temp_file(vector_temp_file_path, name_vecs(self.vault, self.user, self.api, byte))
-
+        
+        map_temp_file_path = None
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+            map_temp_file_path = temp_file.name
             json.dump(self.map, temp_file, indent=2)
+        
+        self.cloud_manager.upload_temp_file(map_temp_file_path, name_map(self.vault, self.user, self.api, byte))
+        if os.path.exists(map_temp_file_path):
+            os.remove(map_temp_file_path)
             
         self.items.clear()
         self.vectors = get_vectors(self.dims)
@@ -469,7 +480,7 @@ class Vault:
             segments.append(" ".join(current_segment))
 
         if self.verbose:
-            print(f'New text chunk of size: {len(current_segment)}') 
+            print(f'split_text chunks: {len(segments)}') 
         
         return segments
     
@@ -490,7 +501,7 @@ class Vault:
                 'data': 'The Project Gutenberg eBook of The Prince...',
                 'metadata': 
                     {
-                        'name': 'hey-0',
+                        'name': 'vaultname-0',
                         'item_id': 0,
                         'created': '2023-12-28T19:55:26.406048',
                         'updated': '2023-12-28T19:55:26.406053',
@@ -499,8 +510,15 @@ class Vault:
                 }
             ]`
         '''
-        results = []
+        results = [None] * len(ids)  # Pre-fill the results list with placeholders
         start_time = time.time()
+        
+        def fetch_item(index, i, _map):
+            # Function to fetch a single item, to be run in parallel
+            item_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault, _map[str(i)], self.user, self.api, item=True))
+            meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault, _map[str(i)], self.user, self.api, meta=True))
+            meta = json.loads(meta_data) 
+            return index, build_return(item_data, meta)
 
         if vault: # if custom vault, get custom mapping
             temp_file_path = self.cloud_manager.download_to_temp_file(name_map(vault, self.user, self.api))
@@ -512,19 +530,16 @@ class Vault:
             vault = self.vault
             _map = self.map
 
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(fetch_item, i, id, _map) for i, id in enumerate(ids)]
+            for future in as_completed(futures):
+                index, result = future.result()
+                results[index] = result  # Insert each result at its corresponding index
             
-        for i in ids:
-            # Retrieve the item
-            item_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault, _map[str(i)], self.user, self.api, item=True))
-            # Retrieve the metadata
-            meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault, _map[str(i)], self.user, self.api, meta=True))
-            meta = json.loads(meta_data)
-            build_return(results, item_data, meta)
-            if self.verbose:
-                print(f"Retrieved {len(ids)} items --- %s seconds ---" % (time.time() - start_time))
+        if self.verbose:
+            print(f"Retrieved {len(ids)} items --- %s seconds ---" % (time.time() - start_time))
 
         return results
-
 
     def get_items_by_vector(self, vector: list, n: int = 4, include_distances: bool = False):
         '''
@@ -534,32 +549,44 @@ class Vault:
             self.load_vectors()
             start_time = time.time()
             if not include_distances:
-                results = []
                 vecs = self.vectors.get_nns_by_vector(vector, n)
-                for vec in vecs:
-                    # Retrieve the item
+                results = [None] * len(vecs)  # Pre-fill the results list with placeholders
+
+                def fetch_item(index, vec):
+                    # Function to fetch a single item, to be run in parallel
                     item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(vec)], self.user, self.api, item=True))
-                    # Retrieve the metadata
                     meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(vec)], self.user, self.api, meta=True))
                     meta = json.loads(meta_data)
-                    build_return(results, item_data, meta)
+                    return index, build_return(item_data, meta)
+                
+                with ThreadPoolExecutor() as executor:
+                    futures = [executor.submit(fetch_item, i, vec) for i, vec in enumerate(vecs)]
+                    for future in as_completed(futures):
+                        index, result = future.result()
+                        results[index] = result  # Insert each result at its corresponding index
+
                 if self.verbose:
                     print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
                 return results
             else:
-                results = []
                 vecs, distances = self.vectors.get_nns_by_vector(vector, n, include_distances=include_distances)
-                counter = 0
-                for vec in vecs:
-                    # Retrieve the item
+                results = [None] * len(vecs)  # Pre-fill the results list with placeholders
+
+                def fetch_item(index, vec, distance):
+                    # Function to fetch a single item, to be run in parallel
                     item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(vec)], self.user, self.api, item=True))
-                    # Retrieve the metadata
                     meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(vec)], self.user, self.api, meta=True))
                     meta = json.loads(meta_data)
-                    build_return(results, item_data, meta, distances[counter])
-                    counter+=1
+                    return index, build_return(item_data, meta, distance)
+
+                with ThreadPoolExecutor() as executor:
+                    futures = [executor.submit(fetch_item, i, vec, distances[i]) for i, vec in enumerate(vecs)]
+                    for future in as_completed(futures):
+                        index, result = future.result()
+                        results[index] = result  # Insert each result at its corresponding index
+
                 if self.verbose:
-                    print(f"Retrieved {n} items --- %s seconds ---" % (time.time() - start_time))
+                    print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
                 return results
         except:
             return [{'data': 'No data has been added', 'metadata': {'no meta': 'No metadata has been added'}}]
@@ -569,6 +596,7 @@ class Vault:
             Returns similar items from the Vault as the one you entered, but locally
             (saves a few milliseconds and is sometimes used on production builds)
         '''
+        self.cloud_manager.update()
         vector = self.process_batch([text], never_stop=False, loop_timeout=180, model=model)[0]
         return self.get_items_by_vector(vector, n, include_distances=include_distances)
     
@@ -783,7 +811,7 @@ class Vault:
             self.load_ai()
         model = model.lower()
         start_time = time.time()
-        self.cloud_manager.update()
+
         if not history:
             history = ''
 
@@ -932,7 +960,7 @@ class Vault:
             self.load_ai()
         model = model.lower()
         start_time = time.time()
-        self.cloud_manager.update()
+
         if not history:
             history = ''
 
@@ -946,8 +974,6 @@ class Vault:
                 
         counter = 0
         for segment in inputs:
-            if self.verbose:
-                print(f"segments: {len(inputs)}")
             start_time = time.time()
             exceptions = 0
 
@@ -1032,7 +1058,7 @@ class Vault:
                     if exceptions >= self.rate_limiter.max_attempts:
                         print(f"API Failed too many times, exiting loop: {e}.")
                         break
-
+            
         if self.verbose:
             print("get chat time --- %s seconds ---" % (time.time() - start_time))
 
@@ -1071,7 +1097,11 @@ class Vault:
         for record in vd:
             vr = record['vault']
             total_items = record['total_items']
-            last_update = format_datetime(record['last_update'])
+            last_up = record['last_update']
+            if type(last_up) is str:
+                last_update = format_datetime(last_up)
+            else:
+                last_update = format_datetime(last_up, is_timestamp=True)
             last_use = format_datetime(record['last_use'], is_timestamp=True) if 'last_use' in record else ''
             total_use = record.get('total_use', '')  # Default to empty string if 'total_use' is not present
             formatted_data.append([vr, total_items, last_update, last_use, total_use])

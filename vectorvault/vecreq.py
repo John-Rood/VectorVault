@@ -97,6 +97,23 @@ def call_proj():
     return decoded + 'vault-' + str(numerical_suffix) + 'ab'
 
 
+def call_update(email, vault, api):
+    url = "https://api.vectorvault.io/update_vault_use" 
+
+    data={ "user": email, "vault": vault, "api_key": api }
+
+    # Make the POST request
+    response = requests.post(url, json=data)
+    
+    # Check the request was successful
+    if response.status_code == 200:
+        # Parse the response JSON
+        data = response.json()
+        return data
+    else:
+        raise Exception(f"Request failed with status {response.status_code}")
+
+
 def call_get_chat(user, vault, api_key, openai_key, text, history=None, summary=False, get_context=False, n_context=4, return_context=False, expansion=False, history_search=False, model='gpt-3.5-turbo', include_context_meta=False):
     url = "https://api.vectorvault.io/get_chat"
 

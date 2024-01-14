@@ -1,54 +1,124 @@
 ![alt text](https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/297fde6c-f5b4-4076-83bc-81dcfdbffebe/Vector+Vault+Header+5000.jpg)
 
-Vector Vault is a cloud-native vector database combined with OpenAI. Easily call ChatGPT or GPT4 and customize how they respond. Take any text data, vectorize it, and add it to the cloud vector database in 3 lines of code. Vector Vault enables you to quickly and securely create and interact with your vector databases - aka "Vaults". Vaults are hosted on serverless distributed cloud architecture backed by Google, making `vectorvault` scalable to any project size. 
+Vector Vault is a cloud-native vector database. This Python package combines our cloud vector database with OpenAI embeddings and API calls. Easily call ChatGPT or GPT4 and customize how they respond. Take any text data, vectorize it, and add it to a cloud vector database 1 line of code. Vector Vault enables you to quickly and securely create and interact with your cloud vector databases - aka "Vaults". Our cloud is hosted on a serverless distributed cloud architecture backed by Google, making Vector Vault scalable to any project size. 
 
-`vectorvault` takes inspiration from LangChain, integrating their most popular chat features and LLM tools. However, by combining vector databases with OpenAI's chat into one single package, `vectorvault` is able to hide most of the complexity, making it simple to build custom chat experiences. It's even easier to use ChatGPT with the `vectorvault` package than OpenAI's default package, and you can customize what ChatGPT says by adding the kind of things you want it to say to the Vault. 
+Vector Vault takes inspiration from LangChain by integrating their most popular features and tools into our package. However, by combining vector databases with OpenAI's API into a single package, `vectorvault` is able keep the complexity in the background, making it simple and easy to build powerful chat experiences. It's easier to use ChatGPT with `vectorvault` than OpenAI's default package, plus you can customize what ChatGPT says by adding things you want it to know to the Vault, and save a custom personality message to make it sound just right. 
 
-See tutorials in the Examples folder. You don't need a Vector Vault API key to use the tools or chat features, but you will need one to access the Vault Cloud and create/use vector databases. If you don't already have one, you can sign up for free at [VectorVault.io](https://vectorvault.io). While the service is paid at production scale, the first tier is free allowing you to develop quickly. Affordability is the best reason to use Vector Vault. Due to our serverless cloud architecture, you are able to create an unlimited number of isolated vetor databases, while only paying for the number of references you make to them. 
+You will need a Vector Vault API key to use vector databases, so pick one up for free at [VectorVault.io](https://vectorvault.io). The first tier is free so you can start building right away. Vector Vault is the first vector database platfrom to go fully serverless. This architecture makes Vector Vault the most affordable and scalable cloud vector database platform in the world. Due to our serverless nature, you are able to create an unlimited number of vector databases, while only paying for the number of references you make to them. `This make Vector Vault the only real solution to multi-tenet applications, where you need an isolated vector database for each user.`  No matter what tier you are on, you will always be able to create and access an infinite number of isolated vector databases. See tutorials in the Examples folder. 
+
+
+<br>
+<br>
+<br>
+<br>
+
+# Build an AI Cusomter Service Chatbot
+<p align="center">
+  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/dceb5c7d-6ec6-4eda-82f2-b8848c7b519d/ai_chatbot_having_a_conversation.png" width="60%" height="60%" />
+</p>
+<br>
+
+Here's a quick example of what you can do with Vector Vault. We load a company's customer support data into a txt file called `customer_service.txt`, vectorize all that data, then upload it to the Vault. 
 
 <br>
 
-### Full Python API:
+### Create the Customer Service Vault
+```python
+from vectorvault import Vault
+
+vault = Vault(
+          user='your_eamil', 
+          api_key='your_api_key',
+          openai_key='your_openai_api_key',
+          vault='Customer Service')
+
+with open('customer_service.txt', 'r') as f:
+    vault.add(f.read())
+
+vault.get_vectors()
+
+vault.save()
+```
+
+<br>
+
+Now whenever you want to use it in production call `get_chat()`, with `get_context=True`, which will take the customer's question, search the Vault to find the 4 most relevant answers, then have ChatGPT reply to the customer using those answers to augment its' reply. AKA RAG response.
+
+```python
+customer_question = "I just bought your XD2000 remote and I'm having trouble syncing it to my tv"
+
+support_answer = vault.get_chat(customer_question, get_context=True)
+```
+<br>
+
+Now your AI chatbot sounds just like every other rep!
+
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+# Full Python API:
 
 `pip install vector-vault` : install
 <br>
-`from vectorvault import Vault` : import
+
+```python
+# Import 
+from vectorvault import Vault
+
+# Connect 
+vault = Vault(
+          user='your_eamil', 
+          api_key='your_api_key',
+          openai_key='your_openai_api_key',
+          vault='any_vault_name')
+``` 
 <br>
-`vault = Vault(
-  user='your_eamil', 
-  api_key='your_api_key',
-  openai_key='your_openai_api_key')` Create Vault Instance and Connect to OpenAI. *(Also call `verbose=True` to print all communications and notifications to the terminal while building)*
-<br>
-`vault.add(text, meta=None, name='', split=False, split_size=1000)` : Loads data to be added to the Vault, with automatic text splitting for long texts. `text` is a text string. `meta` is a dictionary. *(`split=True` will split your text input, based on your `split_size`. For each split, a new item will be created. `name` parameter is a shortcut to adding a "name" field to the metadata. If you don't add a name or any metadata, generic info will be added for you. `text` is the only required input)*
+
+`vault.add("text string")` : Loads data to be added to the Vault, with automatic text splitting for long texts. 
 <br>
 `vault.get_vectors()` : Retrieves vectors embeddings for all loaded data. *(No parameters)*
 <br>
 `vault.save()` : Saves all loaded data with embeddings to the Vault (cloud), along with any metadata. *(No parameters)*
 <br>
+`vault.add_n_save("text string")` : Combines the above three functions into a sinlge call -> *add(), get_vectors(), and save()* 
+<br>
 `vault.delete()` : Deletes the current Vault and all contents. *(No parameters)*
 <br>
-`vault.get_vaults()` : Retrieves a list of Vaults within the current Vault directory. *(No parameters)*
+`vault.delete_items(item_ids = [id1, id2, id3, ...])` : `item_ids` is a list of integers to delete from the vault
 <br>
-`vault.get_similar(text, n)` : Retrieves similar texts from the Vault for a given input text - Processes vectors in the cloud. `text` is required. `n` is optional, default = 4.
+`vault.edit_item(item_id = 1, next_text = "some new text")` : `item_id` is an integer and `new_text` is the new text data you want to replace the old item data with. You can also set new metadata, or leave as is. It's recommended not to overwrite existing metadata, but adding to it will always be fine.
 <br>
-`vault.get_similar_local(text, n)` : Retrieves similar texts from the Vault for a given input text - Processes vectors locally. `text` is required. `n` is optional, default = 4. Local version for speed optimized local production.
+`vault.get_vaults()` : Retrieves a list of Vaults within the current Vault directory.
+<br>
+`vault.get_similar("text string", n)` : Vector similarity search. Returns similar texts from the Vault for any given input text - Processes vectors in the Vector Vault Cloud. `text` is required. `n` is optional, default = 4.
+<br>
+`vault.get_similar_local("text string", n)` : Vector similarity search. Returns similar texts from the Vault for any given input text - Processes vectors locally. *This local version is speed optimization for production deployments.*
 <br>
 `vault.get_total_items()` : Returns the total number of items in the Vault
 <br>
-`vault.clear_cache()` : Clears the cache for all the loaded items - *`add()` loads an item*
+`vault.get_items_by_vector(vector, n)` : Vector similarity search. Requires an input vector, then returns similar items. `n` is number of similar items to return, default is 4
 <br>
-`vault.get_items_by_vector(vector, n)` : Returns vector similar items. Requires input vector, returns similar items. `n` is number of items you want returned, default = 4
-<br>
-`vault.get_distance(id1, id2)`  : For getting the vector distance between two items `id1` and `id2` in the Vault. 
+`vault.get_distance(id1, id2)`  : Get the vector distance between two items `id1` and `id2` in the Vault. 
 <br>*Items can be retrieved from the Vault with a nearest neighbor search using `get_similar()` and the item_ids can be found in the metadata. Item_ids are numeric and sequential, so accessing all items in the Vault can be done by iterating from beginning to end - e.g. `for i in range vault.get_total_items():`*
 
-`vault.get_item_vector(id)` : returns the vector for item `id` in the Vault.
+`vault.get_item_vector(id)` : Returns the vector for item `id` in the Vault.
 <br>
-`vault.get_items(ids)` : returns a list containing your item(s). `ids` is a list of ids, one or many
+`vault.get_tokens("text string")` : Returns the number of tokens for any input text
 <br>
-`vault.cloud_stream(function)` : For cloud application yielding the chat stream, like a flask app. Called like *`vault.cloud_stream(vault.get_chat_stream('some_text'))`* in the return of a flask app.
+`vault.save_custom_prompt(text = '''your custom prompt''')` : Saves prompt to the Vault as default. Whenever you call `get_chat()` with `get_context=True`, the custom prompt you saved will be used 
 <br>
-`vault.print_stream(function)` : For locally printing the chat stream. Called like *`vault.print_stream(vault.get_chat_stream('some_text'))`*. You can also assign a variable to it like *`reply = vault.print_stream()`*  It still streams to the console, but the final complete text will also be available in the *`reply`* variable.
+`vault.fetch_custom_prompt()` : Retrieves the default prompt from the Vault
+<br>
+`vault.save_personality(text = 'Say everything ominously like Darth Vader')` : Saves a personality to the Vault to be used anytime you chat with it. Whenever you call `get_chat()`, the personality will be used in the reply
+<br>
+`vault.fetch_personality()` : Retrieves the default personality from the Vault
+<br>
+`vault.get_items([id1, id2, id3, ...])` : returns a list containing your item(s) data. Input a list of ids, one or more, no limit
 <br>
 `vault.get_chat()` : Retrieves a response from ChatGPT, with parameters for handling conversation history, summarizing responses, and retrieving context-based responses that reference similar data in the vault. *(See dedicated section below on using this function and its' parameters)*
 <br>
@@ -70,21 +140,13 @@ pip install vector-vault
 
 # Upload:
 
-1. Create a Vault instance 
-2. Gather some text data we want to store
-3. Add the data to the Vault
-4. Get vectors embeddings 
-5. Save to the Cloud
-
 ```python
 from vectorvault import Vault
 
 vault = Vault(user='YOUR_EMAIL',
               api_key='YOUR_API_KEY', 
               openai_key='YOUR_OPENAI_KEY',
-              vault='NAME_OF_VAULT') 
-# a new vault will be created if the 'vault' name does not already exist 
-# if name already exists, you will be connected to the existing vault
+              vault='NAME_OF_VAULT') # a new vault will be created if the name does not exist - if so, you will be connected
 
 vault.add('some text')
 
@@ -92,17 +154,6 @@ vault.get_vectors()
 
 vault.save()
 ```
-
-That's all it takes to save your data to a cloud vector database. Now you can quickly search the database or use it as context for ChatGPT aka RAG (Retrieval Augmented Generation), like so:
-
-```python
-question = "Should I use Vector Vault for my next generative ai application?"
-
-answer = vault.get_chat(question, get_context=True)  
-
-print(answer)
-```
->> Vector Vault simplifies the process of creating generative AI, making it a compelling choice for your next project involving generative AI. It's essential to consider your specific use cases and the technologies you're currently utilizing. Nevertheless, Vector Vault's seamless integration into various workflows and its ability to operate in a cloud-based environment make it an ideal solution for incorporating generative AI into any application. To achieve this, you can simply input your text into your Vector Vault implementation and retrieve the generated response. Additionally, you have the option to access the Vector Vault API directly from a JavaScript front-end interface, eliminating the need for setting up your own backend implementation. With these advantages in mind, Vector Vault is likely to streamline the development of your next generative AI application, making it faster and more straightforward.
 
 
 <br>
@@ -130,9 +181,9 @@ Small save loads are usually finished in less than a second. Large loads depend 
   <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/5ae905b0-43d0-4b86-a965-5b447ee8c7de/Vector+Vault+Vault.jpg?content-type=image%2Fjpeg" width="60%" height="60%" />
 </p>
 
-
-In Python:
+## Search your data:
 ```python
+# After adding data about NASA's Mars mission to the Vault
 similar_data = vault.get_similar("Your text input") 
 
 for result in similar_data:
@@ -168,6 +219,118 @@ for result in similar_data:
 ```
 >> NASA Mars Exploration... {"created_at":"2023-05-29T19...} NASA To Host Briefing... {"created_at":"2023-05-29T19...} Program studies Mars... {"created_at":"2023-05-29T19...} A Look at a Steep North Polar... {"created_at":"2023-05-29T19...}
 
+<br>
+<br>
+<br>
+<br>
+
+## Talk to your data
+
+Get chat response from OpenAI's ChatGPT with `get_chat()`.
+It has built-in rate limiting, auto retries, and automatic chat histroy slicing, so you can create complex chat capability without getting complicated. All you have to add is the text and the Vault takes care of the rest.
+
+## The get_chat() function:
+```python
+get_chat( 
+        text = None, # the text to respond to
+        history = None, # conversation history
+        summary = False, # generate a summary of the text
+        get_context = False, # retrieves vector similary search results as context to augment the response (RAG)
+        n_context = 4, # how many items to retrieve and use as context 
+        return_context = False, # returns the context items
+        history_search = False, # integrates conversation history into the vector similarity search
+        smart_history_search = False, # uses ChatGPT to generate a search query given the conversation history
+        model = 'gpt-3.5-turbo', # ChatGPT by default - change to 'gpt-4' or any of the other models
+        include_context_meta = False, # include item metadata in the RAG response
+        custom_prompt = False, # a custom prompt to use in place of the default 
+        local = False, # performs vector search locally
+        temperature = 0, # randomness of the model 0 = none, 0.5 = mid, 1 = most
+        timeout = 45 # how many seconds to wait when not receiving a response from the AI 
+        )
+```
+
+```python
+# Basic usage to get a response
+response = vault.get_chat(text)
+
+# Including chat history
+response = vault.get_chat(text, chat_history)
+
+# Requesting a summary of the response
+summary = vault.get_chat(text, summary=True)
+
+# Retrieving context-based response
+response = vault.get_chat(text, get_context=True)
+
+# Context-based response with chat history
+response = vault.get_chat(text, chat_history, get_context=True)
+
+# Context-response with context samples returned
+vault_response = vault.get_chat(text, get_context=True, return_context=True)
+
+# Using a custom prompt
+response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)
+```
+
+When using a custom prompt, ensure that it includes the placeholders `history`, `context`, and `question`, which will be used during internal formatting of the prompt. *(See default prompts in vectorvault/ai.py)*
+
+
+## Normal Usage:
+```python
+# connect to the vault you want to use
+vault = Vault(user='YOUR_EMAIL', 
+              api_key='YOUR_API_KEY', 
+              openai_key='YOUR_OPENAI_KEY', 
+              vault='vectorvault')
+
+# text input
+question = "Should I use Vector Vault for my next generative ai application?"
+
+answer = vault.get_chat(question, get_context=True)  
+
+print(answer)
+```
+>> Vector Vault simplifies the process of creating generative AI, making it a compelling choice for your next project involving generative AI. It's essential to consider your specific use cases and the technologies you're currently utilizing. Nevertheless, Vector Vault's seamless integration into various workflows and its ability to operate in a cloud-based environment make it an ideal solution for incorporating generative AI into any application. To achieve this, you can simply input your text into your Vector Vault implementation and retrieve the generated response. Additionally, you have the option to access the Vector Vault API directly from a JavaScript front-end interface, eliminating the need for setting up your own backend implementation. With these advantages in mind, Vector Vault is likely to streamline the development of your next generative AI application, making it faster and more straightforward.
+
+<br>
+<br>
+<br>
+<br>
+
+# Summarize Anything:
+
+You can summarize any text, no matter how large - even an entire book all at once. Long texts are split into the largest possible chunk sizes and a summary is generated for each chunk. When all summaries are finished, they are concatenated and returned as one.
+```python
+# get summary, no matter how large the input text
+summary = vault.get_chat(text, summary=True)
+```
+<br>
+
+Want to make it a certain length?
+```python
+# make a summary under a legnth of 1000 characters
+summary = vault.get_chat(text, summary=True)
+
+while len(summary) > 1000:
+    summary = vault.get_chat(summary, summary=True)
+```
+
+<br>
+<br>
+<br>
+<br>
+
+# Streaming:
+Use the built-in streaming functionality to get interactive chat streaming with `get_chat_stream()`. It has all the same params as `get_chat()`, but it streams.
+Here's an [app](https://philbrosophy.web.app) we built to showcase what you can do with Vector Vault:
+<br>
+
+![Alt text](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExa3FhcnB4MWEyeDdmNTRvNWVyODRoa3czMm9nM3RudDd5dW84Y3lwNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/RAQQEzEZHjDwISYK8n/giphy.gif)
+
+See it in action. Check our [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) Colab notebooks.
+
+<br>
+<br>
 <br>
 <br>
 
@@ -269,7 +432,8 @@ print(similar_data[0]['metadata']['genre'])
 <br>
 <br>
 
-# Change Vaults
+# Vaults and Changing Vaults
+Vault names are case sensitive. They can have spaces as well.
 
 ```python
 # print the list of vaults inside the current vault directory
@@ -318,33 +482,12 @@ lab_notes_vault = Vault(user='YOUR_EMAIL',
 Each vault is a seperate and isolated vector database.
 <br>
 <br>
-
-### Use `get_chat()` with `get_context=True` to get response from chatgpt referencing vault data
-
-```python
-question = "Should I use Vector Vault for my next generative ai application?"
-
-answer = vault.get_chat(question, get_context=True)  
-
-print(answer)
-```
->> Vector Vault makes building generative ai easy, so you should consider using Vector Vault for your next generative ai project. Additionally, it is important to keep in mind your specific use cases and the other technologies you are working with. However, given the fact that Vector Vault can be integrated in any work flow and be isolated in a cloud environment, it is an ideal package to integrate into any application that you want to utilize generative ai with. To do so, just send the text inputs to your Vector Vault implementation and return the response. With this in mind, it is likely that Vector Vault would make building your next generative ai application both faster and easier.
-
 <br>
-
-To integrate vault data in the response, you need to pass `get_context=True` 
-```python
-# this will get context from the vault, then ask chatgpt the question
-answer = vault.get_chat(question, get_context=True) 
-
-# this will send to chatgpt only and not interact with the Vault in any way
-answer = vault.get_chat(question) 
-```
 <br>
 <br>
 
 
-### LLM Exclusive Tools (`vault.tools`):
+# LLM Exclusive Tools (`vault.tools`):
 • `get_rating: -> int`
  Useful to get a quality rating (always True: `answer in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]`)
 <br>
@@ -394,287 +537,8 @@ print(answer)
 
 
 
-# ChatGPT
-## Use ChatGPT with `get_chat()` 
-
-<p align="center">
-  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/74776e31-4bfd-4d6b-837b-674790ca4288/wisdomandwealth_Electric_Yellow_and_Dark_Blue_-_chat_messages_g_c81a4325-5347-44a7-879d-a58a6d115446.png" width="60%" height="60%" />
-</p>
-<br>
-
-Get chat response from OpenAI's ChatGPT. 
-With built-in rate limiting, auto retries, and automatic chat histroy slicing, you can create complex chat capability without getting complicated. All you have to add is the text and Vector Vault takes care of the rest.
-
-<br>
-<br>
-
-## The get_chat() function:
-`get_chat(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, custom_prompt=False)`
-
-- Example Signle Usage: 
-`response = vault.get_chat(text)`
-
-- Example Chat: 
-`response = vault.get_chat(text, chat_history)`
-
-- Example Summary: 
-`summary = vault.get_chat(text, summary=True)`
-
-- Example Context-Based Response:
-`response = vault.get_chat(text, get_context=True)`
-
-- Example Context-Based Response w/ Chat History:
-`response = vault.get_chat(text, chat_history, get_context=True)`
-
-- Example Context-Response with Context Samples Returned:
-`vault_response = vault.get_chat(text, get_context=True, return_context=True)`
-Response is a string, unless return_context == True, then response will be a dictionary 
-
-- Example Custom Prompt:
-`response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)`
-
-`custom_prompt` overrides the stock prompt we provide. Check ai.py to see the originals we provide. 
-`llm` and `llm_stream` models manage history internally, so the `content` is the only variable to be included and formattable in the prompt. 
-
-*Example with GPT4:*
-
-```python
-response = vault.get_chat(text, chat_history, get_context=True, model='gpt4)
-```
-
-Getting context from the Vault is usually the goal when customizing text generation, and doing that requires additional prompt variables.
-`llm_w_context` and `llm__w_context_stream` models inject the history, context, and user input all in one prompt. In this case, your custom prompt needs to have `history`, `context` and `question` formattable in the prompt like so:
-
-*Example Custom Prompt:*  
-```python
-# You can build a custom prompt with custom variables:
-my_prompt = """
-    Use the following information to answer the Question at the end. 
-
-    Math Result: {math_answer}
-
-    Known Variables: {known_vars}
-
-    Question: {question}
-
-    (Respond to the Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
-    Answer:
-""" 
-response = vault.get_chat(custom_prompt=my_prompt)
-```
-A custom prompt makes the get_chat() function flexible for any use case. Check ai.py to see the stock prompt templates, and get a better idea of how they work...or just send me a message in Discord.
-
-<br>
-
-
-## Normal Usage:
-```python
-# connect to the vault you want to use
-vault = Vault(user='YOUR_EMAIL', 
-              api_key='YOUR_API_KEY', 
-              openai_key='YOUR_OPENAI_KEY', 
-              vault='philosophy')
-
-# text input
-question = "How do you find happiness?"
-
-# get response
-answer = vault.get_chat(question, get_context=True)
-
-print(answer)
-```
->> The answer to finding happiness is not one-size-fits-all, as it can mean different things to different people. However, it has been found that happiness comes from living and working in line with your values and virtues, and finding pleasure in the actions that accord with them. Additionally, having good friends who share your values and provide support and companionship enhances happiness. It is important to remember that happiness cannot be solely dependent on external factors such as material possessions or fleeting pleasures, as they are subject to change and instability. Rather, true happiness may come from an inner sense of mastery and control over yourself and your actions, as well as a sense of purpose and meaning in life.
-
-<br>
-<br>
-
-# Summarize Anything:
-<p align="center">
-  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/e1ff4ca3-e18b-4c8f-b3c9-ff6ddcc907a1/wisdomandwealth_a_summary_being_created._A_bunch_of_texts_are_f_df58744a-13cb-46fd-b39d-3f090349bbb7.png" width="60%" height="60%" />
-</p>
-
-You can summarize any text, no matter how large - even an entire book all at once. Long texts are split into the largest possible chunk sizes and a summary is generated for each chunk. When all summaries are finished, they are concatenated and returned as one.
-```python
-# get summary, no matter how large the input text
-summary = vault.get_chat(text, summary=True)
-```
-<br>
-
-Want to make it a certain length?
-```python
-# make a summary under a legnth of 1000 characters
-summary = vault.get_chat(text, summary=True)
-
-while len(summary) > 1000:
-    summary = vault.get_chat(summary, summary=True)
-```
-
-<br>
-<br>
-<br>
-
-# Streaming:
-Use the built-in streaming functionality to get interactive chat streaming. Here's an [app](https://philbrosophy.web.app) we built to showcase what you can do with Vector Vault:
-<br>
-
-![Alt text](https://github.com/John-Rood/VectorVault/blob/778c11dfc8b71675d704c5f559c3452dc65b910a/digital%20assets/Streaming%20Demo%20Offish.gif)
-
-## get_chat_stream():
-See it in action. Check our [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) that has Colab notebooks you can be running in the browser seconds from now.
-
-The `get_chat()` function returns the whole message at once, whereas the `get_chat_stream()` yields each word as it's received. Other than that, they are nearly identical and have nearly the same input parameters. Streaming is a much better experience and the preferred option for front end applications users interact with.
-
-```python
-## get_chat()
-print(vault.get_chat(text, history))
-
-## get_chat_stream()
-for word in vault.get_chat_stream(text, history):
-        print(word)
-```
-
-```python
-# But it's best to use the built in print function: print_stream() 
-vault.print_stream(vault.get_chat_stream(text, history))
-```
-
-```python
-# With print_stream() final answer is returned after streaming completes, so you can make it a variable
-answer = vault.print_stream(vault.get_chat_stream(text, history))
-```
-
-<br>
-<br>
-
-## The get_chat_stream() function:
-`get_chat_stream(self, text: str, history: str = None, summary: bool = False, get_context = False, n_context = 4, return_context = False, history_search = False, model='gpt-3.5-turbo', include_context_meta=False, metatag=False, metatag_prefixes=False, metatag_suffixes=False, custom_prompt=False)`
-
-Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream().
-cloud_stream() is for cloud functions, like a flask app serving a front end elsewhere.
-print_stream() is for local console printing
-
-- Example Signle Usage: 
-`response = vault.print_stream(vault.get_chat_stream(text))`
-
-- Example Chat: 
-`response = vault.print_stream(vault.get_chat_stream(text, chat_history))`
-
-- Example Summary: 
-`summary = vault.print_stream(vault.get_chat_stream(text, summary=True))`
-
-- Example Context-Based Response:
-`response = vault.print_stream(vault.get_chat_stream(text, get_context = True))`
-
-- Example Context-Based Response w/ Chat History:
-`response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True))`
-
-- Example Context-Response with Context Samples Returned:
-`vault_response = vault.print_stream(vault.get_chat_stream(text, get_context = True, return_context = True))`
-
-- Example Custom Prompt:
-`response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)`
-
-`custom_prompt` overrides the stock prompt we provide. Check ai.py to see the originals we provide. 
-`llm` and `llm_stream` models manage history internally, so the `content` is the only variable to be included and formattable in the prompt. Visit the get_chat_stream() function in vault.py for more information on metatags or check out our examples folder streaming tutorial.
-
-*Example with GPT4:*
-
-```python
-response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True, model='gpt4))
-```
-
-Getting context from the Vault is usually the goal when customizing text generation, and doing that requires additional prompt variables.
-`llm_w_context` and `llm__w_context_stream` models inject the history, context, and user input all in one prompt. In this case, your custom prompt needs to have `history`, `context` and `question` formattable in the prompt like so:
-
-*Example with Custom Prompt:*  
-```python
-my_prompt = """
-    Use the following Context to answer the Question at the end. 
-    Answer as if you were the modern voice of the context, without referencing the context or mentioning that fact any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
-
-    Chat History (if any): {history}
-
-    Additional Context: {context}
-
-    Question: {question}
-
-    (Respond to the Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
-    Answer:
-""" 
-response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True, custom_prompt=my_prompt))
-```
-
-<br>
-
-Streaming is a key for front end applications, so we also built a `cloud_stream` function to make cloud streaming to your front end app easy. In a flask app, all you need to do is recieve the customer text, then call the vault in the return like this: 
-```python
-# Stream from a flask app in one line
-return Response(vault.cloud_stream(vault.get_chat_stream(text, history, get_context=True)), mimetype='text/event-stream')
-```
-This makes going live with a high level app extremely fast and easy, plus your infrastructure will be scalable and robust. Now you can build impressive applications in record time! If have any questions, message in [Discord](https://discord.gg/AkMsP9Uq). Check out our Colab notebooks in the [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) you can run in the browser right now.
-
-
-<br>
-<br> 
-
-
-
-<br>
-<br>
-<br>
-
-# Build an AI Cusomter Service Chat Bot
-<p align="center">
-  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/dceb5c7d-6ec6-4eda-82f2-b8848c7b519d/ai_chatbot_having_a_conversation.png" width="60%" height="60%" />
-</p>
-<br>
-
-In the following code, we will add all of a company's past support conversations to a cloud Vault. (We load the company support texts from a .txt file, vectorize them, then add them to the Vault). As new people message in, we will vector search the Vault for similar questions and answers. We take the past answers returned from the Vault and instruct ChatGPT to use those previous answers to answer this new question. (NOTE: This will also work based on a customer FAQ, or customer support response templates).
-
-<br>
-
-### Create the Customer Service Vault
-```python
-from vectorvault import Vault
-
-vault = Vault(user='YOUR_EMAIL', 
-              api_key='YOUR_API_KEY', 
-              openai_key='YOUR_OPENAI_KEY', 
-              vault='Customer Service')
-
-with open('customer_service.txt', 'r') as f:
-    vault.add(f.read())
-
-vault.get_vectors()
-
-vault.save()
-```
-
-<br>
-
-And just like that, in a only a few lines of code we created a customer service vault. Now whenever you want to use it in production, just use the `get_chat()` with `get_context=True`, which will take the customer's question, search the vault to find the most similar questions and answers, then have ChatGPT reply to the customer using that information.
-
-```python
-customer_question = "I just bought your XD2000 remote and I'm having trouble syncing it to my tv"
-
-chatbot_answer = vault.get_chat(customer_question, get_context=True)
-```
-<br>
-
-That's all it takes to create an AI customer service chatbot that responds as well as any human support rep!
-
-
-<br>
-<br>
-
----
-<br>
-<br>
-
-
-
 ## Getting Started:
-Open the [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) and try out the Google Colab tutorials we have! They will show you a lot, plus they are in Google Colab, so no local set up required, just open them up and press play.
+Open the [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) and try out the Google Colab tutorials we have! They will show you a lot about how to use the `vectorvault` package. Also try out our no-code dashboard that hosts almost all the same interactions with an interactive visual interface at [app.vectorvault.io](https://app.vectorvault.io)
 
 <br>
 <br>

@@ -535,8 +535,10 @@ Now your AI chatbot sounds just like every other rep!
 
 <br>
 <br>
+<br>
+<br>
 
-## Contact:
+# Contact:
 ### If have any questions, drop a message in the Vector Vault [Discord channel](https://discord.gg/AkMsP9Uq), happy to help.
 
 Happy coding!

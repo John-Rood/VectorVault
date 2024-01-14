@@ -79,7 +79,7 @@ def get_item(item):
     item_meta = item["meta"]
     return item_text, item_id, item_meta
 
-def build_return(results, item_data, meta, distance=None):
+def build_return(item_data, meta, distance=None):
     if not distance:
         result = {
             "data": item_data,
@@ -91,4 +91,4 @@ def build_return(results, item_data, meta, distance=None):
             "metadata": meta,
             "distance": distance
         }
-    results.append(result)
+    return result

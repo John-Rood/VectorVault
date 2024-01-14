@@ -18,9 +18,10 @@ import os
 import json
 import time
 from .creds import CustomCredentials
-from .vecreq import call_proj
+from .vecreq import call_proj, call_update
 from .itemize import cloud_name
 from google.cloud import storage
+from threading import Thread as t
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class CloudManager:
@@ -112,6 +113,10 @@ class CloudManager:
         return _map
     
     def update(self):
+        th = t(target=call_update, args=(self.user, self.vault, self.api))
+        th.start()
+    
+    def build_update(self):
         _map = self.get_mapping()
         for i in range(len(_map)):
             if _map[i]['vault'] == self.vault:
@@ -120,7 +125,6 @@ class CloudManager:
                     _map[i]['total_use'] += 1
                 except:
                     _map[i]['total_use'] = 1
-
 
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
             _path = temp_file.name

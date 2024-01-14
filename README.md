@@ -437,7 +437,7 @@ Each vault is a seperate and isolated vector database.
 <br>
 
 
-# LLM Exclusive Tools (`vault.tools`):
+## LLM Exclusive Tools (`vault.tools`):
 • `get_rating: -> int`
  Useful to get a quality rating (always True: `answer in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]`)
 <br>

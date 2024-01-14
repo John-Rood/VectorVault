@@ -26,11 +26,10 @@ Here's a quick example of what you can do with Vector Vault. We load a company's
 ```python
 from vectorvault import Vault
 
-vault = Vault(
-          user='your_eamil', 
-          api_key='your_api_key',
-          openai_key='your_openai_api_key',
-          vault='Customer Service')
+vault = Vault(user='your_eamil', 
+              api_key='your_api_key',
+              openai_key='your_openai_api_key',
+              vault='Customer Service')
 
 with open('customer_service.txt', 'r') as f:
     vault.add(f.read())
@@ -71,11 +70,10 @@ Now your AI chatbot sounds just like every other rep!
 from vectorvault import Vault
 
 # Connect 
-vault = Vault(
-          user='your_eamil', 
-          api_key='your_api_key',
-          openai_key='your_openai_api_key',
-          vault='any_vault_name')
+vault = Vault(user='your_eamil', 
+              api_key='your_api_key',
+              openai_key='your_openai_api_key',
+              vault='any_vault_name')
 ``` 
 <br>
 

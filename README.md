@@ -12,54 +12,6 @@ You will need a Vector Vault API key to use vector databases, so pick one up for
 <br>
 <br>
 
-# Build an AI Cusomter Service Chatbot
-<p align="center">
-  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/dceb5c7d-6ec6-4eda-82f2-b8848c7b519d/ai_chatbot_having_a_conversation.png" width="60%" height="60%" />
-</p>
-<br>
-
-Here's a quick example of what you can do with Vector Vault. We load a company's customer support data into a txt file called `customer_service.txt`, vectorize all that data, then upload it to the Vault. 
-
-<br>
-
-### Create the Customer Service Vault
-```python
-from vectorvault import Vault
-
-vault = Vault(user='your_eamil', 
-              api_key='your_api_key',
-              openai_key='your_openai_api_key',
-              vault='Customer Service')
-
-with open('customer_service.txt', 'r') as f:
-    vault.add(f.read())
-
-vault.get_vectors()
-
-vault.save()
-```
-
-<br>
-
-Now whenever you want to use it in production call `get_chat()`, with `get_context=True`, which will take the customer's question, search the Vault to find the 4 most relevant answers, then have ChatGPT reply to the customer using those answers to augment its' reply. AKA RAG response.
-
-```python
-customer_question = "I just bought your XD2000 remote and I'm having trouble syncing it to my tv"
-
-support_answer = vault.get_chat(customer_question, get_context=True)
-```
-<br>
-
-Now your AI chatbot sounds just like every other rep!
-
-
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-
 # Full Python API:
 
 `pip install vector-vault` : install
@@ -537,6 +489,50 @@ print(answer)
 
 ## Getting Started:
 Open the [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) and try out the Google Colab tutorials we have! They will show you a lot about how to use the `vectorvault` package. Also try out our no-code dashboard that hosts almost all the same interactions with an interactive visual interface at [app.vectorvault.io](https://app.vectorvault.io)
+
+<br>
+<br>
+<br>
+<br>
+
+# Build an AI Cusomter Service Chatbot
+<p align="center">
+  <img src="https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/dceb5c7d-6ec6-4eda-82f2-b8848c7b519d/ai_chatbot_having_a_conversation.png" width="60%" height="60%" />
+</p>
+<br>
+
+Here's a quick example of what you can do with Vector Vault. We load a company's customer support data into a txt file called `customer_service.txt`, vectorize all that data, then upload it to the Vault. 
+
+<br>
+
+### Create the Customer Service Vault
+```python
+from vectorvault import Vault
+
+vault = Vault(user='your_eamil', 
+              api_key='your_api_key',
+              openai_key='your_openai_api_key',
+              vault='Customer Service')
+
+with open('customer_service.txt', 'r') as f:
+    vault.add(f.read())
+
+vault.get_vectors()
+
+vault.save()
+```
+
+<br>
+
+Now whenever you want to use it in production call `get_chat()`, with `get_context=True`, which will take the customer's question, search the Vault to find the 4 most relevant answers, then have ChatGPT reply to the customer using those answers to augment its' reply. AKA RAG response.
+
+```python
+customer_question = "I just bought your XD2000 remote and I'm having trouble syncing it to my tv"
+
+support_answer = vault.get_chat(customer_question, get_context=True)
+```
+Now your AI chatbot sounds just like every other rep!
+
 
 <br>
 <br>

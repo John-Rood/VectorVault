@@ -35,7 +35,7 @@ from .tools_gpt import ToolsGPT
 
 
 class Vault:
-    def __init__(self, user: str = None, api_key: str = None, vault: str = None, openai_key: str = None, dims: int = 1536, verbose: bool = False, personality_message: str = 'Answer the Question directly and be helpful'):
+    def __init__(self, user: str = None, api_key: str = None, vault: str = None, openai_key: str = None, dims: int = 1536, verbose: bool = False):
         ''' 
         ### Create a vector database instance like this:
         ```
@@ -146,6 +146,8 @@ class Vault:
         return self.vectors.get_item_vector(item_id)
 
     def load_ai(self):
+        self.ai_loaded = True
+        self.ai = AI()
         try:
             main_prompt = self.fetch_custom_prompt()
         except:
@@ -155,7 +157,6 @@ class Vault:
         except:
             personality_message = None
         self.ai = AI(personality_message, main_prompt)
-        self.ai_loaded = True
 
     def save_personality_message(self, text: str):
         '''
@@ -173,7 +174,12 @@ class Vault:
         try:
             personality_message = self.cloud_manager.download_text_from_cloud(f'{self.vault}/personality_message')
         except:
-            personality_message = "Answer directly and be helpful"
+            if self.ai_loaded:
+                personality_message = self.ai.personality_message
+            else:
+                self.load_ai()
+                personality_message = self.ai.personality_message
+                
         return personality_message
     
     def save_custom_prompt(self, text: str):
@@ -192,16 +198,12 @@ class Vault:
         try:
             prompt = self.cloud_manager.download_text_from_cloud(f'{self.vault}/prompt')
         except:
-            prompt = """Use the following Context to answer the Question at the end. 
-        Answer as if you were the modern voice of the context, without referencing the context or mentioning 
-        the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
-
-        Chat History (if any): {history}
-
-        Additional Context: {context}
-
-        Question: {content}
-        """
+            if self.ai_loaded:
+                prompt = self.ai.main_prompt_with_context
+            else:
+                self.load_ai()
+                prompt = self.ai.main_prompt_with_context
+            
         return prompt
 
     def save(self, trees: int = 10):
@@ -357,7 +359,6 @@ class Vault:
         self.load_vectors()
         self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, item=True), new_text)
         edit_vector(item_id, self.process_batch([new_text], never_stop=False, loop_timeout=180)[0])
-        self.cloud_manager.up
 
         if metadata:
             self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, meta=True), json.dumps(metadata))

@@ -2,7 +2,7 @@
 
 Vector Vault is a cloud-native vector database. This Python package combines our cloud vector database with OpenAI embeddings and API calls. Easily call ChatGPT or GPT4 and customize how they respond. Take any text data, vectorize it, and add it to the cloud vector database in 1 line of code. Vector Vault enables you to easily create and interact with your cloud vector databases - aka "Vaults". Our cloud is hosted on a serverless distributed cloud architecture backed by Google, making Vector Vault scalable to any project size. 
 
-Vector Vault takes inspiration from LangChain by integrating their most popular features and tools into our package. However, by combining vector databases with OpenAI's API into a single package, `vectorvault` is able keep the complexity in the background, making it simple and easy to build powerful chat experiences. It's even easier to use ChatGPT with `vectorvault` than with OpenAI's default package, plus you can customize what ChatGPT says by adding things you want it to know to the Vault, and save a custom personality message to make it sound just right. 
+Vector Vault takes inspiration from LangChain by integrating their most popular features and tools into our package. However, by combining vector databases with OpenAI's API into a single package, `vectorvault` is able to keep the complexity in the background, making it simple and easy to build powerful chat experiences. It's even easier to use ChatGPT with `vectorvault` than with OpenAI's default package, plus you can customize what ChatGPT says by adding things you want it to know to the Vault, and save a custom personality message to make it sound just right. 
 
 You will need a Vector Vault API key to create and interact with vector databases, so pick one up for free at [VectorVault.io](https://vectorvault.io). The first tier is free so you can start building right away. Vector Vault is the first vector database platfrom to go fully serverless. This architecture makes Vector Vault the most affordable and scalable cloud vector database platform in the world. Due to our serverless nature, you are able to create an unlimited number of vector databases, while only paying for the number of references you make to them. `This makes Vector Vault the only real solution for multi-tenet applications, where you need an isolated vector database for each user.`  No matter what tier you are on, you will always be able to create and access an infinite number of isolated vector databases. See tutorials in the Examples folder. 
 
@@ -28,11 +28,11 @@ vault = Vault(user='your_eamil',
               vault='any_vault_name')
 ``` 
 
-`vault.add("text string")` : Loads data to be added to the Vault, with automatic text splitting for long texts. 
+`vault.add("text string")` : Loads data to be added to the Vault, with automatic text splitting for long texts
 <br>
-`vault.get_vectors()` : Retrieves vectors embeddings for all loaded data. 
+`vault.get_vectors()` : Retrieves vectors embeddings for all loaded data
 <br>
-`vault.save()` : Saves all loaded data with embeddings to the Vault (cloud), along with any metadata. 
+`vault.save()` : Saves all loaded data with embeddings to the Vault (cloud), along with any metadata
 <br>
 `vault.add_n_save("text string")` : Combines the above three functions into a sinlge call -> *add(), get_vectors(), and save()* 
 <br>
@@ -40,11 +40,11 @@ vault = Vault(user='your_eamil',
 <br>
 `vault.delete_items(item_ids)` : "item_ids" is a list of integers to delete from the vault - *i.e. [id1, id2, id3, ...]*
 <br>
-`vault.edit_item(item_id, next_text)` : "item_id" is an integer and "new_text" is the new text data you want to replace the old item data with. You can also set new metadata, or leave as is. It's recommended not to overwrite existing metadata, but adding to it will always be fine.
+`vault.edit_item(item_id, next_text)` : "item_id" is an integer and "new_text" is the new text data you want to replace the old item data with. You can also set new metadata, or leave as is. It's recommended not to overwrite existing metadata, but adding to it will always be fine
 <br>
-`vault.get_vaults()` : Retrieves a list of Vaults within the current Vault directory.
+`vault.get_vaults()` : Retrieves a list of Vaults within the current Vault directory
 <br>
-`vault.get_similar("text string", n)` : Vector similarity search. Returns similar texts from the Vault for any given input text - Processes vectors in the Vector Vault Cloud. `text` is required. `n` is optional, default = 4.
+`vault.get_similar("text string", n)` : Vector similarity search. Returns similar texts from the Vault for any given input text - Processes vectors in the Vector Vault Cloud. `text` is required. `n` is optional, default = 4
 <br>
 `vault.get_similar_local("text string", n)` : Vector similarity search. Returns similar texts from the Vault for any given input text - Processes vectors locally. *This local version is speed optimization for production deployments.*
 <br>
@@ -54,24 +54,24 @@ vault = Vault(user='your_eamil',
 <br>
 `vault.get_items_by_vector(vector, n)` : Vector similarity search. Requires an input vector, then returns similar items. `n` is number of similar items to return, default is 4
 <br>
-`vault.get_item_vector(id)` : Returns the vector for item "id" in the Vault.
+`vault.get_item_vector(id)` : Returns the vector for item "id" in the Vault
 <br>
 `vault.get_distance(id1, id2)`  : Get the vector distance between the two items in the Vault. 
 <br>*Items can be retrieved from the Vault with a nearest neighbor search using "get_similar()" and the item_ids can be found in the metadata. Item_ids are numeric and sequential, so accessing all items in the Vault can be done by iterating from beginning to end - i.e. "for i in range vault.get_total_items():"*
 
 `vault.get_tokens("text string")` : Returns the number of tokens for any input text
 <br>
-`vault.save_custom_prompt('''your custom prompt here''')` : Saves prompt to the Vault as default. Whenever you call "get_chat()" with param "get_context=True", the custom prompt you saved will be used 
+`vault.save_custom_prompt('''your custom prompt here''')` : Saves prompt to the Vault as default. Whenever you call "get_chat()" with parameter "get_context=True", the custom prompt you saved will be used 
 <br>
 `vault.fetch_custom_prompt()` : Retrieves the default prompt from the Vault
 <br>
-`vault.save_personality('Say everything ominously like Darth Vader')` : Saves a new personality as Vault default to be used anytime you chat with it. Now, whenever you call "get_chat()", the personality you saved will be used in the response
+`vault.save_personality('your desired personality traits here')` : Saves a new personality as Vault default to be used anytime you chat with it. Now, whenever you call "get_chat()", the personality you saved will be used in the response
 <br>
 `vault.fetch_personality()` : Retrieves the default personality from the Vault
 <br>
-`vault.get_chat_stream()` : All the same params as "get_chat()", but it streams.
+`vault.get_chat_stream()` : All the same params as "get_chat()", but it streams
 <br>
-`vault.get_chat()` : A cutting-edge function designed for Retrieval Augmented Generation (RAG), enabling you to effortlessly manage conversational history and seamlessly integrate knowledge from the Vault for context-based responses. 
+`vault.get_chat()` : A cutting-edge function designed for Retrieval Augmented Generation (RAG), enabling you to effortlessly manage conversational history and seamlessly integrate knowledge from the Vault for context-based responses 
 <br>
 <br>
 <br>
@@ -221,7 +221,7 @@ vault_response = vault.get_chat(text, get_context=True, return_context=True)
 response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)
 ```
 
-When using a custom prompt, ensure that it includes the placeholders `history`, `context`, and `question`, which will be used during internal formatting of the prompt. *(See default prompts in vectorvault/ai.py)*
+Use a custom prompt only when get_context=True. If you provide a custom_prompt ensure it includes the placeholders `context`, and `question`. The personality message is your go-to method for customizing prompts and responses. It can be used to make any desired change in the response. Internally it is included as a part of the prompt on every message. Changing the personality_message is easy, and should be used in any situation you want a customized prompt. 
 
 
 ## Normal Usage:
@@ -240,6 +240,20 @@ answer = vault.get_chat(question, get_context=True)
 print(answer)
 ```
 >> Vector Vault simplifies the process of creating generative AI, making it a compelling choice for your next project involving generative AI. It's essential to consider your specific use cases and the technologies you're currently utilizing. Nevertheless, Vector Vault's seamless integration into various workflows and its ability to operate in a cloud-based environment make it an ideal solution for incorporating generative AI into any application. To achieve this, you can simply input your text into your Vector Vault implementation and retrieve the generated response. Additionally, you have the option to access the Vector Vault API directly from a JavaScript front-end interface, eliminating the need for setting up your own backend implementation. With these advantages in mind, Vector Vault is likely to streamline the development of your next generative AI application, making it faster and more straightforward.
+
+## Changing the Personality:
+```python
+# now we save a different personality
+vault.save_personality_message('Say everything like Snoop Dogg')
+
+# and ask the same question again
+question = "Should I use Vector Vault for my next generative ai application?"
+
+answer = vault.get_chat(question, get_context=True)  
+
+print(answer)
+```
+>> Yo, check it out, Vector Vault be makin' generative AI a piece of cake, ya dig? If you got a project that needs some generative AI action, this is the way to go. But hold up, before you jump in, make sure you think 'bout your specific needs and the tech you already got goin' on. But let me tell ya, Vector Vault fits right into any workflow and can do its thing in the cloud, makin' it perfect for any application. All you gotta do is input your text and boom, you get your generated response. And if you wanna get fancy, you can even access the Vector Vault API straight from a JavaScript front-end, no need to mess with your own backend. So, with all these perks, Vector Vault gonna make your generative AI app development smooth and easy, ya feel me? It's gonna be faster and simpler than ever before.
 
 <br>
 <br>

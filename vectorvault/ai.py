@@ -14,16 +14,10 @@ class AI:
         'gpt-4-32k': 32000,
         'gpt-4-1106-preview': 128000,
     }
-        self.no_context_prompt = """
-    Chat History (if any): {history}
-
-    Question: {content}
-    """ 
+        
         self.main_prompt_with_context = """Use the following Context to answer the Question at the end. 
     Answer as if you were the modern voice of the context, without referencing the context or mentioning 
     the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
-
-    Chat History (if any): {history}
 
     Additional Context: {context}
 
@@ -31,20 +25,20 @@ class AI:
     """ if not main_prompt else main_prompt
         
         self.personality_message = personality_message if personality_message else """Answer directly and be helpful"""
-        self.context_prompt = self.main_prompt_with_context + '\n' + f'({self.personality_message})' + '\n' + '''Answer:'''
-        self.prompt = self.no_context_prompt + '\n' + f'({self.personality_message})' + '\n' + '''Answer:'''
+        self.context_prompt = self.main_prompt_with_context + '\n' + f'({self.personality_message})' + '\n\n' + '''Answer:'''
+        self.prompt = "Question: {content}" + '\n\n' + f'({self.personality_message})' + '\n\n' + '''Answer:'''
         
     def within_context_window(self, text : str = None, model='gpt-3.5-turbo'):
         return self.get_tokens(text) < self.model_token_limits.get(model, 4000)
 
-    def make_call(self, prompt, model, temperature, timeout=45):
+    def make_call(self, messages, model, temperature, timeout=45):
         # This function will be run in a separate thread
         def call_api(response_queue):
             try:
                 response = openai.chat.completions.create(
                     model=model,
                     temperature=temperature,
-                    messages=[{"role": "user", "content": prompt}]
+                    messages=messages
                     )
                 response_queue.put(response.choices[0].message.content)
             except Exception as e:
@@ -101,7 +95,7 @@ class AI:
 
             # Construct the prompt with any remaining user input
             history = '' if history is None else history
-            prompt = prompt_template.format(content=user_input, history=history)
+            prompt = prompt_template.format(content=user_input)
 
         # If user_input is not provided, and a custom prompt is given, use the custom prompt only
         elif custom_prompt:
@@ -109,12 +103,12 @@ class AI:
         else:
             raise ValueError('Error: Need custom_prompt if no user_input')
 
-        # Include history if it exists
-        prompt = f"Chat history: \n{history}\n\n User: \n{prompt} \nAnswer:" if history else f"User: \n{prompt} \nAnswer:"
+        messages = [{"role": "user", "content": history}] if history else []
+        messages.append({"role": "user", "content": prompt})
 
         # Return the call
         for _ in range(max_retries):
-            response = self.make_call(prompt, model, temperature, timeout)
+            response = self.make_call(messages, model, temperature, timeout)
             if response is not None:
                 return response
             print("Retrying...")
@@ -227,11 +221,14 @@ class AI:
                     prompt_template = self.truncate_text(prompt_template, tokens_to_remove * 2)
 
         # Format the prompt
-        prompt = prompt_template.format(context=context, history=history, content=user_input)
+        prompt = prompt_template.format(context=context, content=user_input)
+
+        messages = [{"role": "user", "content": history}] if history else []
+        messages.append({"role": "user", "content": prompt})
 
             
         for _ in range(max_retries):
-            response = self.make_call(prompt, model, temperature, timeout)
+            response = self.make_call(messages, model, temperature, timeout)
             if response is not None:
                 return response
             print("Retrying...")
@@ -279,17 +276,16 @@ class AI:
                     assert self.get_tokens(history + user_input + prompt_template) <= max_tokens, "Token limit exceeded."
                 else:
                     assert self.get_tokens(user_input + prompt_template) <= max_tokens, "Token limit exceeded."
+        
+        prompt = prompt_template.format(content=user_input)
 
-            prompt = prompt_template.format(content=user_input, history=history)
-
-        if history:
-            history_prompt = f"Chat history: {history}"
-            prompt = history_prompt + "\n\n" + prompt
+        messages = [{"role": "user", "content": history}] if history else []
+        messages.append({"role": "user", "content": prompt})
 
         response = openai.chat.completions.create(
             model=model,
             temperature=temperature,
-            messages=[{"role": "user", "content": f"{prompt}"}],
+            messages=messages,
             stream=True
         )
         for message in response:
@@ -343,14 +339,17 @@ class AI:
             if self.get_tokens(history + context + user_input + prompt_template) >= max_tokens:
                 prompt_template = self.truncate_text(prompt_template, tokens_to_remove * 2)
 
-        # Construct the final prompt.
-        prompt = prompt_template.format(context=context, history=history, content=user_input)
+        # Construct the final prompt
+        prompt = prompt_template.format(context=context, content=user_input)
+
+        messages = [{"role": "user", "content": history}] if history else []
+        messages.append({"role": "user", "content": prompt})
+
 
         response = openai.chat.completions.create(
             model=model,
             temperature=temperature,
-            messages=[
-                {"role": "user", "content": f"{prompt}"}],
+            messages=messages,
             stream=True
         )
         for message in response:

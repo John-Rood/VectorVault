@@ -243,7 +243,7 @@ print(answer)
 
 ## Changing the Personality:
 ```python
-# now we save a different personality
+# save a different personality
 vault.save_personality_message('Say everything like Snoop Dogg')
 
 # and ask the same question again

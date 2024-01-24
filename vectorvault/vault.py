@@ -25,6 +25,11 @@ import traceback
 import random
 from datetime import datetime
 from typing import List
+from kneed import KneeLocator
+from sklearn.cluster import DBSCAN
+from sklearn.neighbors import NearestNeighbors
+from sklearn.manifold import TSNE
+import plotly.graph_objs as go
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Thread as T
 from .cloudmanager import CloudManager
@@ -138,7 +143,7 @@ class Vault:
         self.check_index()
         return self.vectors.get_distance(id1, id2)
     
-    def get_item_vector(self, item_id : int):
+    def get_item_vector(self, item_id: int):
         '''
             Returns the vector from an item id
         '''
@@ -286,7 +291,7 @@ class Vault:
 
         except Exception as e:
             print(f"An error occurred: {e}")
-            nary.append({ 'vault' : 'demo', 'total_items' : 0, 'last_update' : time.time(), 'last_use' : time.time(), 'total_use' : 0 })
+            nary.append({ 'vault': 'demo', 'total_items': 0, 'last_update': time.time(), 'last_use': time.time(), 'total_use': 0 })
 
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
             nary_temp_file_path = temp_file.name
@@ -294,7 +299,7 @@ class Vault:
 
         self.cloud_manager.upload_temp_file(nary_temp_file_path, f'{self.cloud_manager.username}.json')
 
-    def delete_items(self, item_ids : List[int], trees: int = 10) -> None:
+    def delete_items(self, item_ids: List[int], trees: int = 10) -> None:
         '''
             Deletes one or more items from item_id(s) passed in.
             item_ids is an int or a list of integers
@@ -335,7 +340,7 @@ class Vault:
         if self.verbose:
             print(f'Item {item_id} deleted')
 
-    def edit_item(self, item_id : int, new_text : str, metadata : dict = None, trees: int = 10) -> None:
+    def edit_item(self, item_id: int, new_text: str, trees: int = 10) -> None:
         '''
             Edits any item. Enter the new text and new vectors will automatically be created.
             New data and vectors will be uploaded and the old data will be deleted
@@ -360,11 +365,17 @@ class Vault:
         self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, item=True), new_text)
         edit_vector(item_id, self.process_batch([new_text], never_stop=False, loop_timeout=180)[0])
 
-        if metadata:
-            self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, meta=True), json.dumps(metadata))
-
         if self.verbose:
             print(f'Item {item_id} edited')
+
+    def edit_item_meta(self, item_id: int, metadata) -> None:
+        '''
+            Edit and save any item's metadata
+        '''
+        self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, meta=True), json.dumps(metadata))
+
+        if self.verbose:
+            print(f'Item {item_id} metadata saved')
 
     def check_index(self):
         if not self.x_checked:
@@ -404,7 +415,103 @@ class Vault:
         self.vecs_loaded = True
         if self.verbose:
             print("get load vectors --- %s seconds ---" % (time.time() - start_time))
-    
+
+    def make_3d_map(self, highlight_id: int = None, return_html: bool = False):
+        def choose_eps(vectors_3d, k=4):
+            # Use NearestNeighbors to find the k-nearest distances for each point
+            neigh = NearestNeighbors(n_neighbors=k)
+            neigh.fit(vectors_3d)
+            distances, indices = neigh.kneighbors(vectors_3d)
+
+            # Sort the distances
+            sorted_distances = np.sort(distances[:, k-1], axis=0)
+
+            # Find the knee point for the k-distance graph
+            kneedle = KneeLocator(range(len(sorted_distances)), sorted_distances, S=1.0, curve='convex', direction='increasing')
+            eps = sorted_distances[kneedle.knee]
+
+            return eps
+        
+        # Load vectors
+        self.load_vectors()
+
+        # Retrieve all vectors from the index
+        vectors = [self.vectors.get_item_vector(i) for i in range(self.vectors.get_n_items())]
+
+        # Convert list of vectors to a NumPy array
+        vectors_array = np.array(vectors)
+            
+        # Use t-SNE to project the vectors into 3D space
+        tsne = TSNE(n_components=3, random_state=0)
+        vectors_3d = tsne.fit_transform(vectors_array)
+
+        eps_val = choose_eps(vectors_3d)
+        print(eps_val)
+
+        # Apply DBSCAN clustering
+        dbscan = DBSCAN(eps=eps_val, min_samples=10)  # These parameters may need tuning
+        cluster_labels = dbscan.fit_predict(vectors_3d)
+
+        # Generate hover text for each point
+        hover_texts = [
+            'ID: {} Cluster: {}'.format(i, 'Outlier' if lbl == -1 else lbl)
+            for i, lbl in enumerate(cluster_labels)
+            ]
+
+        # Trace for all points with cluster coloring
+        trace_all = go.Scatter3d(
+            x=vectors_3d[:, 0],
+            y=vectors_3d[:, 1],
+            z=vectors_3d[:, 2],
+            mode='markers',
+            marker=dict(
+                size=5,
+                color=cluster_labels,  # Color by cluster label
+                colorscale='Viridis',  # Color scale for clusters
+                line=dict(width=0)  # No border around markers
+            ),
+            text=hover_texts,
+            hoverinfo='text',
+            name='Clustered points'
+        )
+
+        data = [trace_all]
+
+        # For the highlighted point, if it exists
+        if highlight_id is not None:
+            trace_highlight = go.Scatter3d(
+                x=[vectors_3d[highlight_id, 0]],
+                y=[vectors_3d[highlight_id, 1]],
+                z=[vectors_3d[highlight_id, 2]],
+                mode='markers',
+                marker=dict(
+                    size=8,
+                    color='red',  # Highlighted point is red
+                ),
+                text=['Highlighted ID: {}'.format(highlight_id)],
+                hoverinfo='text',
+                name='Highlighted point'
+            )
+            data.append(trace_highlight)
+
+        # Layout for the 3D plot
+        layout = go.Layout(
+            title='3D Visualization with DBSCAN Clustering',
+            scene=dict(
+                xaxis=dict(title='Dimension 1'),
+                yaxis=dict(title='Dimension 2'),
+                zaxis=dict(title='Dimension 3'),
+            ),
+            margin=dict(l=0, r=0, b=0, t=0)
+        )
+
+        # Create the figure
+        fig = go.Figure(data=data, layout=layout)
+        if return_html:
+            return fig.to_html(full_html=False, include_plotlyjs='cdn')
+        else:
+            fig.show()
+
     def reload_vectors(self):
         num_existing_items = self.vectors.get_n_items()
         new_index = get_vectors(self.dims)

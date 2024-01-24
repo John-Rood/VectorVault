@@ -98,9 +98,6 @@ class CloudManager:
     
     def upload_custom_prompt(self, prompt):
         self.upload_to_cloud(f'{self.vault}/prompt', prompt)
-    
-    def delete_blob(self, blob):
-        blob.delete()
      
     def username(self, input_string):
         return input_string.replace("@", "_at_").replace(".", "_dot_") + '_vvclient'
@@ -131,6 +128,9 @@ class CloudManager:
             json.dump(_map, temp_file, indent=2)
             
         self.upload_temp_file(_path, f'{self.username}.json')
+    
+    def delete_blob(self, blob):
+        blob.delete()
 
     def delete(self):
         blobs = self.cloud.list_blobs(prefix=self.vault)

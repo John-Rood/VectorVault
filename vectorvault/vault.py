@@ -40,7 +40,7 @@ from .tools_gpt import ToolsGPT
 
 
 class Vault:
-    def __init__(self, user: str = None, api_key: str = None, vault: str = None, openai_key: str = None, dims: int = 1536, verbose: bool = False):
+    def __init__(self, user: str = None, api_key: str = None, vault: str = None, openai_key: str = None, embeddings_model: str = None, verbose: bool = False):
         ''' 
         ### Create a vector database instance like this:
         ```
@@ -77,23 +77,18 @@ class Vault:
               verbose=False)
         ```
         '''
+        self.user = user.lower()
+        self.vault = vault.strip() if vault else 'home'
+        self.api = api_key
+        t = T(target=self.connect_to_cloud)
+        t.start()
         if openai_key:
             self.openai_key = openai_key
             openai.api_key = self.openai_key
-        self.user = user.lower()
-        self.vault = vault.strip() if vault else 'home'
-        self.vectors = get_vectors(dims)
-        self.api = api_key
-        self.dims = dims
+        self.embeddings_model = embeddings_model if embeddings_model else 'text-embedding-3-small'
+        self.dims = 1536 if embeddings_model != 'text-embedding-3-large' else 3072
+        self.vectors = get_vectors(self.dims)
         self.verbose = verbose
-        try:
-            self.cloud_manager = CloudManager(self.user, self.api, self.vault)
-            if self.verbose:
-                print(f'Connected vault: {self.vault}')
-        except Exception as e:
-            print('API KEY NOT FOUND! Using Vault without cloud access. `get_chat()` will still work', e)
-            # user can still use the get_chat() function without an api key
-            self.cloud_manager = None
         self.x = 0
         self.x_checked = False
         self.vecs_loaded = False
@@ -104,6 +99,17 @@ class Vault:
         self.ai_loaded = False
         self.tools = ToolsGPT(verbose=verbose)
         self.rate_limiter = RateLimiter(max_attempts=30)
+        t.join()
+
+    def connect_to_cloud(self):
+        try:
+            self.cloud_manager = CloudManager(self.user, self.api, self.vault)
+            if self.verbose:
+                print(f'Connected vault: {self.vault}')
+        except Exception as e:
+            print('API KEY NOT FOUND! Using Vault without cloud access. `get_chat()` will still work', e)
+            # user can still use the get_chat() function without an api key
+            self.cloud_manager = None
 
     def get_vaults(self, vault: str = None):
         '''
@@ -699,13 +705,13 @@ class Vault:
         except:
             return [{'data': 'No data has been added', 'metadata': {'no meta': 'No metadata has been added'}}]
 
-    def get_similar_local(self, text: str, n: int = 4, include_distances: bool = False, model: str = "text-embedding-ada-002"):
+    def get_similar_local(self, text: str, n: int = 4, include_distances: bool = False):
         '''
             Returns similar items from the Vault as the one you entered, but locally
             (saves a few milliseconds and is sometimes used on production builds)
         '''
         self.cloud_manager.update()
-        vector = self.process_batch([text], never_stop=False, loop_timeout=180, model=model)[0]
+        vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
         return self.get_items_by_vector(vector, n, include_distances=include_distances)
     
     def get_similar(self, text: str, n: int = 4, include_distances: bool = False):
@@ -775,7 +781,7 @@ class Vault:
         if self.verbose:
             print("add item time --- %s seconds ---" % (time.time() - start_time))
         
-    def process_batch(self, batch_text_chunks, never_stop, loop_timeout, model="text-embedding-ada-002"):
+    def process_batch(self, batch_text_chunks, never_stop, loop_timeout):
         '''
             Internal function
         '''
@@ -783,7 +789,7 @@ class Vault:
         exceptions = 0
         while True:
             try:
-                res = openai.embeddings.create(input=batch_text_chunks, model=model)
+                res = openai.embeddings.create(input=batch_text_chunks, model=self.embeddings_model)
                 break
             except Exception as e:
                 last_exception_time = time.time()
@@ -793,7 +799,7 @@ class Vault:
 
                 if not never_stop or (time.time() - loop_start_time) > loop_timeout:
                     try:
-                        res = openai.embeddings.create(input=batch_text_chunks, model=model)
+                        res = openai.embeddings.create(input=batch_text_chunks, model=self.embeddings_model)
                         break
                     except Exception as e:
                         if exceptions >= 5:
@@ -802,7 +808,7 @@ class Vault:
                         raise TimeoutError("Loop timed out")
         return [record.embedding for record in res.data]
         
-    def get_vectors(self, batch_size: int = 32, never_stop: bool = False, loop_timeout: int = 777, model: str = "text-embedding-ada-002"):
+    def get_vectors(self, batch_size: int = 32, never_stop: bool = False, loop_timeout: int = 777):
         '''
         Takes text data added to the vault, and gets vectors for them
         '''
@@ -820,7 +826,7 @@ class Vault:
             for i in range(num_batches)
         ]
 
-        batch_embeddings_list = [self.process_batch(batch_text_chunk, never_stop=never_stop, loop_timeout=loop_timeout, model=model) for batch_text_chunk in batches_text_chunks]
+        batch_embeddings_list = [self.process_batch(batch_text_chunk, never_stop=never_stop, loop_timeout=loop_timeout, model=self.embeddings_model) for batch_text_chunk in batches_text_chunks]
 
         current_item_index = 0
         for batch_embeddings in batch_embeddings_list:

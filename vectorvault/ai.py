@@ -2,6 +2,7 @@ import openai
 import tiktoken
 import threading
 import queue
+import tempfile
 
 stock_sys_msg = "You are an AI assistant that excels at following instructions exactly."
 
@@ -221,6 +222,7 @@ class AI:
                     prompt_template = self.truncate_text(prompt_template, tokens_to_remove * 2)
 
         # Format the prompt
+        print(prompt_template)
         prompt = prompt_template.format(context=context, content=user_input)
 
         messages = [{"role": "user", "content": history}] if history else []
@@ -407,3 +409,47 @@ class AI:
     def truncate_text(self, text, tokens_to_remove):          
         return text[(tokens_to_remove * 4):]
 
+
+    def text_to_speech(self, text, model="tts-1", voice="onyx"):
+        """
+        Creates speech from text using the specified model and voice,
+        then saves the output to a temporary file.
+
+        :param text: The text to convert to speech.
+        :param model: The speech model to use.
+        :param voice: The voice to use.
+        :return: The path to the temporary file containing the speech.
+        """
+        # Create speech response from the client
+        response = openai.audio.speech.create(
+        model=model,
+        voice=voice,
+        input=text
+        )
+        
+        # Create a temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+        
+        # Stream the response to the temporary file
+        response.stream_to_file(temp_file.name)
+        
+        # Make sure to close the file to flush all writes
+        temp_file.close()
+        
+        # Return the path to the temporary file
+        return temp_file
+
+    def transcribe_audio(self, file, model="whisper-1"):
+        """
+        Transcribes the given audio file using OpenAI's specified model.
+
+        :param file: A file-like object containing the audio to transcribe.
+        :param model: The model to use for transcription. Defaults to "whisper-1".
+        :return: The transcription result as a string.
+        """
+        try:
+            transcription = openai.audio.transcriptions.create(model=model, file=file)
+            return transcription
+        except Exception as e:
+            print(f"An error occurred during transcription: {e}")
+            return None

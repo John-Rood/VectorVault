@@ -826,7 +826,7 @@ class Vault:
             for i in range(num_batches)
         ]
 
-        batch_embeddings_list = [self.process_batch(batch_text_chunk, never_stop=never_stop, loop_timeout=loop_timeout, model=self.embeddings_model) for batch_text_chunk in batches_text_chunks]
+        batch_embeddings_list = [self.process_batch(batch_text_chunk, never_stop=never_stop, loop_timeout=loop_timeout) for batch_text_chunk in batches_text_chunks]
 
         current_item_index = 0
         for batch_embeddings in batch_embeddings_list:

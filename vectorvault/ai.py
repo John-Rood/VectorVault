@@ -7,13 +7,18 @@ import tempfile
 stock_sys_msg = "You are an AI assistant that excels at following instructions exactly."
 
 class AI:
-    def __init__(self, personality_message: str = None, main_prompt: str = None) -> None:
+    def __init__(self, personality_message: str = None, main_prompt: str = None, verbose: bool = False) -> None:
+        self.verbose = verbose
         self.model_token_limits = {
-        'gpt-3.5-turbo': 4000,
+        'gpt-3.5-turbo': 16000,
+        'gpt-3.5-turbo-0125': 16000,
         'gpt-3.5-turbo-16k': 16000,
         'gpt-4': 8000,
         'gpt-4-32k': 32000,
+        'gpt-4-32k-0613': 32000,
         'gpt-4-1106-preview': 128000,
+        'gpt-4-turbo-preview': 128000,
+        'gpt-4-0125-preview': 128000,
     }
         
         self.main_prompt_with_context = """Use the following Context to answer the Question at the end. 
@@ -31,6 +36,19 @@ class AI:
         
     def within_context_window(self, text : str = None, model='gpt-3.5-turbo'):
         return self.get_tokens(text) < self.model_token_limits.get(model, 4000)
+    
+    def model_check(self, token_count, model):
+        suitable_models = {model_name: tokens for model_name, tokens in self.model_token_limits.items() if tokens >= token_count}
+        
+        # If the current model can handle the token count, keep it
+        if model in suitable_models:
+            return model
+
+        # Otherwise, switch to the smallest model that can handle the token count
+        new_model = min(suitable_models, key=suitable_models.get)
+        print('model switch:', model)
+
+        return new_model
 
     def make_call(self, messages, model, temperature, timeout=45):
         # This function will be run in a separate thread
@@ -63,42 +81,30 @@ class AI:
             If you pass in a custom_prompt with content already fully filled in, and no user_input, it will process your custom_prompt only without changing anything
             If you pass in a custom_prompt, but also pass in user_input, then it will format the custom_prompt to add the user_input (assumes you did not put the user_input inside the custom_prompt already)
         '''
-        prompt_template = custom_prompt if custom_prompt else self.prompt 
-        max_tokens = self.model_token_limits.get(model, 4000)
+        prompt_template = custom_prompt if custom_prompt else self.prompt
         user_input = '' if user_input is None else user_input
         history = '' if history is None else history
-        tokens = self.get_tokens(history + user_input + prompt_template)
-        if tokens >= max_tokens:
-            if model == 'gpt-3.5-turbo' or model == 'gtp-4':
-                model = 'gpt-3.5-turbo-16k'
-                print('model switch:', model)
-                max_tokens = self.model_token_limits.get(model, 4000)
-                if tokens > max_tokens:
-                    model = 'gpt-4-1106-preview'
-                    print('model switch:', model)
-                    max_tokens = self.model_token_limits.get(model, 4000)
 
+        # Use token_model_check to select the suitable model based on token count
+        model = self.model_check(history + user_input + prompt_template, model)
+        max_tokens = self.model_token_limits.get(model, 4000)
+
+        # Adjust the logic for handling user_input and history based on the selected model's token limit
         if user_input or history:
             intokes = self.get_tokens(user_input) if user_input else 0
             histokes = self.get_tokens(history) if history else 0
 
-            # Calculate the total tokens and determine how many tokens are available
             total_tokens = intokes + histokes
-
-            # Truncate history if the total token count exceeds the max token limit
             if total_tokens > max_tokens:
                 excess_tokens = total_tokens - max_tokens
                 history = self.truncate_text(history, excess_tokens) if history else None
 
-            # Double check that we are within the limit, if not, it's the user_input
             if self.get_tokens(history + user_input + prompt_template) >= max_tokens:
                 user_input = self.truncate_text(user_input, excess_tokens)
 
-            # Construct the prompt with any remaining user input
             history = '' if history is None else history
             prompt = prompt_template.format(content=user_input)
 
-        # If user_input is not provided, and a custom prompt is given, use the custom prompt only
         elif custom_prompt:
             prompt = custom_prompt
         else:
@@ -107,7 +113,6 @@ class AI:
         messages = [{"role": "user", "content": history}] if history else []
         messages.append({"role": "user", "content": prompt})
 
-        # Return the call
         for _ in range(max_retries):
             response = self.make_call(messages, model, temperature, timeout)
             if response is not None:
@@ -115,17 +120,18 @@ class AI:
             print("Retrying...")
 
         raise Exception("Failed to receive response within the timeout period.")
+
             
 
     def llm_sys(self, content = None, system_message = stock_sys_msg, model='gpt-3.5-turbo', max_tokens=4000, temperature=0):
         max_tokens = self.model_token_limits.get(model, 4000)
         tokens = self.get_tokens(f"{content} {system_message}")
-        if model == 'gpt-3.5-turbo' or model == 'gtp-4' and tokens > max_tokens:
+        if tokens > max_tokens:
             model = 'gpt-3.5-turbo-16k'
             print('model switch:', model)
             max_tokens = self.model_token_limits.get(model, 4000)
             if tokens > max_tokens:
-                model = 'gpt-4-1106-preview'
+                model = 'gpt-4-turbo-preview'
                 print('model switch:', model)
                 max_tokens = self.model_token_limits.get(model, 4000)
 
@@ -157,7 +163,7 @@ class AI:
             print('model switch:', model)
             max_tokens = self.model_token_limits.get(model, 4000)
             if tokens > max_tokens:
-                model = 'gpt-4-1106-preview'
+                model = 'gpt-4-turbo-preview'
                 print('model switch:', model)
                 max_tokens = self.model_token_limits.get(model, 4000)
 
@@ -191,7 +197,7 @@ class AI:
                 print('model switch:', model)
                 max_tokens = self.model_token_limits.get(model, 4000)
                 if tokens > max_tokens:
-                    model = 'gpt-4-1106-preview'
+                    model = 'gpt-4-turbo-preview'
                     print('model switch:', model)
                     max_tokens = self.model_token_limits.get(model, 4000)
 
@@ -222,8 +228,8 @@ class AI:
                     prompt_template = self.truncate_text(prompt_template, tokens_to_remove * 2)
 
         # Format the prompt
-        print(prompt_template)
         prompt = prompt_template.format(context=context, content=user_input)
+        print(prompt) if self.verbose == True else 1
 
         messages = [{"role": "user", "content": history}] if history else []
         messages.append({"role": "user", "content": prompt})
@@ -255,7 +261,7 @@ class AI:
                 print('model switch:', model)
                 max_tokens = self.model_token_limits.get(model, 4000)
                 if tokens > max_tokens:
-                    model = 'gpt-4-1106-preview'
+                    model = 'gpt-4-turbo-preview'
                     print('model switch:', model)
                     max_tokens = self.model_token_limits.get(model, 4000)
 
@@ -323,7 +329,7 @@ class AI:
                 print('model switch:', model)
                 max_tokens = self.model_token_limits.get(model, 4000)
                 if total_tokens > max_tokens:
-                    model = 'gpt-4-1106-preview'
+                    model = 'gpt-4-turbo-preview'
                     print('model switch:', model)
                     max_tokens = self.model_token_limits.get(model, 4000)
 

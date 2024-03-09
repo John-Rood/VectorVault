@@ -25,11 +25,6 @@ import traceback
 import random
 from datetime import datetime
 from typing import List
-from kneed import KneeLocator
-from sklearn.cluster import DBSCAN
-from sklearn.neighbors import NearestNeighbors
-from sklearn.manifold import TSNE
-import plotly.graph_objs as go
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Thread as T
 from .cloudmanager import CloudManager
@@ -158,7 +153,7 @@ class Vault:
 
     def load_ai(self):
         self.ai_loaded = True
-        self.ai = AI()
+        self.ai = AI(verbose=self.verbose)
         try:
             main_prompt = self.fetch_custom_prompt()
         except:
@@ -423,6 +418,12 @@ class Vault:
             print("get load vectors --- %s seconds ---" % (time.time() - start_time))
 
     def make_3d_map(self, highlight_id: int = None, return_html: bool = False):
+        from kneed import KneeLocator
+        from sklearn.cluster import DBSCAN
+        from sklearn.neighbors import NearestNeighbors
+        from sklearn.manifold import TSNE
+        import plotly.graph_objs as go
+
         def choose_eps(vectors_3d, k=4):
             # Use NearestNeighbors to find the k-nearest distances for each point
             neigh = NearestNeighbors(n_neighbors=k)
@@ -438,22 +439,16 @@ class Vault:
 
             return eps
         
-        # Load vectors
         self.load_vectors()
-
         # Retrieve all vectors from the index
         vectors = [self.vectors.get_item_vector(i) for i in range(self.vectors.get_n_items())]
-
         # Convert list of vectors to a NumPy array
         vectors_array = np.array(vectors)
-            
         # Use t-SNE to project the vectors into 3D space
         tsne = TSNE(n_components=3, random_state=0)
         vectors_3d = tsne.fit_transform(vectors_array)
-
         eps_val = choose_eps(vectors_3d)
         print(eps_val)
-
         # Apply DBSCAN clustering
         dbscan = DBSCAN(eps=eps_val, min_samples=10)  # These parameters may need tuning
         cluster_labels = dbscan.fit_predict(vectors_3d)

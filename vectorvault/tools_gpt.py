@@ -1,5 +1,6 @@
 from .ai import AI
 import time
+import ast
 
 '''
     ToolsGPT is a set of tools special to large language models. 
@@ -43,7 +44,7 @@ import time
 class ToolsGPT():
     def __init__(self, verbose=False):
         self.verbose = verbose
-        self.llm = AI().llm
+        self.llm = AI(verbose=verbose).llm
 
     def get_rating(self, text: str = None, concept_to_rate_for: str = None, model='gpt-3.5-turbo', loop_limit=20) -> int:
         '''
@@ -154,25 +155,63 @@ User: The following content should be a number - Content: "{content}"
         such as text classification or intent recognition.
 
         Classify any text input to a single option contained in a list of options. - Returns exact match to one of items on list.
-        Input text, and list of answers: ["list of answers", "is a list of strings", "do not forget"]
+        Input text, and list of options: ["list of options", "is a list of strings", "do not forget"]
         '''
 
         list_copy = []
         for option in list_of_options:
             list_copy.append(option.strip().replace('.', '').lower().strip('"').strip("'"))
         prompt_template = """Respond with one of the options on this list: {list_of_options} 
-Content to classify: "{content}"  \n\n Classifiy the content above into one of the following options: {list_of_options}"""
+Content to classify: "{content}"  \n\nDo not respond with anything other than the option on the list. Classifiy the content above into one of the following options: {list_of_options}"""
         prompt = prompt_template.format(content=text, list_of_options=list_copy)
 
         answer = self.retry_llm(prompt, model, loop_limit)
 
         if self.verbose:
-            print(f"Get Answer: {answer}")
+            print(f'''Get Answer: {answer}''')
 
-        if answer is not None:
-            answer = list_of_options[list_copy.index(answer)]  # return original answer
+        final = None
 
-        return answer
+        while not final:
+            if answer is not None:
+                try:
+                    try:
+                        new_answer = list_of_options[list_copy.index(answer)]  # return original answer
+                        final = True
+                    except:
+                        self.retry_llm(prompt, model, loop_limit)
+                except:
+                    pass
+
+        return new_answer
+
+    def get_multi_match(self, text: str, list_of_options: list, model='gpt-3.5-turbo', loop_limit=4) -> str:
+        '''
+        This function can be used in a variety of Natural Language Processing (NLP) tasks, 
+        such as text classification or intent recognition.
+
+        Classify any text input to a single option contained in a list of options. - Returns exact match to one of items on list.
+        Input text, and list of options: ["list of options", "is a list of strings", "do not forget"]
+        '''
+
+        list_copy = []
+        for option in list_of_options:
+            list_copy.append(option.strip().replace('.', '').lower().strip('"').strip("'"))
+        prompt_template = """Respond with a list of items from this list: {list_of_options} 
+Content to classify: "{content}"  \n\n Respond with a subset list that matches the content: {list_of_options}"""
+        prompt = prompt_template.format(content=text, list_of_options=list_copy)
+
+        answer = self.retry_llm(prompt, model, loop_limit)
+
+        if self.verbose:
+            print(f'''Get Answer: {answer}''')
+
+        return_list = []
+        print(ast.literal_eval(answer))
+        for i in ast.literal_eval(answer):
+            return_list.append(self.get_match(i, list_of_options, model, loop_limit))
+
+        return return_list
 
     def get_topic(self, text: str, list_of_options: list, model='gpt-3.5-turbo', loop_limit=4) -> str:
         '''

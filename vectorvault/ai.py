@@ -86,7 +86,7 @@ class AI:
         history = '' if history is None else history
 
         # Use token_model_check to select the suitable model based on token count
-        model = self.model_check(history + user_input + prompt_template, model)
+        model = self.model_check(self.get_tokens(history + user_input + prompt_template), model)
         max_tokens = self.model_token_limits.get(model, 4000)
 
         # Adjust the logic for handling user_input and history based on the selected model's token limit

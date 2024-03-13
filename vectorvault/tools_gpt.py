@@ -162,7 +162,7 @@ User: The following content should be a number - Content: "{content}"
         for option in list_of_options:
             list_copy.append(option.strip().replace('.', '').lower().strip('"').strip("'"))
         prompt_template = """Respond with one of the options on this list: {list_of_options} 
-Content to classify: "{content}"  \n\nDo not respond with anything other than the option on the list. Classifiy the content above into one of the following options: {list_of_options}"""
+Content to classify: "{content}"  \n\nDo not respond with anything other than the option on the list. Do not add any additional spaces or characters other than the label: {list_of_options}"""
         prompt = prompt_template.format(content=text, list_of_options=list_copy)
 
         answer = self.retry_llm(prompt, model, loop_limit)
@@ -171,6 +171,7 @@ Content to classify: "{content}"  \n\nDo not respond with anything other than th
             print(f'''Get Answer: {answer}''')
 
         final = None
+        temp = 0
 
         while not final:
             if answer is not None:
@@ -179,7 +180,8 @@ Content to classify: "{content}"  \n\nDo not respond with anything other than th
                         new_answer = list_of_options[list_copy.index(answer)]  # return original answer
                         final = True
                     except:
-                        self.retry_llm(prompt, model, loop_limit)
+                        temp += .2 if temp < .7 else 0
+                        answer = self.retry_llm(prompt, model, loop_limit, temperature=temp)
                 except:
                     pass
 
@@ -383,10 +385,10 @@ Example question 5: 'Will this happen if it's 19 percent likely to happen?' Exam
         return self.retry_llm(custom_prompt=prompt, model=model)
 
     # This function is called by the others to handle retries:
-    def retry_llm(self, custom_prompt, model='gpt-3.5-turbo', loop_limit=5):
+    def retry_llm(self, custom_prompt, model='gpt-3.5-turbo', loop_limit=2, temperature=0):
         for i in range(loop_limit):
             try:
-                return self.llm(custom_prompt=custom_prompt, model=model).strip().replace('.', '').lower().strip('"').strip("'")
+                return self.llm(custom_prompt=custom_prompt, model=model, temperature=temperature).strip().replace('.', '').lower().strip('"').strip("'")
             except Exception as e:
                 if i < loop_limit - 1:  # i is zero indexed
                     time.sleep(5)  # wait 5 seconds before trying again

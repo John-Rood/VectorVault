@@ -13,16 +13,11 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Vector Vault. See license for consent.
 
-import tempfile
-import os
-import json
-import time
+from google.cloud import storage
 from .creds import CustomCredentials
 from .vecreq import call_proj, call_update
 from .itemize import cloud_name
-from google.cloud import storage
-from threading import Thread as t
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from .vault import ThreadPoolExecutor, as_completed, T as t, time, json, os, tempfile
 
 class CloudManager:
     def __init__(self, user: str, api_key: str, vault: str):
@@ -98,6 +93,9 @@ class CloudManager:
     
     def upload_custom_prompt(self, prompt):
         self.upload_to_cloud(f'{self.vault}/prompt', prompt)
+
+    def upload_no_context_prompt(self, prompt):
+        self.upload_to_cloud(f'{self.vault}/no_context_prompt', prompt)
      
     def username(self, input_string):
         return input_string.replace("@", "_at_").replace(".", "_dot_") + '_vvclient'

@@ -155,7 +155,7 @@ class Vault:
         self.ai_loaded = True
         self.ai = AI(verbose=self.verbose)
         self.ai.context_prompt = self.fetch_custom_prompt()
-        self.ai.prompt = self.fetch_custom_prompt(custom=False)
+        self.ai.prompt = self.fetch_custom_prompt(context=False)
         self.ai.personality_message = self.fetch_personality_message()
 
     def save_personality_message(self, text: str):
@@ -182,29 +182,29 @@ class Vault:
                 
         return personality_message
     
-    def save_custom_prompt(self, text: str, custom=True):
+    def save_custom_prompt(self, text: str, context=True):
         '''
             Saves custom_prompt to the vault and use it by default from now on
-            Param: "custom" True = context prompt ; False = main prompt
+            Param: "context" True = context prompt ; False = main prompt
         '''
-        self.cloud_manager.upload_custom_prompt(text) if custom else self.cloud_manager.upload_no_context_prompt(text)
+        self.cloud_manager.upload_custom_prompt(text) if context else self.cloud_manager.upload_no_context_prompt(text)
 
         if self.verbose:
             print(f"Custom prompt saved")
     
-    def fetch_custom_prompt(self, custom=True):
+    def fetch_custom_prompt(self, context=True):
         '''
             Retrieves custom_prompt from the vault if there or eles use defualt - (used for get_context = True responses)
-            custom == False will return custom prompt for not context situations
+            context == False will return custom prompt for not context situations
         '''
         try:
-            prompt = self.cloud_manager.download_text_from_cloud(f'{self.vault}/prompt') if custom else self.cloud_manager.download_text_from_cloud(f'{self.vault}/no_context_prompt')
+            prompt = self.cloud_manager.download_text_from_cloud(f'{self.vault}/prompt') if context else self.cloud_manager.download_text_from_cloud(f'{self.vault}/no_context_prompt')
         except:
             if self.ai_loaded:
-                prompt = self.ai.main_prompt_with_context if custom else self.ai.prompt
+                prompt = self.ai.main_prompt_with_context if context else self.ai.prompt
             else: # only when called externally in some situations
                 self.load_ai()
-                prompt = self.ai.main_prompt_with_context if custom else self.ai.prompt
+                prompt = self.ai.main_prompt_with_context if context else self.ai.prompt
             
         return prompt
 

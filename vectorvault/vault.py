@@ -102,7 +102,7 @@ class Vault:
             if self.verbose:
                 print(f'Connected vault: {self.vault}')
         except Exception as e:
-            print('API KEY NOT FOUND! Using Vault without cloud access. `get_chat()` will still work', e)
+            print('API KEY NOT FOUND or no internet connection!', e)
             # user can still use the get_chat() function without an api key
             self.cloud_manager = None
 
@@ -154,15 +154,9 @@ class Vault:
     def load_ai(self):
         self.ai_loaded = True
         self.ai = AI(verbose=self.verbose)
-        try:
-            main_prompt = self.fetch_custom_prompt()
-        except:
-            main_prompt = None
-        try:
-            personality_message = self.fetch_personality_message()
-        except:
-            personality_message = None
-        self.ai = AI(personality_message, main_prompt)
+        self.ai.context_prompt = self.fetch_custom_prompt()
+        self.ai.prompt = self.fetch_custom_prompt(custom=False)
+        self.ai.personality_message = self.fetch_personality_message()
 
     def save_personality_message(self, text: str):
         '''
@@ -175,40 +169,42 @@ class Vault:
     
     def fetch_personality_message(self):
         '''
-            Retrieves personality_message from the vault to use by default
+            Retrieves personality_message from the vault if it is there or else use the defualt
         '''
         try:
             personality_message = self.cloud_manager.download_text_from_cloud(f'{self.vault}/personality_message')
         except:
             if self.ai_loaded:
                 personality_message = self.ai.personality_message
-            else:
+            else: # only when called externally in some situations
                 self.load_ai()
                 personality_message = self.ai.personality_message
                 
         return personality_message
     
-    def save_custom_prompt(self, text: str):
+    def save_custom_prompt(self, text: str, custom=True):
         '''
             Saves custom_prompt to the vault and use it by default from now on
+            Param: "custom" True = context prompt ; False = main prompt
         '''
-        self.cloud_manager.upload_custom_prompt(text)
+        self.cloud_manager.upload_custom_prompt(text) if custom else self.cloud_manager.upload_no_context_prompt(text)
 
         if self.verbose:
             print(f"Custom prompt saved")
     
-    def fetch_custom_prompt(self):
+    def fetch_custom_prompt(self, custom=True):
         '''
-            Retrieves custom_prompt from the vault to use by default - (used for get_context = True responses)
+            Retrieves custom_prompt from the vault if there or eles use defualt - (used for get_context = True responses)
+            custom == False will return custom prompt for not context situations
         '''
         try:
-            prompt = self.cloud_manager.download_text_from_cloud(f'{self.vault}/prompt')
+            prompt = self.cloud_manager.download_text_from_cloud(f'{self.vault}/prompt') if custom else self.cloud_manager.download_text_from_cloud(f'{self.vault}/no_context_prompt')
         except:
             if self.ai_loaded:
-                prompt = self.ai.main_prompt_with_context
-            else:
+                prompt = self.ai.main_prompt_with_context if custom else self.ai.prompt
+            else: # only when called externally in some situations
                 self.load_ai()
-                prompt = self.ai.main_prompt_with_context
+                prompt = self.ai.main_prompt_with_context if custom else self.ai.prompt
             
         return prompt
 

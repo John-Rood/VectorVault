@@ -7,8 +7,9 @@ import tempfile
 stock_sys_msg = "You are an AI assistant that excels at following instructions exactly."
 
 class AI:
-    def __init__(self, personality_message: str = None, main_prompt: str = None, verbose: bool = False) -> None:
+    def __init__(self, personality_message: str = None, main_prompt: str = None, verbose: bool = False, timeout: int = 300) -> None:
         self.verbose = verbose
+        self.timeout = timeout
         self.model_token_limits = {
         'gpt-3.5-turbo': 16000,
         'gpt-3.5-turbo-0125': 16000,
@@ -50,8 +51,9 @@ class AI:
 
         return new_model
 
-    def make_call(self, messages, model, temperature, timeout=45):
+    def make_call(self, messages, model, temperature, timeout=None):
         # This function will be run in a separate thread
+        timeout = self.timeout if not timeout else timeout
         def call_api(response_queue):
             try:
                 response = openai.chat.completions.create(
@@ -76,11 +78,12 @@ class AI:
 
 
     # This function returns a ChatGPT completion based on a provided input
-    def llm(self, user_input: str = '', history: str = '', model='gpt-3.5-turbo', max_tokens = 4000, custom_prompt = False, temperature = 0, timeout = 45, max_retries = 5):        
+    def llm(self, user_input: str = '', history: str = '', model='gpt-3.5-turbo', max_tokens = 4000, custom_prompt = False, temperature = 0, timeout = None, max_retries = 5):        
         '''
             If you pass in a custom_prompt, make sure you format your inputs - this function will not change it
             If you want a custom_prompt but also want to pass `user_input` to take advantage of this function's formatting, then save your custom prompt as default with `save_custom_prompt` in vault.py
         '''
+        timeout = self.timeout if not timeout else timeout
         prompt_template = custom_prompt if custom_prompt else self.prompt
 
         # Use token_model_check to select the suitable model based on token count
@@ -159,7 +162,8 @@ class AI:
                 }]).choices[0].message.content
 
 
-    def llm_w_context(self, user_input = '', context = '', history = '', model = 'gpt-3.5-turbo', max_tokens = 4000, custom_prompt = False, temperature = 0, timeout = 45, max_retries = 5):
+    def llm_w_context(self, user_input = '', context = '', history = '', model = 'gpt-3.5-turbo', max_tokens = 4000, custom_prompt = False, temperature = 0, timeout = None, max_retries = 5):
+        timeout = self.timeout if not timeout else timeout
         prompt_template = custom_prompt if custom_prompt else self.context_prompt
         model = self.model_check(self.get_tokens(history + user_input + prompt_template + context), model)
         max_tokens = self.model_token_limits.get(model, 4000)

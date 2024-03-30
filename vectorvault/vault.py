@@ -96,15 +96,17 @@ class Vault:
         self.rate_limiter = RateLimiter(max_attempts=30)
         t.join()
 
+
     def connect_to_cloud(self):
         try:
             self.cloud_manager = CloudManager(self.user, self.api, self.vault)
-            if self.verbose:
-                print(f'Connected vault: {self.vault}')
+            print(f'Connected vault: {self.vault}') if self.verbose else 0 
+                
         except Exception as e:
             print('API KEY NOT FOUND or no internet connection!', e)
             # user can still use the get_chat() function without an api key
             self.cloud_manager = None
+
 
     def get_vaults(self, vault: str = None):
         '''
@@ -112,6 +114,7 @@ class Vault:
         '''
         vault = self.vault if vault is None else vault
         return self.cloud_manager.list_vaults(vault)
+
 
     def get_total_items(self, vault: str = None):
         '''
@@ -130,6 +133,7 @@ class Vault:
             except: # it doesn't exist
                 return 0
 
+
     def get_tokens(self, text: str):
         '''
             Returns the number of tokens for any given text
@@ -137,6 +141,7 @@ class Vault:
         self.load_ai()
         return self.ai.get_tokens(text)
     
+
     def get_distance(self, id1: int, id2: int):
         '''
             Returns the distance between two vectors - item ids are needed to compare
@@ -144,12 +149,14 @@ class Vault:
         self.check_index()
         return self.vectors.get_distance(id1, id2)
     
+
     def get_item_vector(self, item_id: int):
         '''
             Returns the vector from an item id
         '''
         self.check_index()
         return self.vectors.get_item_vector(item_id)
+
 
     def load_ai(self):
         self.ai_loaded = True
@@ -158,15 +165,16 @@ class Vault:
         self.ai.prompt = self.fetch_custom_prompt(context=False)
         self.ai.personality_message = self.fetch_personality_message()
 
+
     def save_personality_message(self, text: str):
         '''
             Saves personality_message to the vault and use it by default from now on
         '''
         self.cloud_manager.upload_personality_message(text)
 
-        if self.verbose:
-            print(f"Personality message saved")
-    
+        print(f"Personality message saved") if self.verbose else 0
+            
+
     def fetch_personality_message(self):
         '''
             Retrieves personality_message from the vault if it is there or else use the defualt
@@ -182,6 +190,7 @@ class Vault:
                 
         return personality_message
     
+
     def save_custom_prompt(self, text: str, context=True):
         '''
             Saves custom_prompt to the vault and use it by default from now on
@@ -189,9 +198,9 @@ class Vault:
         '''
         self.cloud_manager.upload_custom_prompt(text) if context else self.cloud_manager.upload_no_context_prompt(text)
 
-        if self.verbose:
-            print(f"Custom prompt saved")
-    
+        print(f"Custom prompt saved") if self.verbose else 0
+            
+
     def fetch_custom_prompt(self, context=True):
         '''
             Retrieves custom_prompt from the vault if there or eles use defualt - (used for get_context = True responses)
@@ -207,6 +216,7 @@ class Vault:
                 prompt = self.ai.main_prompt_with_context if context else self.ai.prompt
             
         return prompt
+
 
     def save(self, trees: int = 10):
         '''
@@ -229,10 +239,9 @@ class Vault:
                 total_saved_items += 1
 
         self.upload_vectors()
-
-        if self.verbose:
-            print(f"upload time --- {(time.time() - start_time)} seconds --- {total_saved_items} items saved")
+        print(f"upload time --- {(time.time() - start_time)} seconds --- {total_saved_items} items saved") if self.verbose else 0
             
+
     def clear_cache(self):
         '''
             Clears the cache for all the loaded items 
@@ -242,12 +251,13 @@ class Vault:
         self.vecs_loaded = True
         self.saved_already = False
 
+
     def delete(self):
         '''
             Deletes the entire Vault and all contents
         '''
-        if self.verbose:
-            print('Deleting started. Note: this can take a while for large datasets')
+        print('Deleting started. Note: this can take a while for large datasets') if self.verbose else 0
+            
         # Clear the local vector data
         self.vectors = get_vectors(self.dims)
         self.items.clear()
@@ -255,10 +265,12 @@ class Vault:
         self.x = 0
         print('Vault deleted')
     
+
     def remap(self, item_id):
         for i in range(item_id, len(self.map) - 1):
             self.map[str(i)] = self.map[str(i + 1)]
         self.map.popitem()
+
 
     def update_vault_data(self):
         nary = []
@@ -295,6 +307,7 @@ class Vault:
             json.dump(nary, temp_file, indent=2)
 
         self.cloud_manager.upload_temp_file(nary_temp_file_path, f'{self.cloud_manager.username}.json')
+
 
     def delete_items(self, item_ids: List[int], trees: int = 10) -> None:
         '''
@@ -334,8 +347,8 @@ class Vault:
             self.remap(item_id)
             rebuild_vectors(item_id)
 
-        if self.verbose:
-            print(f'Item {item_id} deleted')
+        print(f'Item {item_id} deleted') if self.verbose else 0
+
 
     def edit_item(self, item_id: int, new_text: str, trees: int = 10) -> None:
         '''
@@ -362,17 +375,16 @@ class Vault:
         self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, item=True), new_text)
         edit_vector(item_id, self.process_batch([new_text], never_stop=False, loop_timeout=180)[0])
 
-        if self.verbose:
-            print(f'Item {item_id} edited')
+        print(f'Item {item_id} edited') if self.verbose else 0
+
 
     def edit_item_meta(self, item_id: int, metadata) -> None:
         '''
             Edit and save any item's metadata
         '''
         self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, meta=True), json.dumps(metadata))
+        print(f'Item {item_id} metadata saved') if self.verbose else 0
 
-        if self.verbose:
-            print(f'Item {item_id} metadata saved')
 
     def check_index(self):
         if not self.x_checked:
@@ -383,8 +395,8 @@ class Vault:
                 self.reload_vectors()
             
             self.x_checked = True
-            if self.verbose:
-                print("initialize index --- %s seconds ---" % (time.time() - start_time))
+            print("initialize index --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
+                
 
     def load_mapping(self):
         '''Internal function only'''
@@ -401,6 +413,7 @@ class Vault:
         self.map[str(self.x)] = str(uuid.uuid4())
         self.x +=1
     
+
     def load_vectors(self):
         start_time = time.time()
         t = T(target=self.load_mapping())
@@ -410,8 +423,8 @@ class Vault:
         os.remove(temp_file_path)
         t.join()
         self.vecs_loaded = True
-        if self.verbose:
-            print("get load vectors --- %s seconds ---" % (time.time() - start_time))
+        print("get load vectors --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
+
 
     def make_3d_map(self, highlight_id: int = None, return_html: bool = False):
         from kneed import KneeLocator
@@ -509,6 +522,7 @@ class Vault:
         else:
             fig.show()
 
+
     def reload_vectors(self):
         num_existing_items = self.vectors.get_n_items()
         new_index = get_vectors(self.dims)
@@ -519,6 +533,7 @@ class Vault:
             new_index.add_item(i, vector)
         self.x = count + 1
         self.vectors = new_index
+
 
     def upload_vectors(self):
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
@@ -541,6 +556,7 @@ class Vault:
         self.x_checked = False
         self.vecs_loaded = False
         self.saved_already = False
+
 
     def split_text(self, text: str, min_threshold: int = 1000, max_threshold: int = 16000):
         '''
@@ -584,11 +600,11 @@ class Vault:
         if current_segment and (current_length >= min_threshold or not segments):
             segments.append(" ".join(current_segment))
 
-        if self.verbose:
-            print(f'split_text chunks: {len(segments)}') 
+        print(f'split_text chunks: {len(segments)}') if self.verbose else 0
         
         return segments
     
+
     def get_items(self, ids: List[int] = [], vault: str = None) -> list:
         '''
             Get one or more items from the database. 
@@ -641,10 +657,10 @@ class Vault:
                 index, result = future.result()
                 results[index] = result  # Insert each result at its corresponding index
             
-        if self.verbose:
-            print(f"Retrieved {len(ids)} items --- %s seconds ---" % (time.time() - start_time))
-
+        print(f"Retrieved {len(ids)} items --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
+        
         return results
+
 
     def get_items_by_vector(self, vector: list, n: int = 4, include_distances: bool = False):
         '''
@@ -670,8 +686,8 @@ class Vault:
                         index, result = future.result()
                         results[index] = result  # Insert each result at its corresponding index
 
-                if self.verbose:
-                    print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
+                print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
+                   
                 return results
             else:
                 vecs, distances = self.vectors.get_nns_by_vector(vector, n, include_distances=include_distances)
@@ -690,11 +706,12 @@ class Vault:
                         index, result = future.result()
                         results[index] = result  # Insert each result at its corresponding index
 
-                if self.verbose:
-                    print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
+                print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))if self.verbose else 0
+                   
                 return results
         except:
             return [{'data': 'No data has been added', 'metadata': {'no meta': 'No metadata has been added'}}]
+
 
     def get_similar_local(self, text: str, n: int = 4, include_distances: bool = False):
         '''
@@ -705,6 +722,7 @@ class Vault:
         vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
         return self.get_items_by_vector(vector, n, include_distances=include_distances)
     
+
     def get_similar(self, text: str, n: int = 4, include_distances: bool = False):
         '''
             Returns similar items from the Vault as the text you enter.
@@ -712,10 +730,9 @@ class Vault:
             Param `include_distances = True` adds the "distance" field to the return.
             The distance can be useful for assessing similarity differences in the items returned. 
             Each item has its' own distance number, and this changes the structure of the output.
-
-
         '''
         return call_get_similar(self.user, self.vault, self.api, self.openai_key, text, n, include_distances=include_distances, verbose=self.verbose)
+
 
     def add_item(self, text: str, meta: dict = None, name: str = None):
         """
@@ -727,6 +744,7 @@ class Vault:
         self.items.append(new_item)
         self.add_to_map()
 
+
     def add(self, text: str, meta: dict = None, name: str = None, split: bool = False, split_size: int = 1000, max_threshold: int = 16000):
         """
             If your text length is greater than 4000 tokens, Vault.split_text(your_text)  
@@ -735,13 +753,14 @@ class Vault:
         self.check_index()
 
         if len(text) > 15000 or split:
-            if self.verbose:
-                print('Using the built-in "split_text()" function to get a list of texts') 
+            print('Using the built-in "split_text()" function to get a list of texts') if self.verbose else 0 
+                
             texts = self.split_text(text, min_threshold=split_size, max_threshold=max_threshold) # returns list of text segments
         else:
             texts = [text]
         for text in texts:
             self.add_item(text, meta, name)
+
 
     def add_n_save(self, text: str, meta: dict = None, name: str = None, split: bool = False, split_size: int = 1000, max_threshold: int = 16000):
         """
@@ -752,6 +771,7 @@ class Vault:
         self.add(text=text, meta=meta, name=name, split=split, split_size=split_size, max_threshold=max_threshold)
         self.get_vectors()
         self.save()
+
 
     def add_item_with_vector(self, text: str, vector: list, meta: dict = None, name: str = None):
         """
@@ -769,9 +789,9 @@ class Vault:
         self.items.append(itemize(self.vault, self.x, meta, text, name))
         self.add_to_map()
 
-        if self.verbose:
-            print("add item time --- %s seconds ---" % (time.time() - start_time))
-        
+        print("add item time --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
+            
+
     def process_batch(self, batch_text_chunks, never_stop, loop_timeout):
         '''
             Internal function
@@ -799,9 +819,10 @@ class Vault:
                         raise TimeoutError("Loop timed out")
         return [record.embedding for record in res.data]
         
+
     def get_vectors(self, batch_size: int = 32, never_stop: bool = False, loop_timeout: int = 777):
         '''
-        Takes text data added to the vault, and gets vectors for them
+            Takes text data added to the vault, and gets vectors for them
         '''
         self.check_index()
         start_time = time.time()
@@ -827,14 +848,13 @@ class Vault:
                 current_item_index += 1
 
         self.last_time = time.time()
-        if self.verbose:
-            print("get vectors time --- %s seconds ---" % (time.time() - start_time))
-
+        print("get vectors time --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
+            
 
     def get_chat(self, text: str = None, history: str = None, summary: bool = False, get_context: bool = False, 
                  n_context: int = 4, return_context: bool = False, history_search: bool = False, smart_history_search: bool = False, 
                  model: str = 'gpt-3.5-turbo', include_context_meta: bool = False, custom_prompt: bool = False, 
-                 local: bool =False, temperature: int = 0, timeout: int = 45):
+                 local: bool =False, temperature: int = 0, timeout: int = 300):
         '''
             Chat get response from OpenAI's ChatGPT. 
             Models: ChatGPT = "gpt-3.5-turbo" • GPT4 = "gpt-4" 
@@ -984,19 +1004,16 @@ class Vault:
                         print(f"API Failed too many times, exiting loop: {e}.")
                         break
 
-        if self.verbose:
-            print("get chat time --- %s seconds ---" % (time.time() - start_time))
-
-        if not return_context:
-            return response
-        elif return_context:
-            return {'response': response, 'context': context}
+        print("get chat time --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
+            
+        return {'response': response, 'context': context} if return_context else response
         
+
     def get_chat_stream(self, text: str = None, history: str = None, summary: bool = False, get_context: bool = False,
                         n_context: int = 4, return_context: bool = False, history_search: bool = False, smart_history_search: bool = False, 
                         model: str ='gpt-3.5-turbo', include_context_meta: bool = False, metatag: bool = False,
                         metatag_prefixes: bool = False, metatag_suffixes: bool = False, custom_prompt: bool = False, 
-                        local: bool = False, temperature: int = 0, timeout: int = 45):
+                        local: bool = False, temperature: int = 0, timeout: int = 300):
         '''
             Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream().
             cloud_stream() is for cloud functions, like a flask app serving a front end elsewhere.
@@ -1164,8 +1181,8 @@ class Vault:
                         print(f"API Failed too many times, exiting loop: {e}.")
                         break
             
-        if self.verbose:
-            print("get chat time --- %s seconds ---" % (time.time() - start_time))
+        print("get chat time --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
+            
 
     def print_stream(self, function, printing=True):
         '''
@@ -1185,6 +1202,7 @@ class Vault:
             else:
                 return full_text
         
+
     def print_vault_data(self, print_data: bool = True, return_data: bool = False):
         ''' 
             Function to print vault data 
@@ -1223,12 +1241,14 @@ class Vault:
         
             return vd if return_data else None
         
+
     def cloud_stream(self, function):
         '''
             For cloud application yielding the chat stream, like a flask app
         '''
         for word in function:
             yield f"data: {json.dumps({'data': word})} \n\n"
+
 
 class RateLimiter:
     def __init__(self, max_attempts=30):

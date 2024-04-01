@@ -4,11 +4,13 @@ import ast
 
 '''
     ToolsGPT is a set of tools special to large language models. 
-    Every tool turns subjectivity into objectivity.
+    Every tool turns unstructured data into structured data.
     
-    Objectivity is needed for code. 
-    Subjectivity is the primary human input.
-    These tools bridge the gap between human interaction and code. 
+    Structure data is required to run programs. 
+    Unstructured data is the primary human output.
+    AI tools convert unstructured data into structured data, 
+    bridging the gap between humans and programs. 
+    Therefore, in the future, everything will be programmable.
     
     ToolsGPT allows you to get the following for any input:
         1. `get_rating` - returns a rating out of 10 for any input
@@ -19,21 +21,21 @@ import ast
         6. `get_topic` - returns the topic subject matter of any input 
 
         1. `get_rating`:
-            Useful to get a quality rating (integer out of 10)
+            Get a numeric rating out of 10 for anything
 
         2. `get_yes_no`:
-            Useful for getting an exact 'yes' or 'no' to any question
+            Get an exact 'yes' or 'no' to any question
 
         3. `get_number`:
-            Useful for getting something converted into an integer
+            Get an integer output for any input
         
         4. `get_match`:
-            Useful to get an exact match to a single item within a list 
+            Get an exact match to a single item within a list 
             -> in: (text and list of strings) 
             -> out: (one exact match to an answer in list -> string type)
         
         5. `get_multi_match`:
-            Useful to get many exact matches to items within a list  
+            Get many matches to items within a list  
             -> in: (text and list of answers) 
             -> out: (list of exact matches -> list type)
 
@@ -76,9 +78,8 @@ that this number has been carefully considered given your concept. My rating out
         
     def get_number(self, concept, content: str, model='gpt-3.5-turbo', loop_limit=5) -> int:
         '''
-            param: `concept` - i.e. "The following content should be a number between 1 and 100" 
-            Your content will be injected into this prompt: 
-            Prompt = f"{concept} \n\n{content}"
+            param: `concept` - is the idea used to generate a number with - i.e. "How many students are in the professor's class?" 
+            param: `content` - is the content to generate a number for - i.e. "I had 400 students in my class last year, but this year, I have 10% more." 
         '''
         response = self.retry_llm(f'{concept} \n\n{content}', model=model, loop_limit=loop_limit)
         print("Initial number extraction response:", response) if self.verbose else 0
@@ -86,6 +87,10 @@ that this number has been carefully considered given your concept. My rating out
         
     
     def retry_until_its_a_number(self, content: str, model='gpt-3.5-turbo', loop_limit=5) -> int:
+        '''
+            param: `content` - the AI will return an integer based on the content you input
+        '''
+
         prompt_template = """Respond only with a number in integer format...
 Example content: 'The revenue for the last fiscal year was $1,200,000.' Example answer: '1200000'
 Example content 2: 'The company has been in business for twenty years.' Example answer 2: '20'

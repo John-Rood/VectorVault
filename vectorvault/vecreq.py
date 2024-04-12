@@ -58,7 +58,7 @@ def call_buildpath(v, x, user_id, api_key, bytesize=None):
         raise Exception(f"HTTP error: {e}")
     
 
-def call_get_similar(user, vault, api_key, openai_key, text, num_items=4, include_distances=False, verbose=False):
+def call_get_similar(user, vault, api_key, openai_key, text, num_items=4, include_distances=False, verbose=False, embeddings=None):
     url = f"https://api.vectorvault.io/get_similar"
     payload = {
         'user': user,
@@ -66,6 +66,7 @@ def call_get_similar(user, vault, api_key, openai_key, text, num_items=4, includ
         'api_key': api_key,
         'openai_key': openai_key,
         'include_distances': include_distances,
+        'embeddings_model': embeddings,
         'text': text,
         'num_items': num_items
     }
@@ -105,6 +106,34 @@ def call_update(email, vault, api):
     # Make the POST request
     response = requests.post(url, json=data)
     
+    # Check the request was successful
+    if response.status_code == 200:
+        # Parse the response JSON
+        data = response.json()
+        return data
+    else:
+        raise Exception(f"Request failed with status {response.status_code}")
+
+def call_cloud_save(user, api_key, openai_key, vault, embeddings_model, text, meta = None, name = None, split = None, split_size = None):
+    url = "https://api.vectorvault.io/add_cloud"
+
+    # Define the data payload
+    data = {
+        'user': user,
+        'vault': vault,
+        'api_key': api_key,
+        'openai_key': openai_key,
+        "text": text,
+        "embeddings_model": embeddings_model,
+        "meta": meta,
+        "name": name,
+        "split": split,
+        "split_size": split_size,
+    }
+
+    # Make the POST request
+    response = requests.post(url, json=data)
+
     # Check the request was successful
     if response.status_code == 200:
         # Parse the response JSON

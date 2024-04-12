@@ -193,12 +193,22 @@ Content to classify: "{text}"  \n\nDo not respond with anything other than the o
         prompt = f"""Respond with a list of items from this list: {list_of_options} 
 Content to classify: "{text}"  \n\n Respond with a subset list that matches the content: {list_of_options}"""
 
+        # Simulate a call to a function that retries a language model query
         answer = self.retry_llm(prompt, model, loop_limit)
 
-        print(f'''Get Answer: {answer}''') if self.verbose else 0
-        print(ast.literal_eval(answer)) if self.verbose else 0
+        # Logging for debug purposes
+        print(f'''Get Answer: {answer}''') if self.verbose else None
+        print(ast.literal_eval(answer)) if self.verbose else None
 
-        return [i if i in list_of_options else self.get_match(i, list_of_options, model, loop_limit) for i in ast.literal_eval(answer)]
+        # Process the answer, directly adding matches, and using get_match for others
+        processed_results = []
+        for i in ast.literal_eval(answer):
+            if i in list_of_options:
+                processed_results.append(i)
+            else:
+                processed_results.append(self.get_match(i, list_of_options, model, loop_limit))
+        
+        return processed_results
 
 
     def get_topic(self, text: str, list_of_options: list, model='gpt-3.5-turbo', loop_limit=4) -> str:

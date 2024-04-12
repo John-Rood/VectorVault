@@ -13,11 +13,16 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Vector Vault. See license for consent.
 
-from google.cloud import storage
+import tempfile
+import os
+import json
+import time
 from .creds import CustomCredentials
 from .vecreq import call_proj, call_update
 from .itemize import cloud_name
-from .vault import ThreadPoolExecutor, as_completed, T as t, time, json, os, tempfile
+from google.cloud import storage
+from threading import Thread as T
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class CloudManager:
     def __init__(self, user: str, api_key: str, vault: str):
@@ -84,19 +89,11 @@ class CloudManager:
             os.close(temp_file_descriptor)
         return temp_file_path
     
-    def upload(self, item, text, meta):
-        self.upload_to_cloud(self.cloud_name(self.vault, item, self.user, self.api, item=True), text)
-        self.upload_to_cloud(self.cloud_name(self.vault, item, self.user, self.api, meta=True), json.dumps(meta))
-    
-    def upload_personality_message(self, personality_message):
-        self.upload_to_cloud(f'{self.vault}/personality_message', personality_message)
-    
-    def upload_custom_prompt(self, prompt):
-        self.upload_to_cloud(f'{self.vault}/prompt', prompt)
-
-    def upload_no_context_prompt(self, prompt):
-        self.upload_to_cloud(f'{self.vault}/no_context_prompt', prompt)
-     
+    def upload(self, item, text, meta, vault = None):
+        vault if vault else self.vault
+        self.upload_to_cloud(self.cloud_name(vault, item, self.user, self.api, item=True), text)
+        self.upload_to_cloud(self.cloud_name(vault, item, self.user, self.api, meta=True), json.dumps(meta))
+        
     def username(self, input_string):
         return input_string.replace("@", "_at_").replace(".", "_dot_") + '_vvclient'
 
@@ -108,8 +105,8 @@ class CloudManager:
         return _map
     
     def update(self):
-        th = t(target=call_update, args=(self.user, self.vault, self.api))
-        th.start()
+        t = T(target=call_update, args=(self.user, self.vault, self.api))
+        t.start()
     
     def build_update(self):
         _map = self.get_mapping()

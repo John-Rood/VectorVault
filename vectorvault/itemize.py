@@ -92,3 +92,27 @@ def build_return(item_data, meta, distance=None):
             "distance": distance
         }
     return result
+
+def get_time_statement(now, message_time):
+    diff = now - message_time
+    days, seconds = diff.days, diff.seconds
+    human_readable_time = ""
+
+    if days >= 365:
+        years = days // 365
+        human_readable_time = f"{years} {'year' if years == 1 else 'years'} ago: "
+    elif days >= 30:
+        months = days // 30
+        human_readable_time = f"{months} {'month' if months == 1 else 'months'} ago: "
+    elif days >= 1:
+        human_readable_time = f"{days} {'day' if days == 1 else 'days'} ago: "
+    elif seconds >= 3600:
+        hours = seconds // 3600
+        human_readable_time = f"{hours} {'hour' if hours == 1 else 'hours'} ago: "
+    elif seconds >= 60:
+        minutes = seconds // 60
+        human_readable_time = f"{minutes} {'minute' if minutes == 1 else 'minutes'} ago: "
+    else:
+        human_readable_time = "just now: "
+
+    return human_readable_time

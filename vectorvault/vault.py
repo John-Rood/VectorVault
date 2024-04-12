@@ -29,13 +29,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Thread as T
 from .cloudmanager import CloudManager
 from .ai import AI, openai
-from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map
-from .vecreq import call_get_similar
+from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement
+from .vecreq import call_get_similar, call_cloud_save
 from .tools_gpt import ToolsGPT
 
 
 class Vault:
-    def __init__(self, user: str = None, api_key: str = None, vault: str = None, openai_key: str = None, embeddings_model: str = None, verbose: bool = False):
+    def __init__(self, user: str = None, api_key: str = None, openai_key: str = None, vault: str = None, embeddings_model: str = None, verbose: bool = False, conversation_user_id: str = None):
         ''' 
         ### Create a vector database instance like this:
         ```
@@ -75,17 +75,24 @@ class Vault:
         self.user = user.lower()
         self.vault = vault.strip() if vault else 'home'
         self.api = api_key
-        t = T(target=self.connect_to_cloud)
-        t.start()
+        self.verbose = verbose
+        self.embeddings_model = embeddings_model if embeddings_model else 'text-embedding-3-small'
+        self.dims = 1536 if embeddings_model != 'text-embedding-3-large' else 3072
+        try:
+            self.cloud_manager = CloudManager(self.user, self.api, self.vault)
+            if self.verbose:
+                print(f'Connected vault: {self.vault}')
+        except Exception as e:
+            print('API KEY NOT FOUND! Using Vault without cloud access. `get_chat()` will still work', e)
+            # user can still use the get_chat() function without an api key
+            self.cloud_manager = None
         if openai_key:
             self.openai_key = openai_key
             openai.api_key = self.openai_key
-        self.embeddings_model = embeddings_model if embeddings_model else 'text-embedding-3-small'
-        self.dims = 1536 if embeddings_model != 'text-embedding-3-large' else 3072
         self.vectors = get_vectors(self.dims)
-        self.verbose = verbose
         self.x = 0
         self.x_checked = False
+        self.x_loaded_checked = False
         self.vecs_loaded = False
         self.map = {}
         self.items = []
@@ -94,25 +101,15 @@ class Vault:
         self.ai_loaded = False
         self.tools = ToolsGPT(verbose=verbose)
         self.rate_limiter = RateLimiter(max_attempts=30)
-        t.join()
-
-
-    def connect_to_cloud(self):
-        try:
-            self.cloud_manager = CloudManager(self.user, self.api, self.vault)
-            print(f'Connected vault: {self.vault}') if self.verbose else 0 
-                
-        except Exception as e:
-            print('API KEY NOT FOUND or no internet connection!', e)
-            # user can still use the get_chat() function without an api key
-            self.cloud_manager = None
-
+        self.cuid = conversation_user_id
 
     def get_vaults(self, vault: str = None):
         '''
             Returns a list of vaults within the current vault directory 
         '''
         vault = self.vault if vault is None else vault
+        if self.cloud_manager is None:
+           time.sleep(.3)
         return self.cloud_manager.list_vaults(vault)
 
 
@@ -138,7 +135,7 @@ class Vault:
         '''
             Returns the number of tokens for any given text
         '''
-        self.load_ai()
+        self.load_ai() if not self.ai_loaded else None
         return self.ai.get_tokens(text)
     
 
@@ -146,7 +143,7 @@ class Vault:
         '''
             Returns the distance between two vectors - item ids are needed to compare
         '''
-        self.check_index()
+        self.check_index_loaded()
         return self.vectors.get_distance(id1, id2)
     
 
@@ -154,7 +151,7 @@ class Vault:
         '''
             Returns the vector from an item id
         '''
-        self.check_index()
+        self.check_index_loaded()
         return self.vectors.get_item_vector(item_id)
 
 
@@ -218,11 +215,12 @@ class Vault:
         return prompt
 
 
-    def save(self, trees: int = 10):
+    def save(self, trees: int = 10, vault = None):
         '''
             Saves all the data added locally to the Cloud. All Vault references are Cloud references.
             To add data to your Vault and access it later, you must first call add(), then get_vectors(), and finally save().
         '''
+        vault = vault if vault else self.vault
         if self.saved_already:
             self.clear_cache()
             print("The last save was aborted before the build process finished. Clearing cache to start again...")
@@ -235,10 +233,10 @@ class Vault:
         with ThreadPoolExecutor() as executor:
             for item in self.items:
                 item_text, item_id, item_meta = get_item(item)
-                executor.submit(self.cloud_manager.upload, self.map.get(str(item_id)), item_text, item_meta)
+                executor.submit(self.cloud_manager.upload, self.map.get(str(item_id)), item_text, item_meta, vault)
                 total_saved_items += 1
 
-        self.upload_vectors()
+        self.upload_vectors(vault)
         print(f"upload time --- {(time.time() - start_time)} seconds --- {total_saved_items} items saved") if self.verbose else 0
             
 
@@ -247,7 +245,6 @@ class Vault:
             Clears the cache for all the loaded items 
         '''
         self.reload_vectors()
-        self.x_checked = True
         self.vecs_loaded = True
         self.saved_already = False
 
@@ -386,27 +383,37 @@ class Vault:
         print(f'Item {item_id} metadata saved') if self.verbose else 0
 
 
-    def check_index(self):
-        if not self.x_checked:
+    def check_index_loaded(self):
+        if not self.x_loaded_checked:
             start_time = time.time()
             if self.cloud_manager.vault_exists(name_vecs(self.vault, self.user, self.api)):
                 if not self.vecs_loaded:
                     self.load_vectors()
-                self.reload_vectors()
-            
+
+            self.x_loaded_checked = True
+            print("initialize index --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
+
+    def check_index(self):
+        if not self.x_checked:
+            start_time = time.time()
+            if self.cloud_manager.vault_exists(name_vecs(self.vault, self.user, self.api)):
+                if self.vecs_loaded:
+                    self.reload_vectors()
+
             self.x_checked = True
             print("initialize index --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
                 
 
-    def load_mapping(self):
+    def load_mapping(self, vault = None):
         '''Internal function only'''
+        vault = vault if vault else self.vault 
         try: # try to get the map
-            temp_file_path = self.cloud_manager.download_to_temp_file(name_map(self.vault, self.user, self.api))
+            temp_file_path = self.cloud_manager.download_to_temp_file(name_map(vault, self.user, self.api))
             with open(temp_file_path, 'r') as json_file:
                 self.map = json.load(json_file)
             os.remove(temp_file_path)
         except: # it doesn't exist
-            if self.cloud_manager.vault_exists(name_vecs(self.vault, self.user, self.api)): # but if the vault does
+            if self.cloud_manager.vault_exists(name_vecs(vault, self.user, self.api)): # but if the vault does
                 self.map = {str(i): str(i) for i in range(self.vectors.get_n_items())}
 
     def add_to_map(self):
@@ -414,16 +421,31 @@ class Vault:
         self.x +=1
     
 
-    def load_vectors(self):
+    def load_vectors(self, vault = None):
         start_time = time.time()
+        vault = vault if vault else self.vault 
         t = T(target=self.load_mapping())
         t.start()
-        temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(self.vault, self.user, self.api))
+        temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(vault, self.user, self.api))
         self.vectors.load(temp_file_path)
         os.remove(temp_file_path)
         t.join()
         self.vecs_loaded = True
+        self.x_checked = False
         print("get load vectors --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
+
+
+    def reload_vectors(self):
+        num_existing_items = self.vectors.get_n_items()
+        new_index = get_vectors(self.dims)
+        count = -1
+        for i in range(num_existing_items):
+            count += 1
+            vector = self.vectors.get_item_vector(i)
+            new_index.add_item(i, vector)
+        self.x = count + 1
+        self.vectors = new_index
+        self.vecs_loaded = False
 
 
     def make_3d_map(self, highlight_id: int = None, return_html: bool = False):
@@ -523,31 +545,20 @@ class Vault:
             fig.show()
 
 
-    def reload_vectors(self):
-        num_existing_items = self.vectors.get_n_items()
-        new_index = get_vectors(self.dims)
-        count = -1
-        for i in range(num_existing_items):
-            count += 1
-            vector = self.vectors.get_item_vector(i)
-            new_index.add_item(i, vector)
-        self.x = count + 1
-        self.vectors = new_index
-
-
-    def upload_vectors(self):
+    def upload_vectors(self, vault = None):
+        vault = vault if vault else self.vault
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             vector_temp_file_path = temp_file.name
             self.vectors.save(vector_temp_file_path)
             byte = os.path.getsize(vector_temp_file_path)
-            self.cloud_manager.upload_temp_file(vector_temp_file_path, name_vecs(self.vault, self.user, self.api, byte))
+            self.cloud_manager.upload_temp_file(vector_temp_file_path, name_vecs(vault, self.user, self.api, byte))
         
         map_temp_file_path = None
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
             map_temp_file_path = temp_file.name
             json.dump(self.map, temp_file, indent=2)
         
-        self.cloud_manager.upload_temp_file(map_temp_file_path, name_map(self.vault, self.user, self.api, byte))
+        self.cloud_manager.upload_temp_file(map_temp_file_path, name_map(vault, self.user, self.api, byte))
         if os.path.exists(map_temp_file_path):
             os.remove(map_temp_file_path)
             
@@ -662,6 +673,7 @@ class Vault:
         return results
 
 
+    
     def get_items_by_vector(self, vector: list, n: int = 4, include_distances: bool = False):
         '''
             Internal function that returns vector similar items. Requires input vector, returns similar items
@@ -686,8 +698,8 @@ class Vault:
                         index, result = future.result()
                         results[index] = result  # Insert each result at its corresponding index
 
-                print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
-                   
+                if self.verbose:
+                    print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
                 return results
             else:
                 vecs, distances = self.vectors.get_nns_by_vector(vector, n, include_distances=include_distances)
@@ -706,8 +718,8 @@ class Vault:
                         index, result = future.result()
                         results[index] = result  # Insert each result at its corresponding index
 
-                print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))if self.verbose else 0
-                   
+                if self.verbose:
+                    print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
                 return results
         except:
             return [{'data': 'No data has been added', 'metadata': {'no meta': 'No metadata has been added'}}]
@@ -718,12 +730,12 @@ class Vault:
             Returns similar items from the Vault as the one you entered, but locally
             (saves a few milliseconds and is sometimes used on production builds)
         '''
-        self.cloud_manager.update()
+        # self.cloud_manager.update() if not self.cuid else None
         vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
-        return self.get_items_by_vector(vector, n, include_distances=include_distances)
+        return self.get_items_by_vector(vector, n, include_distances = include_distances)
     
 
-    def get_similar(self, text: str, n: int = 4, include_distances: bool = False):
+    def get_similar(self, text: str, n: int = 4, include_distances: bool = False, vault = None):
         '''
             Returns similar items from the Vault as the text you enter.
 
@@ -731,7 +743,7 @@ class Vault:
             The distance can be useful for assessing similarity differences in the items returned. 
             Each item has its' own distance number, and this changes the structure of the output.
         '''
-        return call_get_similar(self.user, self.vault, self.api, self.openai_key, text, n, include_distances=include_distances, verbose=self.verbose)
+        return call_get_similar(self.user, vault if vault else self.vault, self.api, self.openai_key, text, n, include_distances=include_distances, verbose=self.verbose, embeddings=self.embeddings_model)
 
 
     def add_item(self, text: str, meta: dict = None, name: str = None):
@@ -744,7 +756,6 @@ class Vault:
         self.items.append(new_item)
         self.add_to_map()
 
-
     def add(self, text: str, meta: dict = None, name: str = None, split: bool = False, split_size: int = 1000, max_threshold: int = 16000):
         """
             If your text length is greater than 4000 tokens, Vault.split_text(your_text)  
@@ -753,14 +764,13 @@ class Vault:
         self.check_index()
 
         if len(text) > 15000 or split:
-            print('Using the built-in "split_text()" function to get a list of texts') if self.verbose else 0 
-                
+            if self.verbose:
+                print('Using the built-in "split_text()" function to get a list of texts') 
             texts = self.split_text(text, min_threshold=split_size, max_threshold=max_threshold) # returns list of text segments
         else:
             texts = [text]
         for text in texts:
             self.add_item(text, meta, name)
-
 
     def add_n_save(self, text: str, meta: dict = None, name: str = None, split: bool = False, split_size: int = 1000, max_threshold: int = 16000):
         """
@@ -771,6 +781,7 @@ class Vault:
         self.add(text=text, meta=meta, name=name, split=split, split_size=split_size, max_threshold=max_threshold)
         self.get_vectors()
         self.save()
+        T(target=self.clear_cache).start()
 
 
     def add_item_with_vector(self, text: str, vector: list, meta: dict = None, name: str = None):
@@ -851,7 +862,7 @@ class Vault:
         print("get vectors time --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
             
 
-    def get_chat(self, text: str = None, history: str = None, summary: bool = False, get_context: bool = False, 
+    def get_chat(self, text: str = None, history: str = '', summary: bool = False, get_context: bool = False, 
                  n_context: int = 4, return_context: bool = False, history_search: bool = False, smart_history_search: bool = False, 
                  model: str = 'gpt-3.5-turbo', include_context_meta: bool = False, custom_prompt: bool = False, 
                  local: bool =False, temperature: int = 0, timeout: int = 300):
@@ -932,14 +943,12 @@ class Vault:
             ```
 
         '''
-        if not self.ai_loaded:
-            self.load_ai()
+        self.load_ai() if not self.ai_loaded else None
         model = model.lower()
         start_time = time.time()
-
-        if not history:
-            history = ''
-
+    
+        history = self.get_conversation_history(self.cuid, text) if self.cuid else history
+        
         if text: 
             inputs = [text]
         else:
@@ -1004,12 +1013,13 @@ class Vault:
                         print(f"API Failed too many times, exiting loop: {e}.")
                         break
 
+        self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {response}') if self.cuid else None
         print("get chat time --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
             
         return {'response': response, 'context': context} if return_context else response
         
 
-    def get_chat_stream(self, text: str = None, history: str = None, summary: bool = False, get_context: bool = False,
+    def get_chat_stream(self, text: str = None, history: str = '', summary: bool = False, get_context: bool = False,
                         n_context: int = 4, return_context: bool = False, history_search: bool = False, smart_history_search: bool = False, 
                         model: str ='gpt-3.5-turbo', include_context_meta: bool = False, metatag: bool = False,
                         metatag_prefixes: bool = False, metatag_suffixes: bool = False, custom_prompt: bool = False, 
@@ -1078,13 +1088,11 @@ class Vault:
             response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True, custom_prompt=my_prompt))
             ```
         '''
-        if not self.ai_loaded:
-            self.load_ai()
+        self.load_ai() if not self.ai_loaded else None
         model = model.lower()
         start_time = time.time()
-
-        if not history:
-            history = ''
+    
+        history = self.get_conversation_history(self.cuid, text) if self.cuid else history
 
         if text:
             inputs = [text]
@@ -1098,7 +1106,7 @@ class Vault:
         for segment in inputs:
             start_time = time.time()
             exceptions = 0
-
+            full_response = ''
             while True:
                 try:
                     if summary and not get_context:
@@ -1114,6 +1122,7 @@ class Vault:
                                 current_chunk = segment[start_index:end_index]
                                 # Process the current chunk and concatenate the response
                                 for word in self.ai.summarize_stream(current_chunk, model=model, custom_prompt=custom_prompt, temperature=temperature):
+                                    full_response += word
                                     yield word
                                 yield ' '
 
@@ -1121,6 +1130,7 @@ class Vault:
                         except Exception as e:
                             raise e
                         if counter == len(inputs):
+                            self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
                             yield '!END'
                             self.rate_limiter.on_success()
                     
@@ -1138,6 +1148,7 @@ class Vault:
 
                         try:
                             for word in self.ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature):
+                                full_response += word
                                 yield word
                             self.rate_limiter.on_success()
                         except Exception as e:
@@ -1157,20 +1168,25 @@ class Vault:
                                             for i in range(len(metatag)):
                                                 yield str(metatag_prefixes[i]) + str(item['metadata'][f'{metatag[i]}'])
                                 yield item['data']
+                            self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
                             yield '!END'
                             self.rate_limiter.on_success()
                         else:
+                            self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
                             yield '!END'
                             self.rate_limiter.on_success()
 
                     else:
                         try:
                             for word in self.ai.llm_stream(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature):
+                                full_response += word
                                 yield word
                             self.rate_limiter.on_success()
                         except Exception as e:
                             raise e
+                        self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
                         yield '!END'
+
                     self.rate_limiter.on_success()
                     break
                 except Exception as e:
@@ -1203,7 +1219,7 @@ class Vault:
                 return full_text
         
 
-    def print_vault_data(self, print_data: bool = True, return_data: bool = False):
+    def print_vault_data(self, return_data: bool = False):
         ''' 
             Function to print vault data 
         ''' 
@@ -1248,6 +1264,85 @@ class Vault:
         '''
         for word in function:
             yield f"data: {json.dumps({'data': word})} \n\n"
+
+
+    def update_conversation_history(self, conversation_id, message, metadata_list = None):
+        self.reload_vectors()
+        try:
+            metadata_list = metadata_list if metadata_list else json.loads(self.cloud_manager.download_text_from_cloud(f'{self.vault}/user_history/{conversation_id}/metadata'))
+        except:
+            metadata_list = []
+        message_id = f"{time.time():.0f}"  # Current time
+        metadata_list.append({ 'M': message_id, 'L': len(message) })
+        t1 = T(target=self.cloud_manager.upload_to_cloud, args=(f'{self.vault}/user_history/{conversation_id}/{message_id}', message))
+        t2 = T(target=self.cloud_manager.upload_to_cloud, args=(f'{self.vault}/user_history/{conversation_id}/metadata', json.dumps(metadata_list)))
+        t1.start()
+        t2.start()
+        T(target=call_cloud_save, args=(
+            self.user, self.api, self.openai_key, 
+            f'{self.vault}/user_history/{conversation_id}/vectors', self.embeddings_model, 
+            message, None, 
+            message_id, None, None)).start()
+        t1.join()
+        t2.join()
+
+    def get_conversation_history(self, conversation_id, message):
+        history_time = time.time()
+        history = ''
+        def download_conversation_metadata():
+            try:
+                return json.loads(self.cloud_manager.download_text_from_cloud(f'{self.vault}/user_history/{conversation_id}/metadata'))
+            except:
+                return []
+
+        def download_conversation_message(msg_id):
+            try:
+                return self.cloud_manager.download_text_from_cloud(f'{self.vault}/user_history/{conversation_id}/{msg_id}')
+            except:
+                return []
+
+        def golden_retriever(metadata_list): 
+            one_hour_ago = datetime.now() - timedelta(hours=1)
+            return [metadata['M'] for metadata in reversed(metadata_list) if datetime.fromtimestamp(float(metadata['M'])) >= one_hour_ago]
+
+        def vector_search_conversation_history(message):
+            return self.get_similar(message, vault=f'{self.vault}/user_history/{conversation_id}/vectors')
+
+        try:
+            meta = download_conversation_metadata()
+        except:
+            meta = None
+
+        message_ids = golden_retriever(meta) if meta != None else []
+
+        print('message_ids:', message_ids) if self.verbose else None
+
+        if message_ids != []:
+            history_lines = []
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                future_to_message_id = {executor.submit(download_conversation_message, message_id): message_id for message_id in message_ids}
+
+                # Iterate over the futures as they complete (preserves order)
+                for future in as_completed(future_to_message_id):
+                    message_content = future.result()
+                    history_lines.append(message_content)
+
+            history = '\n'.join(history_lines)
+            history = "Recent conversation history:" + history
+
+            vector_similar_results = vector_search_conversation_history(message)
+            if vector_similar_results:
+                vector_history = []
+                now = datetime.now()
+                for i in vector_similar_results:
+                    message_time = datetime.fromtimestamp(float(i['metadata']['name']))
+                    data = i['data']
+                    vector_history.append(f'{get_time_statement(now, message_time)} {data}')                
+
+                history = history + "Vector search conversation history:" + '\n'.join(vector_history)
+
+        print('history retrieval took:', time.time() - history_time) if self.verbose else None
+        return history
 
 
 class RateLimiter:

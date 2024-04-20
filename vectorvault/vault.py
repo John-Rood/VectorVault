@@ -78,14 +78,10 @@ class Vault:
         self.verbose = verbose
         self.embeddings_model = embeddings_model if embeddings_model else 'text-embedding-3-small'
         self.dims = 1536 if embeddings_model != 'text-embedding-3-large' else 3072
-        try:
-            self.cloud_manager = CloudManager(self.user, self.api, self.vault)
-            if self.verbose:
-                print(f'Connected vault: {self.vault}')
-        except Exception as e:
-            print('API KEY NOT FOUND! Using Vault without cloud access. `get_chat()` will still work', e)
-            # user can still use the get_chat() function without an api key
-            self.cloud_manager = None
+        self.cloud_manager = CloudManager(self.user, self.api, self.vault)
+        if self.verbose:
+            print(f'Connected vault: {self.vault}')
+
         if openai_key:
             self.openai_key = openai_key
             openai.api_key = self.openai_key

@@ -23,6 +23,7 @@ class CustomCredentials(Credentials):
         self.api = api
         self.token = None
         self.expiry = None
+        self._universe_domain = "googleapis.com"
         self.refresh(requests.Request())
 
     def apply(self, headers, token=None):

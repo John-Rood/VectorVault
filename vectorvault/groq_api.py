@@ -1,26 +1,21 @@
-import openai
+from groq import Groq
 import tiktoken
 import threading
 import queue
-import tempfile
 
 stock_sys_msg = "You are an AI assistant that excels at following instructions exactly."
 
-class AI:
-    def __init__(self, personality_message: str = None, main_prompt: str = None, verbose: bool = False, timeout: int = 300, fine_tuned_context_window=8000) -> None:
+class GroqAPI:
+    def __init__(self, personality_message: str = None, main_prompt: str = None, verbose: bool = False, timeout: int = 300, api = None) -> None:
         self.verbose = verbose
-        self.default_model = 'gpt-3.5-turbo'
         self.timeout = timeout
-        self.fine_tuned_context_window = fine_tuned_context_window
+        self.client = Groq(api_key=api)
+        self.default_model = 'llama3-8b-8192'
         self.model_token_limits = {
-        'gpt-4': 8000,
-        'gpt-4-turbo': 128000,
-        'gpt-4-turbo-preview': 128000,
-        'gpt-4-1106-preview': 128000,
-        'gpt-4-0125-preview': 128000,
-        'gpt-3.5-turbo': 8000,
-        'gpt-3.5-turbo-0125': 16000,
-        'gpt-3.5-turbo-16k': 16000,
+        'llama3-8b-8192': 8192,
+        'llama3-70b-8192': 8192,
+        'mixtral-8x7b-32768': 32768,
+        'gemma-7b-it': 8192,
     }
         
         self.main_prompt_with_context = """Use the following Context to answer the Question at the end. 
@@ -36,33 +31,27 @@ class AI:
         self.context_prompt = self.main_prompt_with_context + '\n' + f'({self.personality_message})' + '\n\n' + '''Answer:'''
         self.prompt = "Question: {content}" + '\n\n' + f'({self.personality_message})' + '\n\n' + '''Answer:'''
         
-    def within_context_window(self, text : str = None, model=None):
-        if model not in self.model_token_limits.keys():
-            return self.get_tokens(text) < self.model_token_limits.get(model, 8000) if model else 8000
-        else:
-            return self.get_tokens(text) < self.fine_tuned_context_window
+    def within_context_window(self, text : str = None, model='llama3-8b-8192'):
+        return self.get_tokens(text) < self.model_token_limits.get(model, 4000)
     
     def model_check(self, token_count, model):
-        if model not in self.model_token_limits.keys():
+        suitable_models = {model_name: tokens for model_name, tokens in self.model_token_limits.items() if tokens >= token_count}
+        
+        # If the current model can handle the token count, keep it
+        if model in suitable_models:
             return model
-        else: 
-            suitable_models = {model_name: tokens for model_name, tokens in self.model_token_limits.items() if tokens >= token_count}
-            
-            # If the current model can handle the token count, keep it
-            if model in suitable_models:
-                return model
-            
-            else: # Otherwise, switch to the smallest model that can handle the token count
-                new_model = min(suitable_models, key=suitable_models.get)
-                print('model switch from model:', model, 'to model:', new_model)
-                return new_model
+        
+        else: # Otherwise, switch to the smallest model that can handle the token count
+            new_model = min(suitable_models, key=suitable_models.get)
+            print('model switch from model:', model, 'to model:', new_model)
+            return new_model
 
     def make_call(self, messages, model, temperature, timeout=None):
         # This function will be run in a separate thread
         timeout = self.timeout if not timeout else timeout
         def call_api(response_queue):
             try:
-                response = openai.chat.completions.create(
+                response = self.client.chat.completions.create(
                     model=model,
                     temperature=temperature,
                     messages=messages
@@ -83,7 +72,6 @@ class AI:
             return None
 
 
-    # This function returns a ChatGPT completion based on a provided input
     def llm(self, user_input: str = '', history: str = '', model=None, max_tokens = 8000, custom_prompt = False, temperature = 0, timeout = None, max_retries = 5):        
         '''
             If you pass in a custom_prompt, make sure you format your inputs - this function will not change it
@@ -130,7 +118,7 @@ class AI:
         if tokens > max_tokens:
             raise f"Too many tokens: {tokens}"
                 
-        return openai.chat.completions.create(
+        return self.client.chat.completions.create(
             model=model,
             temperature=temperature,
             messages=[{
@@ -156,7 +144,7 @@ class AI:
         if tokens > max_tokens:
             raise f"Too many tokens: {tokens}"
         
-        return openai.chat.completions.create(
+        return self.client.chat.completions.create(
             model=model,
             temperature=temperature,
             messages=[{
@@ -225,7 +213,7 @@ class AI:
         messages = [{"role": "user", "content": history}] if history else []
         messages.append({"role": "user", "content": prompt})
 
-        response = openai.chat.completions.create(
+        response = self.client.chat.completions.create(
             model=model,
             temperature=temperature,
             messages=messages,
@@ -257,7 +245,7 @@ class AI:
         messages = [{"role": "user", "content": history}] if history else []
         messages.append({"role": "user", "content": prompt})
 
-        response = openai.chat.completions.create(
+        response = self.client.chat.completions.create(
             model=model,
             temperature=temperature,
             messages=messages,
@@ -273,7 +261,7 @@ class AI:
         prompt_template = custom_prompt if custom_prompt else """Summarize the following: {content}"""
         prompt = prompt_template.format(content=user_input)
         model = model if model else self.default_model
-        response = openai.chat.completions.create(
+        response = self.client.chat.completions.create(
             model=model,
             temperature=temperature,
             messages=[{"role": "user", "content": f"{prompt}"}]
@@ -284,7 +272,7 @@ class AI:
         prompt_template = custom_prompt if custom_prompt else """Summarize the following: {content}"""
         prompt = prompt_template.format(content=user_input)
         model = model if model else self.default_model
-        response = openai.chat.completions.create(
+        response = self.client.chat.completions.create(
             model=model,
             temperature=temperature,
             messages=[{"role": "user", "content": f"{prompt}"}],
@@ -300,14 +288,13 @@ class AI:
         Continue from where it leaves off by summarizing the next segment content: {content}"""
         prompt = prompt_template.format(previous_summary=previous_summary, content=text)
         model = model if model else self.default_model
-        response = openai.chat.completions.create(
+        response = self.client.chat.completions.create(
             model=model,
             temperature=temperature,
             messages=[{"role": "user", "content": f"{prompt}"}]
         )
         return response.choices[0].message.content
         
-
     def get_tokens(self, string: str, encoding_name: str = "cl100k_base") -> int:
         """Returns the number of tokens in a text string."""
         encoding = tiktoken.get_encoding(encoding_name)
@@ -354,47 +341,3 @@ class AI:
 
         return { 'text': text, 'history': history, 'context': context }
 
-
-    def text_to_speech(self, text, model="tts-1", voice="onyx"):
-        """
-        Creates speech from text using the specified model and voice,
-        then saves the output to a temporary file.
-
-        :param text: The text to convert to speech.
-        :param model: The speech model to use.
-        :param voice: The voice to use.
-        :return: The path to the temporary file containing the speech.
-        """
-        # Create speech response from the client
-        response = openai.audio.speech.create(
-        model=model,
-        voice=voice,
-        input=text
-        )
-        
-        # Create a temporary file
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
-        
-        # Stream the response to the temporary file
-        response.stream_to_file(temp_file.name)
-        
-        # Make sure to close the file to flush all writes
-        temp_file.close()
-        
-        # Return the path to the temporary file
-        return temp_file
-
-    def transcribe_audio(self, file, model="whisper-1"):
-        """
-        Transcribes the given audio file using OpenAI's specified model.
-
-        :param file: A file-like object containing the audio to transcribe.
-        :param model: The model to use for transcription. Defaults to "whisper-1".
-        :return: The transcription result as a string.
-        """
-        try:
-            transcription = openai.audio.transcriptions.create(model=model, file=file)
-            return transcription
-        except Exception as e:
-            print(f"An error occurred during transcription: {e}")
-            return None

@@ -1,4 +1,3 @@
-from .ai import AI
 import ast
 import queue
 import threading
@@ -45,13 +44,18 @@ import threading
 '''
 
 class ToolsGPT():
-    def __init__(self, verbose=False, timeout=300):
+    def __init__(self, verbose=False, timeout=300, ai='openai', groq_api=None):
         self.verbose = verbose
-        self.llm = AI(verbose=verbose).llm
+        if ai == 'openai':
+            from .ai import AI
+            self.llm = AI(verbose=verbose).llm
+        if ai == 'groq':
+            from .groq_api import GroqAPI as AI
+            self.llm = AI(verbose=verbose, api=groq_api).llm
         self.timeout = timeout
 
 
-    def get_rating(self, text: str = None, concept_to_rate_for: str = None, model='gpt-3.5-turbo', loop_limit=20, timeout=None) -> int:
+    def get_rating(self, text: str = None, concept_to_rate_for: str = None, model=None, loop_limit=20, timeout=None, temperature=None) -> int:
         '''
             Get a numeric rating out of 10. Input plain text, and concept to rate for. Defualts to 'quality'
             Output is integer. Leave no text and pass concept only to format custom
@@ -68,7 +72,7 @@ Concept to rate out of ten for: {concept_to_rate_for} \n\n Reponse: Since I am n
 that this number has been carefully considered given your concept. My rating out of 10 integer is: """
             prompt = prompt_template.format(concept_to_rate_for=concept_to_rate_for)
         
-        answer = self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout)
+        answer = self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout, temperature=temperature)
         if self.verbose == True:
             print(f"'Rating Initial Answer: {answer}")
 
@@ -78,7 +82,7 @@ that this number has been carefully considered given your concept. My rating out
             return self.retry_until_its_a_number(answer, model=model, loop_limit=loop_limit, timeout=timeout) # force the integer if zero shot fails
         
         
-    def get_number(self, concept, content: str, model='gpt-3.5-turbo', loop_limit=5, timeout=None) -> int:
+    def get_number(self, concept, content: str, model=None, loop_limit=5, timeout=None, temperature=None) -> int:
         '''
             param: `concept` - is the idea used to generate a number with - i.e. "How many students are in the professor's class?" 
             param: `content` - is the content to generate a number for - i.e. "I had 400 students in my class last year, but this year, I have 10% more." 
@@ -88,7 +92,7 @@ that this number has been carefully considered given your concept. My rating out
         return response if type(response) is int else self.retry_until_its_a_number(response, model=model, loop_limit=loop_limit)
         
     
-    def retry_until_its_a_number(self, content: str, model='gpt-3.5-turbo', loop_limit=5, timeout=None) -> int:
+    def retry_until_its_a_number(self, content: str, model=None, loop_limit=5, timeout=None, temperature=None) -> int:
         '''
             param: `content` - the AI will return an integer based on the content you input
         '''
@@ -105,7 +109,7 @@ User: The following content should be a number - Content: "{content}"
 \nAgent:"""
 
         prompt = prompt_template.format(content=content)
-        response = self.retry_llm(custom_prompt=prompt, model=model, loop_limit=loop_limit, timeout=timeout)
+        response = self.retry_llm(custom_prompt=prompt, model=model, loop_limit=loop_limit, timeout=timeout, temperature=temperature)
         print("Initial number extraction response:", response) if self.verbose else 0
 
         if type(response) is int:
@@ -120,7 +124,7 @@ User: The following content should be a number - Content: "{content}"
                     break
 
                 prompt = prompt_template.format(content=answer)
-                answer = self.retry_llm(custom_prompt=prompt, model=model, loop_limit=loop_limit, timeout=timeout)
+                answer = self.retry_llm(custom_prompt=prompt, model=model, loop_limit=loop_limit, timeout=timeout, temperature=temperature)
                 print(f"Loops: {loops} |  Number: {answer}") if self.verbose else 0
                     
                 try:
@@ -130,12 +134,12 @@ User: The following content should be a number - Content: "{content}"
                     loops += 1
 
     
-    def get_yes_no(self, text: str, question: str = None, model='gpt-3.5-turbo', loop_limit=20, timeout=None) -> str:
+    def get_yes_no(self, text: str, question: str = None, model=None, loop_limit=20, timeout=None, temperature=None) -> str:
         '''
             Get an exact "yes" or "no" to any question, given an input. 
             Be sure to input text to get a yes or no to, then ask the question to answer
         '''
-        answer = self.yay_or_nay(text, question, model=model, timeout=timeout) if question else self.yay_or_nay_question_in_content(text, model=model, timeout=timeout) 
+        answer = self.yay_or_nay(text, question, model=model, timeout=timeout) if question else self.yay_or_nay_question_in_content(text, model=model, timeout=timeout, temperature=temperature) 
         print(f"Y/N Initial Answer: {answer}") if self.verbose == True else 0
             
         loops = 0
@@ -147,7 +151,7 @@ User: The following content should be a number - Content: "{content}"
         return answer
 
 
-    def get_match(self, text: str, list_of_options: list, model='gpt-3.5-turbo', loop_limit=4, timeout=None) -> str:
+    def get_match(self, text: str, list_of_options: list, model=None, loop_limit=4, timeout=None, temperature=None) -> str:
         '''
         This function can be used in a variety of Natural Language Processing (NLP) tasks, 
         such as text classification or intent recognition.
@@ -158,11 +162,11 @@ User: The following content should be a number - Content: "{content}"
 
         list_copy = []
         for option in list_of_options:
-            list_copy.append(option.strip().replace('.', '').lower().strip('"').strip("'"))
+            list_copy.append(str(option).strip().replace('.', '').lower().strip('"').strip("'"))
         prompt = f"""Respond with one of the options on this list: {list_copy} 
 Content to classify: "{text}"  \n\nDo not respond with anything other than the option on the list. Do not add any additional spaces or characters other than the label: {list_copy}"""
 
-        answer = self.retry_llm(prompt, model, loop_limit, timeout=timeout)
+        answer = self.retry_llm(prompt, model, loop_limit, timeout=timeout, temperature=temperature)
 
         print(f'''Get Answer: {answer}''') if self.verbose else 0
 
@@ -184,7 +188,7 @@ Content to classify: "{text}"  \n\nDo not respond with anything other than the o
         return new_answer
 
 
-    def get_multi_match(self, text: str, list_of_options: list, model='gpt-3.5-turbo', loop_limit=4, timeout=None) -> str:
+    def get_multi_match(self, text: str, list_of_options: list, model=None, loop_limit=4, timeout=None, temperature=None) -> str:
         '''
         This function can be used in a variety of Natural Language Processing (NLP) tasks, 
         such as text classification or intent recognition.
@@ -193,27 +197,40 @@ Content to classify: "{text}"  \n\nDo not respond with anything other than the o
         Input text, and list of options: ["list of options", "is a list of strings", "do not forget"]
         '''
         prompt = f"""Respond with a list of items from this list: {list_of_options} 
-Content to classify: "{text}"  \n\n Respond with a subset list that matches the content: {list_of_options}"""
+        Content to classify: "{text}"  \n\n Respond with a subset list that matches the content: {list_of_options}"""
 
         # Simulate a call to a function that retries a language model query
-        answer = self.retry_llm(prompt, model, loop_limit, timeout=timeout)
+        answer = self.retry_llm(prompt, model, loop_limit, timeout=timeout, temperature=temperature)
 
         # Logging for debug purposes
         print(f'''Get Answer: {answer}''') if self.verbose else None
-        print(ast.literal_eval(answer)) if self.verbose else None
+
+        try:
+            literally = ast.literal_eval(answer) if type(answer) is not list else answer
+        except:
+            print('answer 1:', answer)
+            answer = self.retry_llm(f"""Convert this into a Python list: {answer}""", 
+                                    model, loop_limit, timeout=timeout, temperature=temperature)
+            print('answer 2:', answer)
+            try:
+                literally = ast.literal_eval(answer) if type(answer) is not list else answer
+            except:
+                literally = answer.split(',')
+
+        print(literally) if self.verbose else None
 
         # Process the answer, directly adding matches, and using get_match for others
         processed_results = []
-        for i in ast.literal_eval(answer):
+        for i in literally:
             if i in list_of_options:
                 processed_results.append(i)
             else:
-                processed_results.append(self.get_match(i, list_of_options, model, loop_limit, timeout))
+                processed_results.append(self.get_match(i, list_of_options, model, loop_limit, timeout, temperature))
         
         return processed_results
 
 
-    def get_topic(self, text: str, list_of_options: list, model='gpt-3.5-turbo', loop_limit=4) -> str:
+    def get_topic(self, text: str, list_of_options: list, model=None, loop_limit=4, timeout=None, temperature=None) -> str:
         '''
         Like get_match, default optimized for topic recognition
         '''
@@ -225,7 +242,7 @@ Content to classify: "{text}"  \n\n Respond with a subset list that matches the 
 Content to classify: "{content}"  \n\nClassifiy the content above based on which topic it is mostly related to one topic: {list_of_options}"""
         
         prompt = prompt_template.format(content=text, list_of_options=list_copy)
-        topic = self.retry_llm_in_list(prompt, list_copy, model, loop_limit)
+        topic = self.retry_llm(prompt, model, loop_limit, timeout=timeout, temperature=temperature)
         print(f"Topic Answer: {topic}") if self.verbose else 0
             
         if topic is not None:
@@ -234,7 +251,7 @@ Content to classify: "{content}"  \n\nClassifiy the content above based on which
         return topic
 
 
-    def match_or_make(self, text, list_of_options: list = [], model='gpt-3.5-turbo', loop_limit=20) -> str:
+    def match_or_make(self, text, list_of_options: list = [], model=None, loop_limit=20) -> str:
         ''' 
             "M&M" Returns exact match or new option. Input text and list_of_options. 
             If no list is input, then one will be made and be output
@@ -278,17 +295,17 @@ Respond "Yes" if the right category already exists in the list'''
     
 
     # internal function 
-    def make_option(self, text, list_of_options: list, model='gpt-3.5-turbo', timeout=None) -> str:
+    def make_option(self, text, list_of_options: list, model=None, timeout=None, temperature=None) -> str:
         prompt_template = """Content to classify: "{content}"  \n\n
 Create a new category for the content based on these other categories in this list: {list_of_options}"""
 
         prompt = prompt_template.format(content=text, list_of_options=list_of_options)
 
-        return self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout)
+        return self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout, temperature=temperature)
 
 
     # internal function 
-    def make_option_from_zero(self, text, model='gpt-3.5-turbo', timeout=None):
+    def make_option_from_zero(self, text, model=None, timeout=None, temperature=None):
         '''
             Option without anything to go off of but the text input
         '''
@@ -298,11 +315,11 @@ no explination before or after, just the name of the catagory. \n\nThe name of t
         
         prompt = prompt_template.format(content=text)
 
-        return self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout)
+        return self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout, temperature=temperature)
     
 
     # internal function 
-    def finalize_category(self, text, prev_answer, timeout=None):
+    def finalize_category(self, text, prev_answer, timeout=None, temperature=None):
         prompt_template = """Given the following category suggestion: "{prev_answer}"
 \nand this text: "{text}" The final and simple one or two word category name I created for it is: """
         
@@ -312,7 +329,7 @@ no explination before or after, just the name of the catagory. \n\nThe name of t
 
 
     # internal function 
-    def isolate_yes_no(self, content, question: str, model='gpt-3.5-turbo', timeout=None):
+    def isolate_yes_no(self, content, question: str, model=None, timeout=None, temperature=None):
         '''Not recommended for external use. Internal function'''
         prompt_template = """Do not respond with anything before the yes or no. Do not add anything after the "yes" or "no". 
 Example question 1: 'Is the Eiffel tower located in Paris?' Example answer 1: 'Yes' Example question 2: 'Do you think I am fat?' 
@@ -323,11 +340,11 @@ Example question 5: 'Will this happen if it's 19 percent likely to happen?' Exam
 
         prompt = prompt_template.format(content=content, question=question)
 
-        return self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout)
+        return self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout, temperature=temperature)
     
 
     # internal function 
-    def yay_or_nay(self, content, question: str, model='gpt-3.5-turbo', timeout=None):
+    def yay_or_nay(self, content, question: str, model=None, timeout=None, temperature=None):
         '''Not recommended for external use. Internal function'''
         prompt_template = """Do not respond with anything before the yes or no. Do not add anything after the "yes" or "no". 
 Example question 1: 'Is the Eiffel tower located in Paris?' Example answer 1: 'Yes' Example question 2: 'Do you think I am fat?' 
@@ -338,11 +355,11 @@ Example question 5: 'Will this happen if it's 19 percent likely to happen?' Exam
 
         prompt = prompt_template.format(content=content, question=question)
 
-        return self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout)
+        return self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout, temperature=temperature)
     
 
     # internal function 
-    def yay_or_nay_question_in_content(self, content: str, model='gpt-3.5-turbo', timeout=None):
+    def yay_or_nay_question_in_content(self, content: str, model=None, timeout=None, temperature=None):
         '''Not recommended for external use. Internal function'''
         prompt_template = """Do not respond with anything before the yes or no. Do not add anything after the "yes" or "no". 
 Example question 1: 'Is the Eiffel tower located in Paris?' Example answer 1: 'Yes' Example question 2: 'Do you think I am fat?' 
@@ -356,11 +373,11 @@ Agent:"""
 
         prompt = prompt_template.format(content=content)
 
-        return self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout)
+        return self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout, temperature=temperature)
     
 
     # internal function 
-    def zero_or_one(self, content, zero_if: str, one_if: str, model='gpt-3.5-turbo', timeout=None):
+    def zero_or_one(self, content, zero_if: str, one_if: str, model=None, timeout=None, temperature=None):
         '''Not recommended for external use. Internal function'''
         prompt_template = """Do not respond with anything before the 1 or 0. Do not add anything after the "1" or "0". 
 Example question 1: 'Is the Eiffel tower located in Paris?' Example answer 1: '1' Example question 2: 'Do you think I am fat?' 
@@ -371,11 +388,11 @@ Example question 5: 'Will this happen if it's 19 percent likely to happen?' Exam
 
         prompt = prompt_template.format(content=content, zero_if=zero_if, one_if=one_if)
 
-        return self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout)
+        return self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout, temperature=temperature)
     
 
     # internal function 
-    def isolate_zero_one(self, content, model='gpt-3.5-turbo', timeout=None):
+    def isolate_zero_one(self, content, model=None, timeout=None, temperature=None):
         '''Not recommended for external use. Internal function'''
         prompt_template = """Do not respond with anything before the 1 or 0. Do not add anything after the "1" or "0". 
 Example question 1: 'Is the Eiffel tower located in Paris?' Example answer 1: '1' Example question 2: 'Do you think I am fat?' 
@@ -386,11 +403,11 @@ Example question 5: 'Will this happen if it's 19 percent likely to happen?' Exam
 
         prompt = prompt_template.format(content=content)
 
-        return self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout)
+        return self.retry_llm(custom_prompt=prompt, model=model, timeout=timeout, temperature=temperature)
 
 
     # This function is called by the others to handle retries:
-    def retry_llm(self, custom_prompt, model='gpt-3.5-turbo', loop_limit=2, temperature=0, timeout=None):
+    def retry_llm(self, custom_prompt, model=None, loop_limit=2, temperature=0, timeout=None):
         for i in range(loop_limit):
             try:
                 response_queue = queue.Queue()
@@ -425,7 +442,7 @@ Example question 5: 'Will this happen if it's 19 percent likely to happen?' Exam
 
 
 
-    def perfect(self, content, instructions: str, model='gpt-3.5-turbo', timeout=None, yes_no_timeout=None):
+    def perfect(self, content, instructions: str, model=None, timeout=None, temperature=None, yes_no_timeout=None):
         '''Wrapper function ensures that you get exactly what you wanted, and will not return until you get what you wanted'''
         output = self.get_yes_no(model=model, text=f"These are the instructions: {instructions} and this is the Output: {content}", 
                     question=f"Does the output match the instructions?", timeout=yes_no_timeout) == 'no'
@@ -438,7 +455,7 @@ Content: {content}
 
 Return the content exactly as the instructions direct'''
             
-            content = self.llm(new_intstructions, model=model, timeout=timeout)
+            content = self.llm(new_intstructions, model=model, timeout=timeout, temperature=temperature)
             if self.verbose == True:
                 print("Content:", content)
             output = self.get_yes_no(model=model, text=f"These are the instructions: {instructions}", 

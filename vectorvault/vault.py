@@ -23,19 +23,22 @@ import re
 import json
 import traceback
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Thread as T
 from .cloudmanager import CloudManager
 from .ai import AI, openai
+from .groq_api import GroqAPI
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement
 from .vecreq import call_get_similar, call_cloud_save
 from .tools_gpt import ToolsGPT
 
 
 class Vault:
-    def __init__(self, user: str = None, api_key: str = None, openai_key: str = None, vault: str = None, embeddings_model: str = None, verbose: bool = False, conversation_user_id: str = None):
+    def __init__(self, user: str = None, api_key: str = None, openai_key: str = None, vault: str = None, 
+                 embeddings_model: str = None, verbose: bool = False, conversation_user_id: str = None, 
+                 groq_api: str = None, chat_ai: str = 'openai', fine_tuned_model = False):
         ''' 
         ### Create a vector database instance like this:
         ```
@@ -70,6 +73,8 @@ class Vault:
               vault='VAULT_NAME',
               personality_message='Answer like you are Snoop Dogg',
               verbose=False)
+
+        # Change the chat ai from 'openai' to 'groq' if you want to use groq and it will still use embeddings from openai, but the chat comes from groq
         ```
         '''
         self.user = user.lower()
@@ -95,9 +100,12 @@ class Vault:
         self.last_time = None
         self.saved_already = False
         self.ai_loaded = False
-        self.tools = ToolsGPT(verbose=verbose)
+        self.tools = ToolsGPT(verbose=verbose, ai=chat_ai, groq_api=groq_api)
         self.rate_limiter = RateLimiter(max_attempts=30)
         self.cuid = conversation_user_id
+        self.chat_ai = chat_ai
+        self.groq_api = groq_api
+        self.fine_tuned_model = fine_tuned_model
 
     def get_vaults(self, vault: str = None):
         '''
@@ -131,7 +139,7 @@ class Vault:
         '''
             Returns the number of tokens for any given text
         '''
-        self.load_ai() if not self.ai_loaded else None
+        self.load_ai()
         return self.ai.get_tokens(text)
     
 
@@ -152,11 +160,24 @@ class Vault:
 
 
     def load_ai(self):
-        self.ai_loaded = True
-        self.ai = AI(verbose=self.verbose)
-        self.ai.context_prompt = self.fetch_custom_prompt()
-        self.ai.prompt = self.fetch_custom_prompt(context=False)
-        self.ai.personality_message = self.fetch_personality_message()
+        '''
+            Loads the AI functions - internal function
+        '''
+        if not self.ai_loaded:
+            self.ai_loaded = True
+
+            if self.chat_ai == 'openai':
+                self.ai = AI(verbose=self.verbose)
+
+            elif self.chat_ai == 'groq':
+                self.ai = GroqAPI(verbose=self.verbose, api=self.groq_api)
+
+            self.ai.context_prompt = self.fetch_custom_prompt()
+            self.ai.prompt = self.fetch_custom_prompt(context=False)
+            self.ai.personality_message = self.fetch_personality_message()
+
+        if self.fine_tuned_model:
+            self.ai.fine_tuned_model = True
 
 
     def save_personality_message(self, text: str):
@@ -939,8 +960,7 @@ class Vault:
             ```
 
         '''
-        self.load_ai() if not self.ai_loaded else None
-        model = model.lower()
+        self.load_ai()
         start_time = time.time()
     
         history = self.get_conversation_history(self.cuid, text) if self.cuid else history
@@ -1084,8 +1104,7 @@ class Vault:
             response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True, custom_prompt=my_prompt))
             ```
         '''
-        self.load_ai() if not self.ai_loaded else None
-        model = model.lower()
+        self.load_ai()
         start_time = time.time()
     
         history = self.get_conversation_history(self.cuid, text) if self.cuid else history

@@ -94,6 +94,12 @@ class CloudManager:
         self.upload_to_cloud(self.cloud_name(vault, item, self.user, self.api, item=True), text)
         self.upload_to_cloud(self.cloud_name(vault, item, self.user, self.api, meta=True), json.dumps(meta))
         
+    def upload_personality_message(self, personality_message):
+        self.upload_to_cloud(f'{self.vault}/personality_message', personality_message)
+    
+    def upload_custom_prompt(self, prompt):
+        self.upload_to_cloud(f'{self.vault}/prompt', prompt)
+     
     def username(self, input_string):
         return input_string.replace("@", "_at_").replace(".", "_dot_") + '_vvclient'
 

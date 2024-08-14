@@ -587,7 +587,36 @@
                 if (openai_key) document.getElementById('openai_key').value = openai_key;
             }
 
+            function getParameterByName(name, url = window.location.href) {
+                name = name.replace(/[\[\]]/g, '\\$&');
+                let regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                    results = regex.exec(url);
+                if (!results) return null;
+                if (!results[2]) return '';
+                return decodeURIComponent(results[2].replace(/\+/g, ' '));
+            }
 
+            // get the tag from the URL
+            let affTag = getParameterByName('aff');
+            let artTag = getParameterByName('art');
+            let cusTag = getParameterByName('cus');
+
+            // get the static tag
+            let staticTag = 'HTML Demo';  // replace this with the actual static tag
+
+            // get the current tags from the cookie
+            let currentTags = document.cookie.split('; ').find(row => row.startsWith('tags'))?.split('=')[1];
+            currentTags = currentTags ? JSON.parse(decodeURIComponent(currentTags)) : [];
+
+            // add the new tags to the current tags
+            if (artTag) currentTags.push({ tag: artTag, timestamp: new Date().toISOString() });
+            if (cusTag) currentTags.push({ tag: cusTag, timestamp: new Date().toISOString() });
+            if (affTag) currentTags.push({ tag: affTag, timestamp: new Date().toISOString() });
+            if (staticTag) currentTags.push({ tag: staticTag, timestamp: new Date().toISOString() });
+
+            // store the updated tags in the cookie
+            document.cookie = `tags=${encodeURIComponent(JSON.stringify(currentTags))};path=/;domain=.vectorvault.io;secure`;
+            
         // Intitialize Vector Vault API - DO NOT EDIT 
         // This class connects to the Vector Vault Cloud API and is a copy of the official Vector Vault npm package
         class VectorVaultAPI {

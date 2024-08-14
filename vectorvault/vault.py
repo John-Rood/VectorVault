@@ -23,11 +23,10 @@ import re
 import json
 import traceback
 import random
+import threading
 from datetime import datetime, timedelta
-from typing import List
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from threading import Thread as T
-from .cloudmanager import CloudManager
+from typing import List, Union
+from .cloudmanager import CloudManager, as_completed, ThreadPoolExecutor, T
 from .ai import AI, openai
 from .groq_api import GroqAPI
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement
@@ -107,15 +106,6 @@ class Vault:
         self.groq_api = groq_api
         self.fine_tuned_model = fine_tuned_model
 
-    def get_vaults(self, vault: str = None):
-        '''
-            Returns a list of vaults within the current vault directory 
-        '''
-        vault = self.vault if vault is None else vault
-        if self.cloud_manager is None:
-           time.sleep(.3)
-        return self.cloud_manager.list_vaults(vault)
-
 
     def get_total_items(self, vault: str = None):
         '''
@@ -129,10 +119,20 @@ class Vault:
                 temp_file_path = self.cloud_manager.download_to_temp_file(name_map(vault, self.user, self.api))
                 with open(temp_file_path, 'r') as json_file:
                     _map = json.load(json_file)
-                os.remove(temp_file_path)
+                self.delete_temp_file(temp_file_path)
                 return len(_map)
             except: # it doesn't exist
                 return 0
+
+    def get_total_vectors(self):
+        '''
+            Returns the total number of vectors in the Vault
+        '''
+        try:
+            self.load_vectors()
+        except:
+            return 0
+        return self.vectors.get_n_items()
 
 
     def get_tokens(self, text: str):
@@ -159,7 +159,7 @@ class Vault:
         return self.vectors.get_item_vector(item_id)
 
 
-    def load_ai(self):
+    def load_ai(self) -> None:
         '''
             Loads the AI functions - internal function
         '''
@@ -172,9 +172,10 @@ class Vault:
             elif self.chat_ai == 'groq':
                 self.ai = GroqAPI(verbose=self.verbose, api=self.groq_api)
 
-            self.ai.context_prompt = self.fetch_custom_prompt()
-            self.ai.prompt = self.fetch_custom_prompt(context=False)
+            self.ai.main_prompt_with_context = self.fetch_custom_prompt()
+            self.ai.main_prompt = self.fetch_custom_prompt(context=False)
             self.ai.personality_message = self.fetch_personality_message()
+            self.ai.set_prompts()
 
         if self.fine_tuned_model:
             self.ai.fine_tuned_model = True
@@ -253,7 +254,15 @@ class Vault:
                 executor.submit(self.cloud_manager.upload, self.map.get(str(item_id)), item_text, item_meta, vault)
                 total_saved_items += 1
 
+        all_vaults = self.cloud_manager.download_vaults_list_from_cloud()
+
+        if self.vault not in all_vaults and all_vaults:
+            all_vaults.append(self.vault)
+            self.cloud_manager.upload_vaults_list(all_vaults)
+
         self.upload_vectors(vault)
+        self.update_vault_data(this_vault_only=True)
+        self.cloud_manager.build_data_update()
         print(f"upload time --- {(time.time() - start_time)} seconds --- {total_saved_items} items saved") if self.verbose else 0
             
 
@@ -264,6 +273,24 @@ class Vault:
         self.reload_vectors()
         self.vecs_loaded = True
         self.saved_already = False
+
+
+    def duplicate_vault(self, new_vault_name):
+        vault = Vault(user=self.user, api_key=self.api, openai_key=self.openai_key, vault=self.vault, verbose=self.verbose)
+        vault2 = Vault(user=self.user, api_key=self.api, openai_key=self.openai_key, vault=new_vault_name, verbose=self.verbose)
+
+        for i in range(vault.get_total_items()):
+            item = vault.get_items([i])[0]['data']
+            vault2.add(item)
+            print(f"\r{i}", end='') if self.verbose else None
+
+        vault2.get_vectors()
+        vault2.save()
+
+        self.load_ai()
+        vault2.save_custom_prompt(self.ai.main_prompt, False)
+        vault2.save_custom_prompt(self.ai.main_prompt_with_context)
+        vault2.save_personality_message(self.ai.personality_message)
 
 
     def delete(self):
@@ -277,8 +304,60 @@ class Vault:
         self.items.clear()
         self.cloud_manager.delete()
         self.x = 0
-        print('Vault deleted')
+        vaults = self.cloud_manager.download_vaults_list_from_cloud()
+        try:
+            vaults.remove(self.vault)
+        except: 
+            pass
+        self.cloud_manager.upload_vaults_list(vaults)
+        self.update_vault_data(remove_vault=True)
+        self.map = {}
+        self.items = []
+        print(f'Vault: "{self.vault}" deleted')
     
+
+    def get_vaults(self, vault: str = None) -> list:
+        '''
+            Returns a list of vaults within the current vault directory 
+        '''
+        vault = self.vault if vault is None else vault
+
+        if vault == '':
+            return self.get_all_vaults()
+        
+        time.sleep(.3) if self.cloud_manager is None else 0
+        return self.cloud_manager.list_vaults(vault)
+    
+
+    def get_all_vaults(self) -> list:
+        '''
+            Returns a list of vaults within the current vault directory 
+        '''
+        try: 
+            return self.cloud_manager.download_vaults_list_from_cloud()
+        except:
+            return []
+    
+
+    def list_cloud_vaults(self):
+        '''
+            Returns a list of all the cloud vaults 
+        '''
+        time.sleep(.3) if self.cloud_manager is None else 0
+        return self.cloud_manager.list_vaults('')
+    
+
+    def save_mapping(self, vault=None):
+        vault = self.vault if not vault else vault
+        map_temp_file_path = None
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+            map_temp_file_path = temp_file.name
+            json.dump(self.map, temp_file, indent=2)
+        
+        self.cloud_manager.upload_temp_file(map_temp_file_path, name_map(vault, self.user, self.api))
+        if os.path.exists(map_temp_file_path):
+            self.delete_temp_file(map_temp_file_path)
+        
 
     def remap(self, item_id):
         for i in range(item_id, len(self.map) - 1):
@@ -286,35 +365,87 @@ class Vault:
         self.map.popitem()
 
 
-    def update_vault_data(self):
+    def remap_item_numbers(self):
+        new_map = {}
+        new_item_number = 0
+        self.load_mapping()
+        
+        # Iterate through all items in the current map
+        for old_key, uuid in self.map.items():
+            meta_path = self.cloud_manager.cloud_name(self.vault, uuid, self.user, self.api, meta=True)
+            if self.cloud_manager.item_exists(uuid):
+                meta_data = json.loads(self.cloud_manager.download_text_from_cloud(meta_path))
+                meta_data['item_id'] = new_item_number
+                self.cloud_manager.upload_to_cloud(meta_path, json.dumps(meta_data))
+                new_map[str(new_item_number)] = uuid
+                new_item_number += 1
+        
+        self.map = new_map
+        self.save_mapping()
+        self.update_vault_data(this_vault_only=True)
+        
+        print(f"Item numbering fixed. Total items: {new_item_number}")
+
+        
+    def update_vault_data(self, this_vault_only=False, remove_vault=False):
         nary = []
-        try:
+        try: # try because new users do not have this file on first call
             vault_data = self.cloud_manager.get_mapping()
-            all_vaults = self.get_vaults('')
-            _data = [vault for vault in vault_data if vault['vault'] in all_vaults]
-            for i in all_vaults:
-                total_items = self.get_total_items(i)
-                time.sleep(.01)
-                item = self.get_items([ total_items - 1 ], i)[0]['metadata']
-                try: 
-                    time_for_last_item = item['updated']
-                except:
-                    time_for_last_item = item['updated_at']
+            all_vaults = [i['vault'] for i in vault_data]
+            if self.vault not in all_vaults:
+                nary.append({ 'vault': f'{self.vault}', 'total_items': self.get_total_items(), 'last_update': time.time(), 'last_use': time.time(), 'total_use': 1 })
 
-                vault_dict = { 'vault': f'{i}', 'total_items': total_items, 'last_update': time_for_last_item }
+            for i in vault_data:
+                if not this_vault_only and not remove_vault: 
+                    total_items = self.get_total_items(i['vault']) 
+                else:
+                    total_items = i['total_items']
 
-                for original_data in _data:  
-                    if original_data['vault'] == f'{i}':
-                        if 'last_use' in original_data:
-                            vault_dict['last_use'] = original_data['last_use']
-                        if 'total_use' in original_data:
-                            vault_dict['total_use'] = original_data['total_use']
+                if this_vault_only and i['vault'] == self.vault:
+                    total_items = self.get_total_items()
+                
+                vault_dict = { 'vault': i['vault'], 'total_items': total_items, 'last_update': i['last_update'] }
 
-                nary.append(vault_dict)
+                if 'last_use' in i:
+                    vault_dict['last_use'] = i['last_use']
+                if 'total_use' in i:
+                    vault_dict['total_use'] = i['total_use']
 
-        except Exception as e:
+                if remove_vault and self.vault == i['vault']:
+                    pass
+                else:
+                    nary.append(vault_dict) 
+
+        except Exception as e: # so we make the file 
             print(f"An error occurred: {e}")
-            nary.append({ 'vault': 'demo', 'total_items': 0, 'last_update': time.time(), 'last_use': time.time(), 'total_use': 0 })
+            nary.append({ 'vault': 'demo', 'total_items': 0, 'last_update': time.time(), 'last_use': time.time(), 'total_use': 1 })
+
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+            nary_temp_file_path = temp_file.name
+            json.dump(nary, temp_file, indent=2)
+
+        self.cloud_manager.upload_temp_file(nary_temp_file_path, f'{self.cloud_manager.username}.json')
+
+
+    def hard_remap_vault_data(self):
+        nary = []
+        for i in self.get_vaults(''):
+            total_items = self.get_total_items(i)
+            time.sleep(.01)
+            item = self.get_items([ total_items - 1 ], i)[0]['metadata']
+            try: 
+                time_for_last_item = item['updated']
+            except:
+                time_for_last_item = item['updated_at']
+
+            vault_dict = { 'vault': f'{i}', 'total_items': total_items, 'last_update': time_for_last_item }
+
+            if 'last_use' in i:
+                vault_dict['last_use'] = i['last_use']
+            if 'total_use' in i:
+                vault_dict['total_use'] = i['total_use']
+
+            nary.append(vault_dict)
 
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
             nary_temp_file_path = temp_file.name
@@ -325,43 +456,53 @@ class Vault:
 
     def delete_items(self, item_ids: List[int], trees: int = 10) -> None:
         '''
-            Deletes one or more items from item_id(s) passed in.
-            item_ids is an int or a list of integers
+        Deletes one or more items from item_id(s) passed in.
+        item_ids is an int or a list of integers
         '''
-        def rebuild_vectors(item_id):
-            '''Deletes target vector and rebuilds the database'''
+        def download_and_upload(old_id, new_id):
+            metadata = json.loads(self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.old_map[str(old_id)], self.user, self.api, meta=True)))
+            metadata['item_id'] = new_id
+            self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.old_map[str(old_id)], self.user, self.api, meta=True), json.dumps(metadata))
+            self.map[str(new_id)] = self.old_map[str(old_id)]
+
+        def rebuild_vectors(item_ids):
+            '''Deletes target vectors and rebuilds the database'''
             num_existing_items = self.vectors.get_n_items()
             new_index = get_vectors(self.dims)
-            plus_one = 0
-
-            def download_and_upload(i, plus_one):
-                if plus_one == 1:
-                    metadata = json.loads(self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.old_map[str(i)], self.user, self.api, meta=True)))
-                    metadata['item_id'] = i - plus_one
-                    self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.old_map[str(i - plus_one)], self.user, self.api, meta=True), json.dumps(metadata))
+            new_id = 0
 
             with ThreadPoolExecutor() as executor:
-                for i in range(num_existing_items):
-                    if i == item_id: # the item being deleted 
-                        plus_one += 1 
-                    else: 
-                        vector = self.vectors.get_item_vector(i - plus_one) 
-                        new_index.add_item(i - plus_one, vector)
-                        executor.submit(download_and_upload, i, plus_one)
+                futures = []
+
+                for old_id in range(num_existing_items):
+                    if old_id not in item_ids:
+                        vector = self.vectors.get_item_vector(old_id)
+                        new_index.add_item(new_id, vector)
+                        time.sleep(.05)
+                        futures.append(executor.submit(download_and_upload, old_id, new_id))
+                        new_id += 1
+
+                # Ensure all threads complete
+                for future in as_completed(futures):
+                    future.result()
 
             self.vectors = new_index
             self.vectors.build(trees)
             self.upload_vectors()
 
         item_ids = [item_ids] if isinstance(item_ids, int) else item_ids
-        for item_id in item_ids:
-            self.load_vectors()
-            self.cloud_manager.delete_item(self.map[str(item_id)])
-            self.old_map = self.map
-            self.remap(item_id)
-            rebuild_vectors(item_id)
+        self.old_map = self.map.copy()
+        self.load_vectors()
 
-        print(f'Item {item_id} deleted') if self.verbose else 0
+        for item_id in item_ids:
+            self.cloud_manager.delete_item(self.old_map[str(item_id)])
+            self.remap(item_id)
+
+        rebuild_vectors(item_ids)
+        self.update_vault_data(this_vault_only=True)
+        self.cloud_manager.build_data_update()
+        self.clear_cache()
+        print(f'Items {item_ids} deleted and database rebuilt') if self.verbose else 0
 
 
     def edit_item(self, item_id: int, new_text: str, trees: int = 10) -> None:
@@ -389,6 +530,8 @@ class Vault:
         self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, item=True), new_text)
         edit_vector(item_id, self.process_batch([new_text], never_stop=False, loop_timeout=180)[0])
 
+        self.update_vault_data(this_vault_only=True)
+        self.cloud_manager.build_data_update()
         print(f'Item {item_id} edited') if self.verbose else 0
 
 
@@ -414,8 +557,9 @@ class Vault:
         if not self.x_checked:
             start_time = time.time()
             if self.cloud_manager.vault_exists(name_vecs(self.vault, self.user, self.api)):
-                if self.vecs_loaded:
-                    self.reload_vectors()
+                if not self.vecs_loaded:
+                    self.load_vectors()
+                self.reload_vectors()
 
             self.x_checked = True
             print("initialize index --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
@@ -428,7 +572,7 @@ class Vault:
             temp_file_path = self.cloud_manager.download_to_temp_file(name_map(vault, self.user, self.api))
             with open(temp_file_path, 'r') as json_file:
                 self.map = json.load(json_file)
-            os.remove(temp_file_path)
+            self.delete_temp_file(temp_file_path)
         except: # it doesn't exist
             if self.cloud_manager.vault_exists(name_vecs(vault, self.user, self.api)): # but if the vault does
                 self.map = {str(i): str(i) for i in range(self.vectors.get_n_items())}
@@ -437,6 +581,14 @@ class Vault:
         self.map[str(self.x)] = str(uuid.uuid4())
         self.x +=1
     
+    def delete_temp_file(self, temp_file_path, attempts = 5):
+        '''Internal function only'''
+        for i in range(attempts):
+            try:
+                os.delete(temp_file_path)
+                break
+            except: 
+                time.sleep(.01)
 
     def load_vectors(self, vault = None):
         start_time = time.time()
@@ -445,7 +597,7 @@ class Vault:
         t.start()
         temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(vault, self.user, self.api))
         self.vectors.load(temp_file_path)
-        os.remove(temp_file_path)
+        self.delete_temp_file(temp_file_path)
         t.join()
         self.vecs_loaded = True
         self.x_checked = False
@@ -564,21 +716,13 @@ class Vault:
 
     def upload_vectors(self, vault = None):
         vault = vault if vault else self.vault
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(delete=True) as temp_file:
             vector_temp_file_path = temp_file.name
             self.vectors.save(vector_temp_file_path)
             byte = os.path.getsize(vector_temp_file_path)
             self.cloud_manager.upload_temp_file(vector_temp_file_path, name_vecs(vault, self.user, self.api, byte))
         
-        map_temp_file_path = None
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
-            map_temp_file_path = temp_file.name
-            json.dump(self.map, temp_file, indent=2)
-        
-        self.cloud_manager.upload_temp_file(map_temp_file_path, name_map(vault, self.user, self.api, byte))
-        if os.path.exists(map_temp_file_path):
-            os.remove(map_temp_file_path)
-            
+        self.save_mapping(vault)
         self.items.clear()
         self.vectors = get_vectors(self.dims)
         self.x_checked = False
@@ -673,7 +817,7 @@ class Vault:
             temp_file_path = self.cloud_manager.download_to_temp_file(name_map(vault, self.user, self.api))
             with open(temp_file_path, 'r') as json_file:
                 _map = json.load(json_file)
-            os.remove(temp_file_path)
+            self.delete_temp_file(temp_file_path)
         else:
             self.load_mapping()
             vault = self.vault
@@ -740,14 +884,125 @@ class Vault:
                 return results
         except:
             return [{'data': 'No data has been added', 'metadata': {'no meta': 'No metadata has been added'}}]
+    
+    
+    def get_all_items(self, vault: str = None) -> dict:
+        '''
+        Get all items from the database.
+        Returns a dictionary with the sequential number of the item (item number) as the key,
+        and a dictionary containing the item data and metadata as the value.
 
+        - Example Usage:
+            all_items = vault.get_all_items()
 
+        Sample return:
+        {
+            1: {
+                'data': 'The Project Gutenberg eBook of The Prince...',
+                'metadata': {
+                    'name': 'vaultname-0',
+                    'item_id': 0,
+                    'created': '2023-12-28T19:55:26.406048',
+                    'updated': '2023-12-28T19:55:26.406053',
+                    'time': 1703793326.4060538
+                }
+            },
+            2: {
+                'data': 'Another item content...',
+                'metadata': {
+                    'name': 'vaultname-1',
+                    'item_id': 1,
+                    'created': '2023-12-28T20:00:00.000000',
+                    'updated': '2023-12-28T20:00:00.000000',
+                    'time': 1703793600.0000000
+                }
+            },
+            ...
+        }
+        '''
+        start_time = time.time()
+        
+        def fetch_item(item_number, item_id, _map):
+            # Function to fetch a single item, to be run in parallel
+            item_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault, _map[str(item_id)], self.user, self.api, item=True))
+            meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault, _map[str(item_id)], self.user, self.api, meta=True))
+            meta = json.loads(meta_data) 
+            return item_number, {
+                'data': item_data,
+                'metadata': meta
+            }
+
+        if vault:  # if custom vault, get custom mapping
+            temp_file_path = self.cloud_manager.download_to_temp_file(name_map(vault, self.user, self.api))
+            with open(temp_file_path, 'r') as json_file:
+                _map = json.load(json_file)
+            self.delete_temp_file(temp_file_path)
+        else:
+            self.load_mapping()
+            vault = self.vault
+            _map = self.map
+
+        results = {}
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(fetch_item, i+1, item_id, _map) for i, item_id in enumerate(_map.keys())]
+            for future in as_completed(futures):
+                item_number, result = future.result()
+                results[item_number] = result
+
+        print(f"Retrieved {len(results)} items --- {time.time() - start_time:.2f} seconds ---") if self.verbose else None
+        
+        return json.dumps(results)
+    
+
+    def override_cloud_database_with_json_upload(self, json_data: Union[str, dict]):
+        """
+        Replace your entire vault from a JSON string or dictionary.
+        The JSON should be in the format output by get_all_items().
+
+        :param json_data: A JSON string or dictionary containing items to be added.
+        Each item should have 'data' and 'metadata' fields.
+
+        Usage:
+        # use with caution
+        vault.add_items_from_json(json_string_or_dict)
+
+        """
+        # If json_data is a string, parse it into a dictionary
+        if isinstance(json_data, str):
+            try:
+                items_dict = json.loads(json_data)
+            except json.JSONDecodeError:
+                raise ValueError("Invalid JSON string provided.")
+        else:
+            items_dict = json_data
+
+        self.delete_items([i for i in range(self.get_total_items())])
+
+        items_added = 0
+        for item_number, item_data in items_dict.items():
+            if 'data' not in item_data or 'metadata' not in item_data:
+                print(f"Skipping item {item_number}: Invalid format")
+                continue
+
+            text = item_data['data']
+            metadata = item_data['metadata']
+            name = metadata.get('name')  
+            self.add_item(text=text, meta=metadata, name=name)
+            items_added += 1
+        
+        self.get_vectors()
+        self.save()
+
+        print(f"Successfully added {items_added} items to the vault.") if self.verbose else 0
+
+        
     def get_similar_local(self, text: str, n: int = 4, include_distances: bool = False):
         '''
             Returns similar items from the Vault as the one you entered, but locally
             (saves a few milliseconds and is sometimes used on production builds)
         '''
-        # self.cloud_manager.update() if not self.cuid else None
+        t = T(target=self.cloud_manager.build_update)
+        t.start()
         vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
         return self.get_items_by_vector(vector, n, include_distances = include_distances)
     
@@ -885,12 +1140,6 @@ class Vault:
                  local: bool =False, temperature: int = 0, timeout: int = 300):
         '''
             Chat get response from OpenAI's ChatGPT. 
-            Models: ChatGPT = "gpt-3.5-turbo" • GPT4 = "gpt-4" 
-            Large Context Models: ChatGPT 16k = "gpt-3.5-turbo-16k" • GPT4 32k = "gpt-4-32k"
-            Best Versions: "gpt-3.5-turbo-0301" is March 2023 ChatGPT (best version) - "gpt-4-0314" (best version)
-
-            include_context_meta (bool): If True, will also include context metadata, rather than just the context text string
-
             Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
             Enter your text, add optional chat history, and optionally choose a summary response (default: summmary = False)
 
@@ -908,54 +1157,11 @@ class Vault:
 
             - Example Context-Based Response w/ Chat History:
             `response = vault.get_chat(text, chat_history, get_context = True)`
-
-            - Example Context-Response with Context Samples Returned:
-            `vault_response = vault.get_chat(text, get_context = True, return_context = True)`
-            
-            Response is a string, unless return_context == True, then response will be a dictionary 
-
-            - Example to print dictionary results:
-            # print response:
-            `print(vault_response['response'])` 
-
-            # print context:
-            for item in answer['context']:
-                print("\n\n", f"item {item['metadata']['item_id']}")
-                print(item['data'])
-
             smart_history_search is False by default skip adding the history of the conversation to the text input for similarity search (useful if history contains subject infomation useful for answering the new text input and the text input doesn't contain that info)
             
             - Example Custom Prompt:
-            `response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)`
-
-            `custom_prompt` overrides the stock prompt we provide. Check ai.py to see the originals we provide. 
-            `llm` and `llm_stream` models manage history internally, so the `content` is the only variable to be included and formattable in the prompt. 
-
-            *Example WIHTOUT Vault Context:*
-
-            ```python
-            my_prompt = """Answer this question as if you were a financial advisor: "{content}". """
-            response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)
             ```
-
-            Getting context from the Vault is usually the goal when customizing text generation, and doing that requires additional prompt variables.
-            `llm_w_context` and `llm__w_context_stream` models inject the history, context, and user input all in one prompt. In this case, your custom prompt needs to have `history`, `context` and `question` formattable in the prompt like so:
-
-            *Example WITH Vault Context:*  
-            ```python
-            custom_prompt = """
-                Use the following Context to answer the Question at the end. 
-                Answer as if you were the modern voice of the context, without referencing the context or mentioning that fact any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
-
-                Chat History (if any): {history}
-
-                Additional Context: {context}
-
-                Question: {question}
-
-                (Respond to the Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
-                Answer:
-            """ 
+            my_prompt = """Answer this question as if you were a financial advisor: "{content}". """
             response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)
             ```
 
@@ -1041,9 +1247,7 @@ class Vault:
                         metatag_prefixes: bool = False, metatag_suffixes: bool = False, custom_prompt: bool = False, 
                         local: bool = False, temperature: int = 0, timeout: int = 300):
         '''
-            Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream().
-            cloud_stream() is for cloud functions, like a flask app serving a front end elsewhere.
-            print_stream() is for local console printing
+            Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream()
 
             - Example Signle Usage: 
             `response = vault.print_stream(vault.get_chat_stream(text))`
@@ -1068,39 +1272,10 @@ class Vault:
             
             - Example Context-Response with SPECIFIC META TAGS for Context Samples Returned & Specific Meta Prefixes and Suffixes:
             `vault_response = vault.print_stream(vault.get_chat_stream(text, get_context = True, return_context = True, include_context_meta=True, metatag=['title', 'author'], metatag_prefixes=['\n\n Title: ', '\nAuthor: '], metatag_suffixes=['', '\n']))`
-            
 
             - Example Custom Prompt:
-            `response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)`
-
-            `custom_prompt` overrides the stock prompt we provide. Check ai.py to see the originals we provide. 
-            `llm` and `llm_stream` models manage history internally, so the `content` is the only variable to be included and formattable in the prompt. 
-
-            *Example WIHTOUT Vault Context:*
-
             ```python
             my_prompt = """Answer this question as if you were a financial advisor: "{content}". """
-            response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True, custom_prompt=my_prompt))
-            ```
-
-            Getting context from the Vault is usually the goal when customizing text generation, and doing that requires additional prompt variables.
-            `llm_w_context` and `llm__w_context_stream` models inject the history, context, and user input all in one prompt. In this case, your custom prompt needs to have `history`, `context` and `question` formattable in the prompt like so:
-
-            *Example WITH Vault Context:*  
-            ```python
-            custom_prompt = """
-                Use the following Context to answer the Question at the end. 
-                Answer as if you were the modern voice of the context, without referencing the context or mentioning that fact any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
-
-                Chat History (if any): {history}
-
-                Additional Context: {context}
-
-                Question: {question}
-
-                (Respond to the Question directly. Be the voice of the context, and most importantly: be interesting, engaging, and helpful) 
-                Answer:
-            """ 
             response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True, custom_prompt=my_prompt))
             ```
         '''

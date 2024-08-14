@@ -15,6 +15,8 @@ class AI:
         self.model_token_limits = {
         'gpt-4': 8000,
         'gpt-4-turbo': 128000,
+        'gpt-4o-mini': 128000,
+        'gpt-4o': 128000,
         'gpt-4-turbo-preview': 128000,
         'gpt-4-1106-preview': 128000,
         'gpt-4-0125-preview': 128000,
@@ -23,6 +25,7 @@ class AI:
         'gpt-3.5-turbo-16k': 16000,
     }
         
+        self.main_prompt = "Question: {content}" 
         self.main_prompt_with_context = """Use the following Context to answer the Question at the end. 
     Answer as if you were the modern voice of the context, without referencing the context or mentioning 
     the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
@@ -33,8 +36,12 @@ class AI:
     """ if not main_prompt else main_prompt
         
         self.personality_message = personality_message if personality_message else """Answer directly and be helpful"""
-        self.context_prompt = self.main_prompt_with_context + '\n' + f'({self.personality_message})' + '\n\n' + '''Answer:'''
-        self.prompt = "Question: {content}" + '\n\n' + f'({self.personality_message})' + '\n\n' + '''Answer:'''
+        self.context_prompt = self.main_prompt_with_context + '\n' + f'({self.personality_message})' + '\n' 
+        self.prompt = self.main_prompt + '\n\n' + f'({self.personality_message})' + '\n'
+        
+    def set_prompts(self,):
+        self.context_prompt = self.main_prompt_with_context + '\n' + f'({self.personality_message})' + '\n' 
+        self.prompt = self.main_prompt + '\n\n' + f'({self.personality_message})' + '\n' 
         
     def within_context_window(self, text : str = None, model=None):
         if model not in self.model_token_limits.keys():
@@ -184,7 +191,7 @@ class AI:
 
         # Format the prompt
         prompt = prompt_template.format(context=context, content=user_input)
-        print(prompt) if self.verbose == True else 1
+        print('Full input prompt:', prompt) if self.verbose == True else 1
 
         messages = [{"role": "user", "content": history}] if history else []
         messages.append({"role": "user", "content": prompt})

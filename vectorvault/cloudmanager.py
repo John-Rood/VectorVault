@@ -17,12 +17,12 @@ import tempfile
 import os
 import json
 import time
-from .creds import CustomCredentials
-from .vecreq import call_proj, call_update
-from .itemize import cloud_name
 from google.cloud import storage
 from threading import Thread as T
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from .creds import CustomCredentials
+from .vecreq import call_proj
+from .itemize import cloud_name
 
 class CloudManager:
     def __init__(self, user: str, api_key: str, vault: str):
@@ -63,6 +63,10 @@ class CloudManager:
         blob = self.cloud.blob(vault_name)
         blob.upload_from_string(content)
 
+    def download_vaults_list_from_cloud(self):
+        blob = self.cloud.blob('/vaults_list')
+        return json.loads(blob.download_as_text())
+
     def download_text_from_cloud(self, vault_name):
         blob = self.cloud.blob(vault_name)
         return blob.download_as_text()
@@ -70,7 +74,6 @@ class CloudManager:
     def upload_temp_file(self, temp_file_path, vault_name):
         blob = self.cloud.blob(vault_name)
         blob.upload_from_filename(temp_file_path)
-        os.remove(temp_file_path)
 
     def download_to_temp_file(self, vault_name):
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
@@ -94,6 +97,10 @@ class CloudManager:
         self.upload_to_cloud(self.cloud_name(vault, item, self.user, self.api, item=True), text)
         self.upload_to_cloud(self.cloud_name(vault, item, self.user, self.api, meta=True), json.dumps(meta))
         
+    def upload_vaults_list(self, vaults_list):
+        blob = self.cloud.blob('/vaults_list')
+        blob.upload_from_string(json.dumps(vaults_list))
+        
     def upload_personality_message(self, personality_message):
         self.upload_to_cloud(f'{self.vault}/personality_message', personality_message)
     
@@ -110,10 +117,6 @@ class CloudManager:
         os.remove(temp_file_path)
         return _map
     
-    def update(self):
-        t = T(target=call_update, args=(self.user, self.vault, self.api))
-        t.start()
-    
     def build_update(self):
         _map = self.get_mapping()
         for i in range(len(_map)):
@@ -123,6 +126,18 @@ class CloudManager:
                     _map[i]['total_use'] += 1
                 except:
                     _map[i]['total_use'] = 1
+
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+            _path = temp_file.name
+            json.dump(_map, temp_file, indent=2)
+            
+        self.upload_temp_file(_path, f'{self.username}.json')
+    
+    def build_data_update(self):
+        _map = self.get_mapping()
+        for i in range(len(_map)):
+            if _map[i]['vault'] == self.vault:
+                _map[i]['last_update'] = time.time()
 
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
             _path = temp_file.name
@@ -157,3 +172,8 @@ class CloudManager:
             blob.delete()
         else:
             print(f"Item metadata at path {meta_path} does not exist.")
+
+    def item_exists(self, uuid):
+        item_path = self.cloud_name(self.vault, uuid, self.user, self.api, item=True)
+        blob = self.cloud.blob(item_path)
+        return blob.exists(self.storage_client)

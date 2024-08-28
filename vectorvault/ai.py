@@ -101,11 +101,11 @@ class AI:
 
         # Use token_model_check to select the suitable model based on token count
         model = model if model else self.default_model
-        model = self.model_check(self.get_tokens(history + user_input + prompt_template), model)
+        model = self.model_check(self.get_tokens(str(history) + str(user_input) + str(prompt_template)), model)
         max_tokens = self.model_token_limits.get(model, 8000)
 
         if user_input:
-            new_texts = self.truncate_text(user_input, history, prompt_template, max_tokens=max_tokens)
+            new_texts = self.truncate_text(user_input, str(history), str(prompt_template), max_tokens=max_tokens)
             user_input, history = new_texts['text'], new_texts['history']
 
             prompt = prompt_template.format(content=user_input)
@@ -131,7 +131,7 @@ class AI:
     def llm_sys(self, content = None, system_message = stock_sys_msg, model = None, max_tokens = 8000, temperature = 0):
         tokens = self.get_tokens(f"{content} {system_message}")
         model = model if model else self.default_model
-        model = self.model_check(self.get_tokens(system_message + content), model)
+        model = self.model_check(self.get_tokens(str(system_message) + str(content)), model)
         max_tokens = self.model_token_limits.get(model, 8000)
 
         if tokens > max_tokens:
@@ -182,11 +182,11 @@ class AI:
         timeout = self.timeout if not timeout else timeout
         prompt_template = custom_prompt if custom_prompt else self.context_prompt 
         model = model if model else self.default_model
-        model = self.model_check(self.get_tokens(history + user_input + prompt_template + context), model)
+        model = self.model_check(self.get_tokens(str(history) + str(user_input) + str(prompt_template) + str(context)), model)
         max_tokens = self.model_token_limits.get(model, 8000)
 
         if user_input and context:
-            new_texts = self.truncate_text(user_input, history, prompt_template, context, max_tokens=max_tokens)
+            new_texts = self.truncate_text(user_input, str(history), str(prompt_template), str(context), max_tokens=max_tokens)
             user_input, history, context = new_texts['text'], new_texts['history'], new_texts['context']
 
         # Format the prompt
@@ -214,11 +214,11 @@ class AI:
 
         # Use token_model_check to select the suitable model based on token count
         model = model if model else self.default_model
-        model = self.model_check(self.get_tokens(history + user_input + prompt_template), model)
+        model = self.model_check(self.get_tokens(str(history) + str(user_input) + str(prompt_template)), model)
         max_tokens = self.model_token_limits.get(model, 8000)
 
         if user_input:
-            new_texts = self.truncate_text(user_input, history, prompt_template, max_tokens=max_tokens)
+            new_texts = self.truncate_text(user_input, str(history), str(prompt_template), max_tokens=max_tokens)
             user_input, history = new_texts['text'], new_texts['history']
 
             prompt = prompt_template.format(content=user_input)
@@ -250,11 +250,11 @@ class AI:
         '''
         prompt_template = custom_prompt if custom_prompt else self.context_prompt
         model = model if model else self.default_model
-        model = self.model_check(self.get_tokens(history + user_input + prompt_template + context), model)
+        model = self.model_check(self.get_tokens(str(history) + str(user_input) + str(prompt_template) + str(context)), model)
         max_tokens = self.model_token_limits.get(model, 8000)
 
         if user_input and context:
-            new_texts = self.truncate_text(user_input, history, prompt_template, context, max_tokens=max_tokens)
+            new_texts = self.truncate_text(user_input, str(history), str(prompt_template), str(context), max_tokens=max_tokens)
             user_input, history, context = new_texts['text'], new_texts['history'], new_texts['context']
 
         # Format the prompt

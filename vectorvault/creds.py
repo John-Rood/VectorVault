@@ -41,7 +41,7 @@ class CustomCredentials(Credentials):
                 "user_id": self.user,
                 "api_key": self.api,
             }
-            response = requests.post('https://vv-creds-etrszydrna-uc.a.run.app/access', json=data)
+            response = requests.post('https://credentials.vectorvault.io/access', json=data)
             response.raise_for_status()  
             response_data = response.json()
             self.token = response_data['access_token']

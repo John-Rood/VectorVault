@@ -21,7 +21,7 @@ from google.cloud import storage
 from threading import Thread as T
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .creds import CustomCredentials
-from .vecreq import call_proj
+from .cloud_api import call_proj
 from .itemize import cloud_name
 
 class CloudManager:

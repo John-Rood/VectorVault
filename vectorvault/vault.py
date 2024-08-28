@@ -29,8 +29,8 @@ from typing import List, Union
 from .cloudmanager import CloudManager, as_completed, ThreadPoolExecutor, T
 from .ai import AI, openai
 from .groq_api import GroqAPI
-from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement
-from .vecreq import call_get_similar, call_cloud_save
+from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement, load_json
+from .cloud_api import call_get_similar, call_cloud_save
 from .tools_gpt import ToolsGPT
 
 
@@ -94,6 +94,7 @@ class Vault:
         self.x_checked = False
         self.x_loaded_checked = False
         self.vecs_loaded = False
+        self.load_json = load_json
         self.map = {}
         self.items = []
         self.last_time = None
@@ -128,10 +129,7 @@ class Vault:
         '''
             Returns the total number of vectors in the Vault
         '''
-        try:
-            self.load_vectors()
-        except:
-            return 0
+        self.check_index_loaded()
         return self.vectors.get_n_items()
 
 
@@ -491,8 +489,8 @@ class Vault:
             self.upload_vectors()
 
         item_ids = [item_ids] if isinstance(item_ids, int) else item_ids
-        self.old_map = self.map.copy()
         self.load_vectors()
+        self.old_map = self.map.copy()
 
         for item_id in item_ids:
             self.cloud_manager.delete_item(self.old_map[str(item_id)])
@@ -833,7 +831,6 @@ class Vault:
         
         return results
 
-
     
     def get_items_by_vector(self, vector: list, n: int = 4, include_distances: bool = False):
         '''
@@ -886,75 +883,60 @@ class Vault:
             return [{'data': 'No data has been added', 'metadata': {'no meta': 'No metadata has been added'}}]
     
     
-    def get_all_items(self, vault: str = None) -> dict:
+    def download_database_to_json(self, return_meta = False) -> dict:
         '''
-        Get all items from the database.
+        Download all items from the database to json.
         Returns a dictionary with the sequential number of the item (item number) as the key,
         and a dictionary containing the item data and metadata as the value.
 
         - Example Usage:
-            all_items = vault.get_all_items()
+            all_items = vault.download_database_to_json()
 
         Sample return:
         {
             1: {
                 'data': 'The Project Gutenberg eBook of The Prince...',
-                'metadata': {
-                    'name': 'vaultname-0',
-                    'item_id': 0,
-                    'created': '2023-12-28T19:55:26.406048',
-                    'updated': '2023-12-28T19:55:26.406053',
-                    'time': 1703793326.4060538
-                }
             },
             2: {
                 'data': 'Another item content...',
-                'metadata': {
-                    'name': 'vaultname-1',
-                    'item_id': 1,
-                    'created': '2023-12-28T20:00:00.000000',
-                    'updated': '2023-12-28T20:00:00.000000',
-                    'time': 1703793600.0000000
-                }
             },
             ...
         }
         '''
         start_time = time.time()
         
-        def fetch_item(item_number, item_id, _map):
+        def fetch_item(item_id):
             # Function to fetch a single item, to be run in parallel
-            item_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault, _map[str(item_id)], self.user, self.api, item=True))
-            meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault, _map[str(item_id)], self.user, self.api, meta=True))
+            item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, item=True))
+            meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, meta=True))
             meta = json.loads(meta_data) 
-            return item_number, {
-                'data': item_data,
-                'metadata': meta
-            }
+            if return_meta:
+                return item_id, {
+                    'data': item_data,
+                    'metadata': meta
+                } 
+            else:
+                return item_id, {
+                    'data': item_data,
+                }
 
-        if vault:  # if custom vault, get custom mapping
-            temp_file_path = self.cloud_manager.download_to_temp_file(name_map(vault, self.user, self.api))
-            with open(temp_file_path, 'r') as json_file:
-                _map = json.load(json_file)
-            self.delete_temp_file(temp_file_path)
-        else:
-            self.load_mapping()
-            vault = self.vault
-            _map = self.map
+        self.load_vectors() # also loads mapping
 
         results = {}
         with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(fetch_item, i+1, item_id, _map) for i, item_id in enumerate(_map.keys())]
+            futures = [executor.submit(fetch_item, item_id) for item_id in self.map.keys()]
             for future in as_completed(futures):
                 item_number, result = future.result()
                 results[item_number] = result
+
+        results = {k: results[k] for k in sorted(results.keys())}
 
         print(f"Retrieved {len(results)} items --- {time.time() - start_time:.2f} seconds ---") if self.verbose else None
         
         return json.dumps(results)
     
 
-    def override_cloud_database_with_json_upload(self, json_data: Union[str, dict]):
+    def upload_database_from_json(self, json_data: Union[str, dict]):
         """
         Replace your entire vault from a JSON string or dictionary.
         The JSON should be in the format output by get_all_items().
@@ -964,38 +946,32 @@ class Vault:
 
         Usage:
         # use with caution
-        vault.add_items_from_json(json_string_or_dict)
+        vault.upload_database_from_json(json_string_or_dict)
 
         """
-        # If json_data is a string, parse it into a dictionary
-        if isinstance(json_data, str):
-            try:
-                items_dict = json.loads(json_data)
-            except json.JSONDecodeError:
-                raise ValueError("Invalid JSON string provided.")
-        else:
-            items_dict = json_data
+        items_dict = load_json(json_data)
+        print('Loaded json items') if self.verbose else 0
+        print('Deleting cloud items') if self.verbose else 0
 
         self.delete_items([i for i in range(self.get_total_items())])
 
         items_added = 0
-        for item_number, item_data in items_dict.items():
-            if 'data' not in item_data or 'metadata' not in item_data:
+        for item_number, item_data in sorted(items_dict.items()):
+            if 'data' not in item_data:
                 print(f"Skipping item {item_number}: Invalid format")
                 continue
 
-            text = item_data['data']
-            metadata = item_data['metadata']
-            name = metadata.get('name')  
-            self.add_item(text=text, meta=metadata, name=name)
+            self.add_item(text=item_data['data'], meta=item_data.get('metadata', None))
             items_added += 1
         
+        print('Cloud items deleted') if self.verbose else 0
         self.get_vectors()
+        print('Saving new json items to the cloud') if self.verbose else 0
         self.save()
 
-        print(f"Successfully added {items_added} items to the vault.") if self.verbose else 0
-
+        print(f"Successfully saved {items_added} items to the vault.") if self.verbose else 0
         
+
     def get_similar_local(self, text: str, n: int = 4, include_distances: bool = False):
         '''
             Returns similar items from the Vault as the one you entered, but locally
@@ -1005,7 +981,7 @@ class Vault:
         t.start()
         vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
         return self.get_items_by_vector(vector, n, include_distances = include_distances)
-    
+
 
     def get_similar(self, text: str, n: int = 4, include_distances: bool = False, vault = None):
         '''
@@ -1028,6 +1004,7 @@ class Vault:
         self.items.append(new_item)
         self.add_to_map()
 
+
     def add(self, text: str, meta: dict = None, name: str = None, split: bool = False, split_size: int = 1000, max_threshold: int = 16000):
         """
             If your text length is greater than 4000 tokens, Vault.split_text(your_text)  
@@ -1043,6 +1020,7 @@ class Vault:
             texts = [text]
         for text in texts:
             self.add_item(text, meta, name)
+
 
     def add_n_save(self, text: str, meta: dict = None, name: str = None, split: bool = False, split_size: int = 1000, max_threshold: int = 16000):
         """

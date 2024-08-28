@@ -13,11 +13,12 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Vector Vault. See license for consent.import datetime 
 
-from .vecreq import call_name_vecs, call_buildpath
+from .cloud_api import call_name_vecs, call_buildpath
 from annoy import AnnoyIndex
 from copy import deepcopy
 import datetime
 import time
+import json
 
 def itemize(vault, x, meta=None, text=None, name=None):
     meta = deepcopy(meta) if meta else {}
@@ -116,3 +117,12 @@ def get_time_statement(now, message_time):
         human_readable_time = "just now: "
 
     return human_readable_time
+
+def load_json(json_object):
+    def load_json_from_string(string):
+        try:
+            return json.loads(string)
+        except json.JSONDecodeError:
+            raise ValueError("Invalid JSON string provided.")
+        
+    return load_json_from_string(json_object) if isinstance(json_object, str) else json_object

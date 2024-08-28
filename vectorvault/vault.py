@@ -423,6 +423,7 @@ class Vault:
             json.dump(nary, temp_file, indent=2)
 
         self.cloud_manager.upload_temp_file(nary_temp_file_path, f'{self.cloud_manager.username}.json')
+        self.delete_temp_file(nary_temp_file_path)
 
 
     def hard_remap_vault_data(self):
@@ -450,6 +451,7 @@ class Vault:
             json.dump(nary, temp_file, indent=2)
 
         self.cloud_manager.upload_temp_file(nary_temp_file_path, f'{self.cloud_manager.username}.json')
+        self.delete_temp_file(nary_temp_file_path)
 
 
     def delete_items(self, item_ids: List[int], trees: int = 10) -> None:
@@ -714,12 +716,13 @@ class Vault:
 
     def upload_vectors(self, vault = None):
         vault = vault if vault else self.vault
-        with tempfile.NamedTemporaryFile(delete=True) as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             vector_temp_file_path = temp_file.name
             self.vectors.save(vector_temp_file_path)
             byte = os.path.getsize(vector_temp_file_path)
             self.cloud_manager.upload_temp_file(vector_temp_file_path, name_vecs(vault, self.user, self.api, byte))
         
+        self.delete_temp_file(vector_temp_file_path)
         self.save_mapping(vault)
         self.items.clear()
         self.vectors = get_vectors(self.dims)

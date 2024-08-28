@@ -18,6 +18,7 @@ class GroqAPI:
         'gemma-7b-it': 8192,
     }
         
+        self.main_prompt = "Question: {content}" 
         self.main_prompt_with_context = """Use the following Context to answer the Question at the end. 
     Answer as if you were the modern voice of the context, without referencing the context or mentioning 
     the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
@@ -28,8 +29,9 @@ class GroqAPI:
     """ if not main_prompt else main_prompt
         
         self.personality_message = personality_message if personality_message else """Answer directly and be helpful"""
-        self.context_prompt = self.main_prompt_with_context + '\n' + f'({self.personality_message})' + '\n\n' + '''Answer:'''
-        self.prompt = "Question: {content}" + '\n\n' + f'({self.personality_message})' + '\n\n' + '''Answer:'''
+        self.context_prompt = self.main_prompt_with_context + '\n' + f'({self.personality_message})' + '\n' 
+        self.prompt = self.main_prompt + '\n\n' + f'({self.personality_message})' + '\n'
+        
         
     def within_context_window(self, text : str = None, model='llama3-8b-8192'):
         return self.get_tokens(text) < self.model_token_limits.get(model, 4000)

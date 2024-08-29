@@ -323,7 +323,7 @@ class Vault:
         if vault == '':
             return self.get_all_vaults()
         
-        time.sleep(.3) if self.cloud_manager is None else 0
+        time.sleep(.1) if self.cloud_manager is None else 0
         return self.cloud_manager.list_vaults(vault)
     
 
@@ -501,7 +501,6 @@ class Vault:
         rebuild_vectors(item_ids)
         self.update_vault_data(this_vault_only=True)
         self.cloud_manager.build_data_update()
-        self.clear_cache()
         print(f'Items {item_ids} deleted and database rebuilt') if self.verbose else 0
 
 
@@ -648,7 +647,6 @@ class Vault:
         tsne = TSNE(n_components=3, random_state=0)
         vectors_3d = tsne.fit_transform(vectors_array)
         eps_val = choose_eps(vectors_3d)
-        print(eps_val)
         # Apply DBSCAN clustering
         dbscan = DBSCAN(eps=eps_val, min_samples=10)  # These parameters may need tuning
         cluster_labels = dbscan.fit_predict(vectors_3d)

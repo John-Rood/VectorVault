@@ -31,7 +31,7 @@ from .ai import AI, openai
 from .groq_api import GroqAPI
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement, load_json
 from .cloud_api import call_get_similar, call_cloud_save
-from .tools_gpt import ToolsGPT
+from .tools import LLMTools
 
 
 class Vault:
@@ -100,7 +100,7 @@ class Vault:
         self.last_time = None
         self.saved_already = False
         self.ai_loaded = False
-        self.tools = ToolsGPT(verbose=verbose, ai=chat_ai, groq_api=groq_api)
+        self.tools = LLMTools(verbose=verbose, ai=chat_ai, groq_api=groq_api)
         self.rate_limiter = RateLimiter(max_attempts=30)
         self.cuid = conversation_user_id
         self.chat_ai = chat_ai

@@ -1032,7 +1032,6 @@ class Vault:
         self.add(text=text, meta=meta, name=name, split=split, split_size=split_size, max_threshold=max_threshold)
         self.get_vectors()
         self.save()
-        T(target=self.clear_cache).start()
 
 
     def add_item_with_vector(self, text: str, vector: list, meta: dict = None, name: str = None):

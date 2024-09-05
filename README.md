@@ -42,9 +42,9 @@ print(rag_response)
 
 ## Key Concepts
 
-- **Vaults**: Isolated vector databases for organizing your data.
-- **Embeddings**: Vector representations of your data, automatically generated and stored.
-- **RAG Queries**: Combine vector search with AI-generated responses for intelligent retrieval.
+- **Vaults**: Isolated serverless Vector databases. No limits, inifitely scalable.
+- **RAG-Native**: Vector Similarity Search Retrieval Augmented Generation by default - fully customizable with params
+- **Cloud Engine**: We process operations and AI references in the Vector Vault cloud, making it easy for you to integrate to the front end and build real applications
 
 ## Advanced Features
 

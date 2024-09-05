@@ -18,9 +18,8 @@ import os
 import json
 import time
 from google.cloud import storage
-from threading import Thread as T
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from .creds import CustomCredentials
+from .credentials_manager import CredentialsManager
 from .cloud_api import call_proj
 from .itemize import cloud_name
 
@@ -30,7 +29,7 @@ class CloudManager:
         self.api = api_key
         self.vault = vault
         # Create credentials
-        self.credentials = CustomCredentials(user, self.api)
+        self.credentials = CredentialsManager(user, self.api)
         # Instantiate the client 
         self.storage_client = storage.Client(project=call_proj(), credentials=self.credentials)
         self.username = self.username(self.user)

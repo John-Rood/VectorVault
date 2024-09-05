@@ -17,7 +17,7 @@ from google.auth.credentials import Credentials
 import requests
 import datetime
 
-class CustomCredentials(Credentials):
+class CredentialsManager(Credentials):
     def __init__(self, user, api):
         self.user = user
         self.api = api

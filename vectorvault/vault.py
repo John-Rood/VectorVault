@@ -23,15 +23,15 @@ import re
 import json
 import traceback
 import random
-import threading
+from threading import Thread as T
 from datetime import datetime, timedelta
 from typing import List, Union
-from .cloudmanager import CloudManager, as_completed, ThreadPoolExecutor, T
-from .ai import AI, openai
+from .llm_tools import LLMTools
 from .groq_api import GroqAPI
-from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement, load_json
+from .openai_api import OpenaiAPI, openai
 from .cloud_api import call_get_similar, call_cloud_save
-from .tools import LLMTools
+from .cloudmanager import CloudManager, as_completed, ThreadPoolExecutor
+from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement, load_json
 
 
 class Vault:
@@ -165,7 +165,7 @@ class Vault:
             self.ai_loaded = True
 
             if self.chat_ai == 'openai':
-                self.ai = AI(verbose=self.verbose)
+                self.ai = OpenaiAPI(verbose=self.verbose)
 
             elif self.chat_ai == 'groq':
                 self.ai = GroqAPI(verbose=self.verbose, api=self.groq_api)

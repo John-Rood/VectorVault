@@ -6,7 +6,7 @@ import tempfile
 
 stock_sys_msg = "You are an AI assistant that excels at following instructions exactly."
 
-class AI:
+class OpenaiAPI:
     def __init__(self, personality_message: str = None, main_prompt: str = None, verbose: bool = False, timeout: int = 300, fine_tuned_context_window=8000) -> None:
         self.verbose = verbose
         self.default_model = 'gpt-3.5-turbo'

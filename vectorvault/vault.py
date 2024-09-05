@@ -99,7 +99,6 @@ class Vault:
         self.last_time = None
         self.saved_already = False
         self.ai_loaded = False
-        self.tools = LLMTools(verbose=verbose, ai=chat_ai, groq_api=groq_api)
         self.rate_limiter = RateLimiter(max_attempts=30)
         self.cuid = conversation_user_id
         self.chat_ai = chat_ai

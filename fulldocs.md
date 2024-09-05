@@ -292,7 +292,7 @@ response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my
 Use a custom prompt only when get_context=True. If you provide a custom_prompt ensure it includes the placeholders `context`, and `question`. The personality message is your go-to method for customizing prompts and responses. It can be used to make any desired change in the response. Internally it is included as a part of the prompt on every message. Changing the personality_message is easy, and should be used in any situation you want a customized prompt. 
 
 
-## Normal Usage:
+## Basic Usage:
 ```python
 # connect to the vault you want to use
 vault = Vault(user='YOUR_EMAIL', 
@@ -301,7 +301,7 @@ vault = Vault(user='YOUR_EMAIL',
               vault='vectorvault')
 
 # text input
-question = "Should I use Vector Vault for my next generative ai application?"
+question = "Why should I use Vector Vault for my next generative ai application?"
 
 answer = vault.get_chat(question, get_context=True)  
 
@@ -309,13 +309,13 @@ print(answer)
 ```
 >> Vector Vault simplifies the process of creating generative AI, making it a compelling choice for your next project involving generative AI. It's essential to consider your specific use cases and the technologies you're currently utilizing. Nevertheless, Vector Vault's seamless integration into various workflows and its ability to operate in a cloud-based environment make it an ideal solution for incorporating generative AI into any application. To achieve this, you can simply input your text into your Vector Vault implementation and retrieve the generated response. Additionally, you have the option to access the Vector Vault API directly from a JavaScript front-end interface, eliminating the need for setting up your own backend implementation. With these advantages in mind, Vector Vault is likely to streamline the development of your next generative AI application, making it faster and more straightforward.
 
-## Changing the Personality:
+## Change the Personality:
 ```python
 # save a different personality
 vault.save_personality_message('Say everything like Snoop Dogg')
 
 # and ask the same question again
-question = "Should I use Vector Vault for my next generative ai application?"
+question = "Why should I use Vector Vault for my next generative ai application?"
 
 answer = vault.get_chat(question, get_context=True)  
 

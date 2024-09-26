@@ -6,25 +6,41 @@ import tempfile
 
 stock_sys_msg = "You are an AI assistant that excels at following instructions exactly."
 
+all_models = {
+    'o1-mini': 128000,
+    'o1-preview': 128000,
+    'o1-preview-2024-09-12': 128000,
+    'o1-mini-2024-09-12': 128000,
+    'gpt-4-turbo': 128000,
+    'gpt-4o-mini': 128000,
+    'gpt-4o': 128000,
+    'gpt-4o-2024-08-06': 128000,
+    'gpt-4-turbo-preview': 128000,
+    'gpt-4-1106-preview': 128000,
+    'gpt-4-0125-preview': 128000,
+    'gpt-4-0314': 8000,
+    'gpt-4-0613': 8000,
+    'gpt-4': 8000,
+    'gpt-3.5-turbo': 16000,
+    'gpt-3.5-turbo-0125': 16000,
+}
+
+front_models = {
+    'o1-mini': 128000,
+    'o1-preview': 128000,
+    'gpt-4o': 128000,
+    'gpt-4o-mini': 128000,
+    'gpt-4': 8000,
+    'gpt-3.5-turbo': 8000,
+}
+
 class OpenaiAPI:
     def __init__(self, personality_message: str = None, main_prompt: str = None, verbose: bool = False, timeout: int = 300, fine_tuned_context_window=8000) -> None:
         self.verbose = verbose
         self.default_model = 'gpt-3.5-turbo'
         self.timeout = timeout
         self.fine_tuned_context_window = fine_tuned_context_window
-        self.model_token_limits = {
-        'gpt-4': 8000,
-        'gpt-4-turbo': 128000,
-        'gpt-4o-mini': 128000,
-        'gpt-4o': 128000,
-        'gpt-4-turbo-preview': 128000,
-        'gpt-4-1106-preview': 128000,
-        'gpt-4-0125-preview': 128000,
-        'gpt-3.5-turbo': 8000,
-        'gpt-3.5-turbo-0125': 16000,
-        'gpt-3.5-turbo-16k': 16000,
-    }
-        
+        self.model_token_limits = all_models
         self.main_prompt = "Question: {content}" 
         self.main_prompt_with_context = """Use the following Context to answer the Question at the end. 
     Answer as if you were the modern voice of the context, without referencing the context or mentioning 

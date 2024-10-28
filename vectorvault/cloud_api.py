@@ -3,8 +3,13 @@ import hashlib
 import json
 from requests.exceptions import JSONDecodeError
 
+API_BASE_URL = "https://api.vectorvault.io" 
+VECTOR_BASE_URL = "https://vectors.vectorvault.io" 
+access_token = None
+refresh_token = None
+
 def call_name_vecs(vault, user_id, api_key, bytesize=None):
-    url = f'https://vectors.vectorvault.io/name_vecs'
+    url = f'{VECTOR_BASE_URL}/name_vecs'
     headers = {'Content-Type': 'application/json'}
     data = {
         "vault": vault,
@@ -58,28 +63,20 @@ def call_buildpath(v, x, user_id, api_key, bytesize=None):
         raise Exception(f"HTTP error: {e}")
     
 
-def call_get_similar(user, vault, api_key, openai_key, text, num_items=4, include_distances=False, verbose=False, embeddings=None):
-    url = f"https://api.vectorvault.io/get_similar"
+def call_req(user, api_key, num=4):
+    url = f"{API_BASE_URL}/make_request"
     payload = {
         'user': user,
-        'vault': vault,
         'api_key': api_key,
-        'openai_key': openai_key,
-        'include_distances': include_distances,
-        'embeddings_model': embeddings,
-        'text': text,
-        'num_items': num_items
+        'num': num,
     }
     response = requests.post(url, json=payload)
     
     try:
-        if verbose==True:
-            print(response.json())
-        results = response.json().get('results')
-        return results
+        return response.json()
     except JSONDecodeError:
         print(f"Unexpected response: {response.status_code} | {response.text}")
-        return []
+        return None
 
 
 def call_proj():
@@ -98,63 +95,140 @@ def call_proj():
     return decoded + 'vault-' + str(numerical_suffix) + 'ab'
 
 
-def call_cloud_save(user, api_key, openai_key, vault, embeddings_model, text, meta = None, name = None, split = None, split_size = None):
-    url = "https://api.vectorvault.io/add_cloud"
+def login_with_api(email, api_key):
+    global access_token, refresh_token
+    url = f"{API_BASE_URL}/login_with_api"
+    payload = {
+        "email": email,
+        "api_key": api_key
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+        result = response.json()
+        access_token = result['access_token']
+        refresh_token = result.get('refresh_token')
+        return True
+    except requests.exceptions.RequestException as e:
+        print(f"Error during login_with_api: {e}")
+        return False
 
-    # Define the data payload
+
+def call_cloud_save(user, api_key, vault, embeddings_model, text, meta=None, name=None, split=None, split_size=None):
+    global access_token
+    # Authenticate using API key if access_token is None
+    if access_token is None:
+        success = login_with_api(user, api_key)
+        if not success:
+            print("Authentication failed.")
+            return None
+
+    url = f"{API_BASE_URL}/add_cloud"
     data = {
-        'user': user,
-        'vault': vault,
-        'api_key': api_key,
-        'openai_key': openai_key,
-        "text": text,
+        "vault": vault,
         "embeddings_model": embeddings_model,
+        "text": text,
         "meta": meta,
         "name": name,
         "split": split,
         "split_size": split_size,
     }
-
-    # Make the POST request
-    response = requests.post(url, json=data)
-
-    # Check the request was successful
-    if response.status_code == 200:
-        # Parse the response JSON
-        data = response.json()
-        return data
-    else:
-        raise Exception(f"Request failed with status {response.status_code}")
-
-
-def call_get_chat(user, vault, api_key, openai_key, text, history=None, summary=False, get_context=False, n_context=4, return_context=False, expansion=False, history_search=False, model='gpt-3.5-turbo', include_context_meta=False):
-    url = "https://api.vectorvault.io/get_chat"
-
-    # Define the data payload
-    data = {
-        'user': user,
-        'vault': vault,
-        'api_key': api_key,
-        'openai_key': openai_key,
-        "text": text,
-        "history": history,
-        "summary": summary,
-        "get_context": get_context,
-        "n_context": n_context,
-        "return_context": return_context,
-        "history_search": history_search,
-        "model": model,
-        "include_context_meta": include_context_meta
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {access_token}"
     }
 
-    # Make the POST request
-    response = requests.post(url, json=data)
-
-    # Check the request was successful
-    if response.status_code == 200:
-        # Parse the response JSON
+    try:
+        response = requests.post(url, json=data, headers=headers)
+        response.raise_for_status()
         data = response.json()
         return data
-    else:
-        raise Exception(f"Request failed with status {response.status_code}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error during call_cloud_save: {e}")
+        return None
     
+
+def run_flow(user, api_key, flow_name, message, history='', vault='home', conversation_user_id=None, 
+             chat_ai='openai', fine_tuned_model=False):
+    global access_token
+    # Authenticate using API key if access_token is None
+    if access_token is None:
+        success = login_with_api(user, api_key)
+        if not success:
+            print("Authentication failed.")
+            return None
+    url = f"{API_BASE_URL}/flow"
+    payload = {
+        "flow_id": flow_name,
+        "message": message,
+        "history": history,
+        "vault": vault,
+        "conversation_user_id": conversation_user_id,
+        "chat_ai": chat_ai,
+        "fine_tune_model": fine_tuned_model
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {access_token}"
+    }
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+        result = response.json()
+        return result.get('response', None)
+    except requests.exceptions.RequestException as e:
+        print(f"Error during run_flow: {e}")
+        return None
+
+
+def run_flow_stream(user, api_key, flow_name, message, history='', vault='home', conversation_user_id=None, 
+                    chat_ai='openai', fine_tuned_model=False):
+    global access_token
+    # Authenticate using API key if access_token is None
+    if access_token is None:
+        success = login_with_api(user, api_key)
+        if not success:
+            print("Authentication failed.")
+            return None
+    url = f"{API_BASE_URL}/flow-stream"
+    payload = {
+        "flow_id": flow_name,
+        "message": message,
+        "history": history,
+        "vault": vault,
+        "conversation_user_id": conversation_user_id,
+        "chat_ai": chat_ai,
+        "fine_tune_model": fine_tuned_model
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {access_token}"
+    }
+    full_response = ''
+    logs = []
+    try:
+        with requests.post(url, json=payload, headers=headers, stream=True) as response:
+            response.raise_for_status()
+            event_type = None  # Initialize event_type
+            for line in response.iter_lines():
+                if line:
+                    decoded_line = line.decode('utf-8')
+                    if decoded_line.startswith('event: '):
+                        event_type = decoded_line[7:].strip()
+                    elif decoded_line.startswith('data: '):
+                        data = json.loads(decoded_line[6:])
+                        if event_type == 'message':
+                            content = data.get('content', '')
+                            full_response += content
+                            print(content, end='', flush=True)
+                        elif event_type == 'log':
+                            logs.append(data)
+                        elif event_type == 'done':
+                            break
+            return {"response": full_response, "logs": logs}
+    except requests.exceptions.RequestException as e:
+        print(f"Error during run_flow_stream: {e}")
+        return None

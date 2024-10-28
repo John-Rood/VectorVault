@@ -28,7 +28,7 @@ from datetime import datetime, timedelta
 from typing import List, Union
 from .groq_api import GroqAPI
 from .openai_api import OpenaiAPI, openai
-from .cloud_api import call_get_similar, call_cloud_save
+from .cloud_api import call_cloud_save, run_flow, run_flow_stream
 from .cloudmanager import CloudManager, as_completed, ThreadPoolExecutor
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement, load_json
 
@@ -38,41 +38,39 @@ class Vault:
                  embeddings_model: str = None, verbose: bool = False, conversation_user_id: str = None, 
                  groq_api: str = None, chat_ai: str = 'openai', fine_tuned_model = False):
         ''' 
-        ### Create a vector database instance like this:
+        >>> Create a vector database instance:
         ```
-        vault = Vault(user='YOUR_EMAIL',
-              api_key='VECTOR_VAULT_API_KEY',
-              openai_key='OPENAI_API_KEY',
-              vault='VAULT_NAME',
+        vault = Vault(user='your_email',
+              api_key='vectorvault_api',
+              openai_key='openai_api',
+              vault='your_vault_name',
               verbose=True)
         ```
 
-        ### Add data to the vector database aka "the Vault":
+        >>> Add data to the vector database aka "the Vault":
         ```
         vault.add('some text')
         vault.get_vectors()
         vault.save()
         ```
 
-        ### Basic ChatGPT response:
+        >>> Plain ChatGPT response:
         `basic_chatgpt_answer = vault.get_chat('some question')`
 
-        ### Advanced RAG response: (Retrieval Augemented Generation) -> (uses 'get_context=True' to reference the Vault - [which will internally pulls 4 vector similar search results from the database to be used as context before responding])
+        >>> RAG response: -> (use 'get_context=True' to read 4 vector similar search results from the database before responding])
         `rag_answer = vault.get_chat('some question', get_context=True)`
 
-        ### Change the model to GPT4 with the `model` param in get_chat:
+        >>> Change the model with the `model` param in get_chat:
         `gpt4_rag_answer = vault.get_chat('some question', get_context=True, model='gpt-4')`
 
-        ### Change the personality of your bot with the personality_message:
+        >>> Change the personality of your bot with the personality_message:
         ```
-        vault = Vault(user='YOUR_EMAIL',
-              api_key='VECTOR_VAULT_API_KEY',
-              openai_key='OPENAI_API_KEY',
-              vault='VAULT_NAME',
+        vault = Vault(user='your_email',
+              api_key='vectorvault_api',
+              openai_key='openai_api',
+              vault='your_vault_name',
               personality_message='Answer like you are Snoop Dogg',
               verbose=False)
-
-        # Change the chat ai from 'openai' to 'groq' if you want to use groq and it will still use embeddings from openai, but the chat comes from groq
         ```
         '''
         self.user = user.lower()
@@ -831,7 +829,7 @@ class Vault:
         return results
 
     
-    def get_items_by_vector(self, vector: list, n: int = 4, include_distances: bool = False):
+    def get_items_by_vector(self, vector: list, n: int = 4, include_distances: bool = False, vault = None):
         '''
             Internal function that returns vector similar items. Requires input vector, returns similar items
         '''
@@ -844,8 +842,8 @@ class Vault:
 
                 def fetch_item(index, vec):
                     # Function to fetch a single item, to be run in parallel
-                    item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(vec)], self.user, self.api, item=True))
-                    meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(vec)], self.user, self.api, meta=True))
+                    item_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault if vault else self.vault, self.map[str(vec)], self.user, self.api, item=True))
+                    meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault if vault else self.vault, self.map[str(vec)], self.user, self.api, meta=True))
                     meta = json.loads(meta_data)
                     return index, build_return(item_data, meta)
                 
@@ -864,8 +862,8 @@ class Vault:
 
                 def fetch_item(index, vec, distance):
                     # Function to fetch a single item, to be run in parallel
-                    item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(vec)], self.user, self.api, item=True))
-                    meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(vec)], self.user, self.api, meta=True))
+                    item_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault if vault else self.vault, self.map[str(vec)], self.user, self.api, item=True))
+                    meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault if vault else self.vault, self.map[str(vec)], self.user, self.api, meta=True))
                     meta = json.loads(meta_data)
                     return index, build_return(item_data, meta, distance)
 
@@ -971,17 +969,6 @@ class Vault:
         print(f"Successfully saved {items_added} items to the vault.") if self.verbose else 0
         
 
-    def get_similar_local(self, text: str, n: int = 4, include_distances: bool = False):
-        '''
-            Returns similar items from the Vault as the one you entered, but locally
-            (saves a few milliseconds and is sometimes used on production builds)
-        '''
-        t = T(target=self.cloud_manager.build_update)
-        t.start()
-        vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
-        return self.get_items_by_vector(vector, n, include_distances = include_distances)
-
-
     def get_similar(self, text: str, n: int = 4, include_distances: bool = False, vault = None):
         '''
             Returns similar items from the Vault as the text you enter.
@@ -990,7 +977,9 @@ class Vault:
             The distance can be useful for assessing similarity differences in the items returned. 
             Each item has its' own distance number, and this changes the structure of the output.
         '''
-        return call_get_similar(self.user, vault if vault else self.vault, self.api, self.openai_key, text, n, include_distances=include_distances, verbose=self.verbose, embeddings=self.embeddings_model)
+        T(target=self.cloud_manager.build_update, args=(n,)).start()
+        vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
+        return self.get_items_by_vector(vector, n, include_distances = include_distances, vault = vault if vault else self.vault)
 
 
     def add_item(self, text: str, meta: dict = None, name: str = None):
@@ -1110,10 +1099,20 @@ class Vault:
         print("get vectors time --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
             
 
-    def get_chat(self, text: str = None, history: str = '', summary: bool = False, get_context: bool = False, 
-                 n_context: int = 4, return_context: bool = False, history_search: bool = False, smart_history_search: bool = False, 
-                 model: str = 'gpt-3.5-turbo', include_context_meta: bool = False, custom_prompt: bool = False, 
-                 local: bool =False, temperature: int = 0, timeout: int = 300):
+    def get_chat(self, 
+            text: str = None, 
+            history: str = '', 
+            summary: bool = False, 
+            get_context: bool = False, 
+            n_context: int = 4, 
+            return_context: bool = False, 
+            history_search: bool = False, 
+            smart_history_search: bool = False, 
+            model: str = 'gpt-3.5-turbo', 
+            include_context_meta: bool = False, 
+            custom_prompt: bool = False, 
+            temperature: int = 0, 
+            timeout: int = 300):
         '''
             Chat get response from OpenAI's ChatGPT. 
             Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
@@ -1183,14 +1182,11 @@ class Vault:
                         else:
                             search_input = segment + history if history_search else segment
                             
-                        if include_context_meta:
-                            context = self.get_similar(search_input, n=n_context) if not local else self.get_similar_local(search_input, n=n_context)
-                            input_ = str(context) # all of the metadata included
-                        else:
-                            context = self.get_similar(search_input, n=n_context) if not local else self.get_similar_local(search_input, n=n_context)
-                            input_ = ''
-                            for text in context:
-                                input_ += text['data'] # just the text data, no metadata
+                        context = self.get_similar(search_input, n=n_context)
+                        input_ = str(context) if include_context_meta else ''
+                        for text in context:
+                            input_ += text['data']
+
                         response = self.ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
                     else: # Custom prompt only
                         if inputs[0] == 0:
@@ -1217,36 +1213,36 @@ class Vault:
         return {'response': response, 'context': context} if return_context else response
         
 
-    def get_chat_stream(self, text: str = None, history: str = '', summary: bool = False, get_context: bool = False,
-                        n_context: int = 4, return_context: bool = False, history_search: bool = False, smart_history_search: bool = False, 
-                        model: str ='gpt-3.5-turbo', include_context_meta: bool = False, metatag: bool = False,
-                        metatag_prefixes: bool = False, metatag_suffixes: bool = False, custom_prompt: bool = False, 
-                        local: bool = False, temperature: int = 0, timeout: int = 300):
+    def get_chat_stream(self, 
+            text: str = None, 
+            history: str = '', 
+            summary: bool = False, 
+            get_context: bool = False,
+            n_context: int = 4, 
+            return_context: bool = False, 
+            history_search: bool = False, 
+            smart_history_search: bool = False,
+            model: str ='gpt-3.5-turbo', 
+            include_context_meta: bool = False, 
+            metatag: bool = False,
+            metatag_prefixes: bool = False, 
+            metatag_suffixes: bool = False, 
+            custom_prompt: bool = False, 
+            temperature: int = 0, 
+            timeout: int = 300):
         '''
             Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream()
 
             - Example Signle Usage: 
             `response = vault.print_stream(vault.get_chat_stream(text))`
 
-            - Example Chat: 
-            `response = vault.print_stream(vault.get_chat_stream(text, chat_history))`
-            
-            - Example Summary: 
-            `summary = vault.print_stream(vault.get_chat_stream(text, summary=True))`
-
-            - Example Context-Based Response:
-            `response = vault.print_stream(vault.get_chat_stream(text, get_context = True))`
-
-            - Example Context-Based Response w/ Chat History:
-            `response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True))`
-
             - Example Context-Response with Context Samples Returned:
             `vault_response = vault.print_stream(vault.get_chat_stream(text, get_context = True, return_context = True))`
 
-            - Example Context-Response with SPECIFIC META TAGS for Context Samples Returned:
+            - Example Context-Response with Specific Meta Tags for Context Samples Returned:
             `vault_response = vault.print_stream(vault.get_chat_stream(text, get_context = True, return_context = True, include_context_meta=True, metatag=['title', 'author']))`
             
-            - Example Context-Response with SPECIFIC META TAGS for Context Samples Returned & Specific Meta Prefixes and Suffixes:
+            - Example Context-Response with Specific Meta Tags for Context Samples Returned & Specific Meta Prefixes and Suffixes:
             `vault_response = vault.print_stream(vault.get_chat_stream(text, get_context = True, return_context = True, include_context_meta=True, metatag=['title', 'author'], metatag_prefixes=['\n\n Title: ', '\nAuthor: '], metatag_suffixes=['', '\n']))`
 
             - Example Custom Prompt:
@@ -1306,8 +1302,8 @@ class Vault:
                             search_input = self.ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
                         else:
                             search_input = segment + history if history_search else segment
-
-                        context = self.get_similar(search_input, n=n_context) if not local else self.get_similar_local(search_input, n=n_context)
+                        
+                        context = self.get_similar(search_input, n=n_context)
                         input_ = str(context) if include_context_meta else ''
                         for text in context:
                             input_ += text['data']
@@ -1445,7 +1441,7 @@ class Vault:
         t1.start()
         t2.start()
         T(target=call_cloud_save, args=(
-            self.user, self.api, self.openai_key, 
+            self.user, self.api,
             f'{self.vault}/user_history/{conversation_id}/vectors', self.embeddings_model, 
             message, None, 
             message_id, None, None)).start()
@@ -1509,6 +1505,33 @@ class Vault:
 
         print('history retrieval took:', time.time() - history_time) if self.verbose else None
         return history
+    
+
+    def run_flow(self, flow_name, message, history: str = '', vault = None):
+        return run_flow(
+            user = self.user,
+            api_key=self.api,
+            flow_name=flow_name,
+            message=message,
+            history=history,
+            vault = self.vault if not vault else vault,
+            conversation_user_id = self.cuid,
+            chat_ai = self.chat_ai,
+            fine_tuned_model = self.fine_tuned_model
+            )
+
+    def stream_flow(self, flow_name, message, history: str = '', vault = None):
+        yield run_flow_stream(
+            user = self.user,
+            api_key=self.api,
+            flow_name=flow_name,
+            message=message,
+            history=history,
+            vault = self.vault if not vault else vault,
+            conversation_user_id = self.cuid,
+            chat_ai = self.chat_ai,
+            fine_tuned_model = self.fine_tuned_model
+            )
 
 
 class RateLimiter:
@@ -1527,3 +1550,4 @@ class RateLimiter:
         # Apply exponential backoff with a random jitter
         self.current_delay = min(self.max_delay, random.uniform(self.base_delay, self.current_delay * self.backoff_factor))
         time.sleep(self.current_delay)
+

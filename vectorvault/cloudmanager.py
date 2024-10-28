@@ -20,7 +20,7 @@ import time
 from google.cloud import storage
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .credentials_manager import CredentialsManager
-from .cloud_api import call_proj
+from .cloud_api import call_proj, call_req
 from .itemize import cloud_name
 
 class CloudManager:
@@ -116,7 +116,7 @@ class CloudManager:
         os.remove(temp_file_path)
         return _map
     
-    def build_update(self):
+    def build_update(self, n):
         _map = self.get_mapping()
         for i in range(len(_map)):
             if _map[i]['vault'] == self.vault:
@@ -129,6 +129,7 @@ class CloudManager:
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
             _path = temp_file.name
             json.dump(_map, temp_file, indent=2)
+            call_req(self.user, self.api, n)
             
         self.upload_temp_file(_path, f'{self.username}.json')
     

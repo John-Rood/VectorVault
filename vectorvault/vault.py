@@ -317,7 +317,13 @@ class Vault:
         vault = self.vault if vault is None else vault
 
         if vault == '':
-            return self.get_all_vaults()
+            all_vaults = self.get_all_vaults()
+            if all_vaults == []:
+                all_vaults = self.cloud_manager.list_vaults(vault)
+                self.cloud_manager.upload_vaults_list(all_vaults)
+                return all_vaults
+            else:
+                return all_vaults
         
         time.sleep(.1) if self.cloud_manager is None else 0
         return self.cloud_manager.list_vaults(vault)

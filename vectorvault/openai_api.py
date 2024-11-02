@@ -84,15 +84,25 @@ class OpenaiAPI:
         # This function will be run in a separate thread
         timeout = self.timeout if not timeout else timeout
         def call_api(response_queue):
-            try:
-                response = openai.chat.completions.create(
-                    model=model,
-                    temperature=temperature,
-                    messages=messages
-                    )
-                response_queue.put(response.choices[0].message.content)
-            except Exception as e:
-                response_queue.put(e)
+            if model not in ['o1-preview', 'o1-mini', 'o1-preview-2024-09-12', 'o1-mini-2024-09-12']:
+                try:
+                    response = openai.chat.completions.create(
+                        model=model,
+                        temperature=temperature,
+                        messages=messages
+                        )
+                    response_queue.put(response.choices[0].message.content)
+                except Exception as e:
+                    response_queue.put(e)
+            else:
+                try:
+                    response = openai.chat.completions.create(
+                        model=model,
+                        messages=messages
+                        )
+                    response_queue.put(response.choices[0].message.content)
+                except Exception as e:
+                    response_queue.put(e)
 
         response_queue = queue.Queue()
         api_thread = threading.Thread(target=call_api, args=(response_queue,))
@@ -105,7 +115,36 @@ class OpenaiAPI:
             print("Request timed out")
             return None
 
+    def stream_call(self, messages, model, temperature, timeout=None):
+        timeout = self.timeout if not timeout else timeout
 
+        def call_api():
+            if model not in ['o1-preview', 'o1-mini', 'o1-preview-2024-09-12', 'o1-mini-2024-09-12']:
+                try:
+                    response = openai.chat.completions.create(
+                        model=model,
+                        temperature=temperature,
+                        messages=messages,
+                        stream=True
+                    )
+                    for chunk in response:
+                        message = chunk.choices[0].delta.content
+                        if message:
+                            yield message
+                except Exception as e:
+                    yield str(e)
+            else:
+                try:
+                    response = openai.chat.completions.create(
+                        model=model,
+                        messages=messages
+                    )
+                    yield response.choices[0].message.content
+                except Exception as e:
+                    yield str(e)
+
+        return call_api()
+    
     # This function returns a ChatGPT completion based on a provided input
     def llm(self, user_input: str = '', history: str = '', model=None, max_tokens = 8000, custom_prompt = False, temperature = 0, timeout = None, max_retries = 5):        
         '''
@@ -142,7 +181,6 @@ class OpenaiAPI:
 
         raise Exception("Failed to receive response within the timeout period.")
 
-            
 
     def llm_sys(self, content = None, system_message = stock_sys_msg, model = None, max_tokens = 8000, temperature = 0):
         tokens = self.get_tokens(f"{content} {system_message}")
@@ -248,16 +286,9 @@ class OpenaiAPI:
         messages = [{"role": "user", "content": history}] if history else []
         messages.append({"role": "user", "content": prompt})
 
-        response = openai.chat.completions.create(
-            model=model,
-            temperature=temperature,
-            messages=messages,
-            stream=True
-        )
-        for message in response:
-            message = message.choices[0].delta.content
+        for message in self.stream_call(messages, model, temperature):
             if message:
-                yield message 
+                yield message
                         
                     
     def llm_w_context_stream(self, user_input = '', context = '', history = '', model = None, custom_prompt = False, temperature = 0):
@@ -280,16 +311,9 @@ class OpenaiAPI:
         messages = [{"role": "user", "content": history}] if history else []
         messages.append({"role": "user", "content": prompt})
 
-        response = openai.chat.completions.create(
-            model=model,
-            temperature=temperature,
-            messages=messages,
-            stream=True
-        )
-        for message in response:
-            message = message.choices[0].delta.content
+        for message in self.stream_call(messages, model, temperature):
             if message:
-                yield message 
+                yield message
 
 
     def summarize(self, user_input, model=None, custom_prompt=False, temperature=0):   
@@ -307,16 +331,9 @@ class OpenaiAPI:
         prompt_template = custom_prompt if custom_prompt else """Summarize the following: {content}"""
         prompt = prompt_template.format(content=user_input)
         model = model if model else self.default_model
-        response = openai.chat.completions.create(
-            model=model,
-            temperature=temperature,
-            messages=[{"role": "user", "content": f"{prompt}"}],
-            stream = True
-        )
-        for message in response:
-            message = message.choices[0].delta.content
+        for message in self.stream_call(user_input, model, temperature):
             if message:
-                yield message 
+                yield message
 
     def smart_summary(self, text, previous_summary, model=None, custom_prompt=False, temperature=0):   
         prompt_template = custom_prompt if custom_prompt else """Given the previous summary: {previous_summary} 

@@ -151,8 +151,7 @@ def call_cloud_save(user, api_key, vault, embeddings_model, text, meta=None, nam
         return None
     
 
-def run_flow(user, api_key, flow_name, message, history='', vault='home', conversation_user_id=None, 
-             chat_ai='openai', fine_tuned_model=False):
+def run_flow(user, api_key, flow_name, message, history='', vault='home', conversation_user_id=None):
     global access_token
     # Authenticate using API key if access_token is None
     if access_token is None:
@@ -167,8 +166,6 @@ def run_flow(user, api_key, flow_name, message, history='', vault='home', conver
         "history": history,
         "vault": vault,
         "conversation_user_id": conversation_user_id,
-        "chat_ai": chat_ai,
-        "fine_tune_model": fine_tuned_model
     }
     headers = {
         "Content-Type": "application/json",
@@ -184,8 +181,7 @@ def run_flow(user, api_key, flow_name, message, history='', vault='home', conver
         return None
 
 
-def run_flow_stream(user, api_key, flow_name, message, history='', vault='home', conversation_user_id=None, 
-                    chat_ai='openai', fine_tuned_model=False):
+def run_flow_stream(user, api_key, flow_name, message, history='', vault='home', conversation_user_id=None):
     global access_token
     # Authenticate using API key if access_token is None
     if access_token is None:
@@ -200,8 +196,6 @@ def run_flow_stream(user, api_key, flow_name, message, history='', vault='home',
         "history": history,
         "vault": vault,
         "conversation_user_id": conversation_user_id,
-        "chat_ai": chat_ai,
-        "fine_tune_model": fine_tuned_model
     }
     headers = {
         "Content-Type": "application/json",

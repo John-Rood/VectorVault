@@ -26,8 +26,7 @@ import random
 from threading import Thread as T
 from datetime import datetime, timedelta
 from typing import List, Union
-from .groq_api import GroqAPI
-from .openai_api import OpenaiAPI, openai
+from .ai import openai, OpenAIPlatform, AnthropicPlatform, GroqPlatform, get_all_models, LLMClient
 from .cloud_api import call_cloud_save, run_flow, run_flow_stream
 from .cloudmanager import CloudManager, as_completed, ThreadPoolExecutor
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement, load_json
@@ -36,7 +35,7 @@ from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cl
 class Vault:
     def __init__(self, user: str = None, api_key: str = None, openai_key: str = None, vault: str = None, 
                  embeddings_model: str = None, verbose: bool = False, conversation_user_id: str = None, 
-                 groq_api: str = None, chat_ai: str = 'openai', fine_tuned_model = False):
+                 fine_tuned_context_window = 128000, groq_key: str = None, anthropic_key: str = None):
         ''' 
         >>> Create a vector database instance:
         ```
@@ -80,12 +79,7 @@ class Vault:
         self.embeddings_model = embeddings_model if embeddings_model else 'text-embedding-3-small'
         self.dims = 1536 if embeddings_model != 'text-embedding-3-large' else 3072
         self.cloud_manager = CloudManager(self.user, self.api, self.vault)
-        if self.verbose:
-            print(f'Connected vault: {self.vault}')
-
-        if openai_key:
-            self.openai_key = openai_key
-            openai.api_key = self.openai_key
+        print(f'Connected vault: {self.vault}') if self.verbose else 0
         self.vectors = get_vectors(self.dims)
         self.x = 0
         self.x_checked = False
@@ -96,12 +90,18 @@ class Vault:
         self.items = []
         self.last_time = None
         self.saved_already = False
+        self._ai = None
         self.ai_loaded = False
         self.rate_limiter = RateLimiter(max_attempts=30)
         self.cuid = conversation_user_id
-        self.chat_ai = chat_ai
-        self.groq_api = groq_api
-        self.fine_tuned_model = fine_tuned_model
+        self.fine_tuned_context_window = fine_tuned_context_window
+        self.all_models = get_all_models()
+        if openai_key:
+            openai.api_key = openai_key
+            self.openai_key = openai_key
+            self.openai = OpenAIPlatform()
+        self.groq = GroqPlatform(groq_key)
+        self.anthropic = AnthropicPlatform(anthropic_key)
 
 
     def get_total_items(self, vault: str = None):
@@ -134,7 +134,7 @@ class Vault:
             Returns the number of tokens for any given text
         '''
         self.load_ai()
-        return self.ai.get_tokens(text)
+        return self._ai.get_tokens(text)
     
 
     def get_distance(self, id1: int, id2: int):
@@ -151,29 +151,81 @@ class Vault:
         '''
         self.check_index_loaded()
         return self.vectors.get_item_vector(item_id)
+        
+
+    def add_fine_tuned_model_to_platform(self, model_name: str, platform='openai', token_limit=None):
+        """
+        Adds a fine-tuned model to the model_token_limits dictionary of the specified platform.
+
+        Args:
+            model_name (str): The name of the fine-tuned model.
+            platform (str): The target platform ('openai', 'groq', 'anthropic').
+            token_limit (int): The token limit for the fine-tuned model.
+        """
+        if platform == 'openai':
+            platform_instance = self.openai
+        elif platform == 'groq':
+            platform_instance = self.groq
+        elif platform == 'anthropic':
+            platform_instance = self.anthropic
+        else:
+            raise ValueError(f"Unknown platform: {platform}")
+        
+        if token_limit:
+            self.fine_tuned_context_window = token_limit
+
+        token_limit = token_limit if token_limit else 128000
+        platform_instance.model_token_limits[model_name] = token_limit 
+        print(f"Fine-tuned model '{model_name}' added to {platform} with token limit {token_limit}.") if self.verbose else 0
 
 
-    def load_ai(self) -> None:
+    def get_client_from_model(self, model: str):
+        """
+        Returns the correct platform instance to use for a given model.
+
+        Args:
+            model (str): The name of the model.
+
+        Returns:
+            LLMPlatform: The appropriate platform instance.
+        """
+        if model in self.anthropic.model_token_limits:
+            return LLMClient(self.anthropic, fine_tuned_context_window=self.fine_tuned_context_window)
+        elif model in self.groq.model_token_limits:
+            return LLMClient(self.groq, fine_tuned_context_window=self.fine_tuned_context_window)
+        elif model in self.openai.model_token_limits:
+            return LLMClient(self.openai, fine_tuned_context_window=self.fine_tuned_context_window)
+        else:
+            raise ValueError(f"Model '{model}' not found in any platform.")
+
+
+    @property
+    def ai(self):
+        self.load_ai()  
+        return self._ai
+            
+
+    def load_ai(self, model: str = None) -> None:
         '''
             Loads the AI functions - internal function
         '''
+
         if not self.ai_loaded:
             self.ai_loaded = True
 
-            if self.chat_ai == 'openai':
-                self.ai = OpenaiAPI(verbose=self.verbose)
+            if model:
+                self._ai = self.get_client_from_model(model=model)
+            else:
+                self._ai = self.get_client_from_model(model=self.all_models['default'])
 
-            elif self.chat_ai == 'groq':
-                self.ai = GroqAPI(verbose=self.verbose, api=self.groq_api)
-
-            self.ai.main_prompt_with_context = self.fetch_custom_prompt()
-            self.ai.main_prompt = self.fetch_custom_prompt(context=False)
-            self.ai.personality_message = self.fetch_personality_message()
-            self.ai.set_prompts()
-
-        if self.fine_tuned_model:
-            self.ai.fine_tuned_model = True
-
+            try: 
+                self._ai.main_prompt_with_context = self.fetch_custom_prompt()
+                self._ai.main_prompt = self.fetch_custom_prompt(context=False)
+                self._ai.personality_message = self.fetch_personality_message()
+                self._ai.set_prompts()
+            except:
+                pass
+            
 
     def save_personality_message(self, text: str):
         '''
@@ -192,10 +244,10 @@ class Vault:
             personality_message = self.cloud_manager.download_text_from_cloud(f'{self.vault}/personality_message')
         except:
             if self.ai_loaded:
-                personality_message = self.ai.personality_message
+                personality_message = self._ai.personality_message
             else: # only when called externally in some situations
                 self.load_ai()
-                personality_message = self.ai.personality_message
+                personality_message = self._ai.personality_message
                 
         return personality_message
     
@@ -219,10 +271,10 @@ class Vault:
             prompt = self.cloud_manager.download_text_from_cloud(f'{self.vault}/prompt') if context else self.cloud_manager.download_text_from_cloud(f'{self.vault}/no_context_prompt')
         except:
             if self.ai_loaded:
-                prompt = self.ai.main_prompt_with_context if context else self.ai.prompt
+                prompt = self._ai.main_prompt_with_context if context else self._ai.prompt
             else: # only when called externally in some situations
                 self.load_ai()
-                prompt = self.ai.main_prompt_with_context if context else self.ai.prompt
+                prompt = self._ai.main_prompt_with_context if context else self._ai.prompt
             
         return prompt
 
@@ -270,8 +322,8 @@ class Vault:
 
 
     def duplicate_vault(self, new_vault_name):
-        vault = Vault(user=self.user, api_key=self.api, openai_key=self.openai_key, vault=self.vault, verbose=self.verbose)
-        vault2 = Vault(user=self.user, api_key=self.api, openai_key=self.openai_key, vault=new_vault_name, verbose=self.verbose)
+        vault = Vault(user=self.user, api_key=self.api, ai_key=self.ai_key, vault=self.vault, verbose=self.verbose, chat_ai=self.chat_ai)
+        vault2 = Vault(user=self.user, api_key=self.api, ai_key=self.ai_key, vault=new_vault_name, verbose=self.verbose, chat_ai=self.chat_ai)
 
         for i in range(vault.get_total_items()):
             item = vault.get_items([i])[0]['data']
@@ -282,9 +334,9 @@ class Vault:
         vault2.save()
 
         self.load_ai()
-        vault2.save_custom_prompt(self.ai.main_prompt, False)
-        vault2.save_custom_prompt(self.ai.main_prompt_with_context)
-        vault2.save_personality_message(self.ai.personality_message)
+        vault2.save_custom_prompt(self._ai.main_prompt, False)
+        vault2.save_custom_prompt(self._ai.main_prompt_with_context)
+        vault2.save_personality_message(self._ai.personality_message)
 
 
     def delete(self):
@@ -1035,7 +1087,7 @@ class Vault:
         self.check_index()
         start_time = time.time()
 
-        if self.ai.get_tokens(text) > 4000:
+        if self._ai.get_tokens(text) > 4000:
             raise 'Text length too long. Use the "split_text() function to get a list of text segments'
 
         # Add vector to vectorspace
@@ -1078,6 +1130,9 @@ class Vault:
         '''
             Takes text data added to the vault, and gets vectors for them
         '''
+        if not self.openai_key:
+            raise "Cannot get embeddings without an OpenAI API key" 
+        
         self.check_index()
         start_time = time.time()
 
@@ -1114,7 +1169,7 @@ class Vault:
             return_context: bool = False, 
             history_search: bool = False, 
             smart_history_search: bool = False, 
-            model: str = 'gpt-3.5-turbo', 
+            model: str = None, 
             include_context_meta: bool = False, 
             custom_prompt: bool = False, 
             temperature: int = 0, 
@@ -1147,8 +1202,9 @@ class Vault:
             ```
 
         '''
-        self.load_ai()
         start_time = time.time()
+        model = self.all_models['default'] if not model else model
+        self.load_ai(model=model)
     
         history = self.get_conversation_history(self.cuid, text) if self.cuid else history
         
@@ -1167,8 +1223,8 @@ class Vault:
                 try:
                     # Make API call
                     if summary and not get_context:
-                        token_limit = self.ai.model_token_limits.get(model, 4000)
-                        total_tokens = self.ai.get_tokens(segment)
+                        token_limit = self._ai.model_token_limits.get(model, 4000)
+                        total_tokens = self._ai.get_tokens(segment)
                         response = ""
 
                         for i in range(math.ceil(total_tokens / token_limit)):
@@ -1178,13 +1234,13 @@ class Vault:
                             # Extract the current chunk from the segment
                             current_chunk = segment[start_index:end_index]
                             # Process the current chunk and concatenate the response
-                            response += ' ' + self.ai.summarize(current_chunk, model=model, custom_prompt=custom_prompt, temperature=temperature)
+                            response += ' ' + self._ai.summarize(current_chunk, model=model, custom_prompt=custom_prompt, temperature=temperature)
                             self.rate_limiter.on_success()
 
                     elif text and get_context and not summary:
                         if smart_history_search:
                             custom_entry = f"Using the current message, with the message history, what subject is the user is focused on. \nCurrent message: {text}. \n\nPrevious messages: {history}."
-                            search_input = self.ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
+                            search_input = self._ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
                         else:
                             search_input = segment + history if history_search else segment
                             
@@ -1193,12 +1249,12 @@ class Vault:
                         for text in context:
                             input_ += text['data']
 
-                        response = self.ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
+                        response = self._ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
                     else: # Custom prompt only
                         if inputs[0] == 0:
-                            response = self.ai.llm(model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
+                            response = self._ai.llm(model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
                         else:
-                            response = self.ai.llm(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
+                            response = self._ai.llm(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
                             
                     # If the call is successful, reset the backoff
                     self.rate_limiter.on_success()
@@ -1228,7 +1284,7 @@ class Vault:
             return_context: bool = False, 
             history_search: bool = False, 
             smart_history_search: bool = False,
-            model: str ='gpt-3.5-turbo', 
+            model: str = None, 
             include_context_meta: bool = False, 
             metatag: bool = False,
             metatag_prefixes: bool = False, 
@@ -1257,8 +1313,9 @@ class Vault:
             response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True, custom_prompt=my_prompt))
             ```
         '''
-        self.load_ai()
         start_time = time.time()
+        model = self.all_models['default'] if not model else model
+        self.load_ai(model=model)
     
         history = self.get_conversation_history(self.cuid, text) if self.cuid else history
 
@@ -1279,8 +1336,8 @@ class Vault:
                 try:
                     if summary and not get_context:
                         try:
-                            token_limit = self.ai.model_token_limits.get(model, 4000)
-                            total_tokens = self.ai.get_tokens(segment)
+                            token_limit = self._ai.model_token_limits.get(model, 4000)
+                            total_tokens = self._ai.get_tokens(segment)
 
                             for i in range(math.ceil(total_tokens / token_limit)):
                                 # Calculate start and end indices for the current chunk
@@ -1289,7 +1346,7 @@ class Vault:
                                 # Extract the current chunk from the segment
                                 current_chunk = segment[start_index:end_index]
                                 # Process the current chunk and concatenate the response
-                                for word in self.ai.summarize_stream(current_chunk, model=model, custom_prompt=custom_prompt, temperature=temperature):
+                                for word in self._ai.summarize_stream(current_chunk, model=model, custom_prompt=custom_prompt, temperature=temperature):
                                     full_response += word
                                     yield word
                                 yield ' '
@@ -1305,7 +1362,7 @@ class Vault:
                     elif text and get_context and not summary:
                         if smart_history_search:
                             custom_entry = f"Using the current message, with the message history, what is the user is focused on. \nCurrent message: {text}. \n\nPrevious messages: {history}."
-                            search_input = self.ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
+                            search_input = self._ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
                         else:
                             search_input = segment + history if history_search else segment
                         
@@ -1315,7 +1372,7 @@ class Vault:
                             input_ += text['data']
 
                         try:
-                            for word in self.ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature):
+                            for word in self._ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature):
                                 full_response += word
                                 yield word
                             self.rate_limiter.on_success()
@@ -1346,7 +1403,7 @@ class Vault:
 
                     else:
                         try:
-                            for word in self.ai.llm_stream(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature):
+                            for word in self._ai.llm_stream(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature):
                                 full_response += word
                                 yield word
                             self.rate_limiter.on_success()
@@ -1522,8 +1579,6 @@ class Vault:
             history=history,
             vault = self.vault if not vault else vault,
             conversation_user_id = self.cuid,
-            chat_ai = self.chat_ai,
-            fine_tuned_model = self.fine_tuned_model
             )
 
     def stream_flow(self, flow_name, message, history: str = '', vault = None):
@@ -1535,8 +1590,6 @@ class Vault:
             history=history,
             vault = self.vault if not vault else vault,
             conversation_user_id = self.cuid,
-            chat_ai = self.chat_ai,
-            fine_tuned_model = self.fine_tuned_model
             )
 
 

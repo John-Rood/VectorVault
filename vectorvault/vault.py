@@ -1173,7 +1173,8 @@ class Vault:
             include_context_meta: bool = False, 
             custom_prompt: bool = False, 
             temperature: int = 0, 
-            timeout: int = 300):
+            timeout: int = 300
+            ):
         '''
             Chat get response from OpenAI's ChatGPT. 
             Rate limiting, auto retries, and chat histroy slicing built-in so you can chat with ease. 
@@ -1291,7 +1292,8 @@ class Vault:
             metatag_suffixes: bool = False, 
             custom_prompt: bool = False, 
             temperature: int = 0, 
-            timeout: int = 300):
+            timeout: int = 300
+            ):
         '''
             Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream()
 
@@ -1427,7 +1429,7 @@ class Vault:
 
     def print_stream(self, function, printing=True):
         '''
-            For local use printing the chat stream. Call 'printing=False' for no pretty printing to be applied
+            For printing chat stream. Call 'printing=False' for no pretty printing to be applied
         '''
         full_text= ''
         newlinetime=1

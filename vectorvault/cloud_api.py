@@ -117,9 +117,38 @@ def login_with_api(email, api_key):
         return False
 
 
+def refresh_access_token(user, api_key):
+    """
+    Attempts to refresh the access token using your API's refresh endpoint.
+    Fallback: re-login if refresh_token doesn't work or is None.
+    """
+    global access_token, refresh_token
+    if not refresh_token:
+        print("No refresh_token available; re-logging in...")
+        return login_with_api(user, api_key)
+
+    url = f"{API_BASE_URL}/refresh_token"
+    payload = {"refresh_token": refresh_token}
+    headers = {"Content-Type": "application/json"}
+
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        # Update your global tokens
+        access_token = data.get('access_token')
+        refresh_token = data.get('refresh_token')
+        return True
+    except requests.exceptions.RequestException as e:
+        print(f"Error refreshing token: {e}")
+        print("Re-logging in as fallback...")
+        return login_with_api(user, api_key)
+
+
 def call_cloud_save(user, api_key, vault, embeddings_model, text, meta=None, name=None, split=None, split_size=None):
     global access_token
-    # Authenticate using API key if access_token is None
+
+    # If we don't have a token yet, log in
     if access_token is None:
         success = login_with_api(user, api_key)
         if not success:
@@ -144,21 +173,41 @@ def call_cloud_save(user, api_key, vault, embeddings_model, text, meta=None, nam
     try:
         response = requests.post(url, json=data, headers=headers)
         response.raise_for_status()
-        data = response.json()
-        return data
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 401:
+            # Attempt to refresh token
+            if refresh_access_token(user, api_key):
+                # Retry
+                headers["Authorization"] = f"Bearer {access_token}"
+                try:
+                    response = requests.post(url, json=data, headers=headers)
+                    response.raise_for_status()
+                    return response.json()
+                except requests.exceptions.RequestException as e2:
+                    print(f"Error after refreshing token: {e2}")
+                    return None
+            else:
+                print("Failed to refresh token or re-login.")
+                return None
+        else:
+            print(f"Error during call_cloud_save: {e}")
+            return None
     except requests.exceptions.RequestException as e:
         print(f"Error during call_cloud_save: {e}")
         return None
-    
+
 
 def run_flow(user, api_key, flow_name, message, history='', vault='home', conversation_user_id=None):
     global access_token
-    # Authenticate using API key if access_token is None
+
+    # Authenticate if needed
     if access_token is None:
         success = login_with_api(user, api_key)
         if not success:
             print("Authentication failed.")
             return None
+
     url = f"{API_BASE_URL}/flow"
     payload = {
         "flow_id": flow_name,
@@ -171,11 +220,32 @@ def run_flow(user, api_key, flow_name, message, history='', vault='home', conver
         "Content-Type": "application/json",
         "Authorization": f"Bearer {access_token}"
     }
+
     try:
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
         result = response.json()
         return result.get('response', None)
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 401:
+            # Attempt token refresh
+            if refresh_access_token(user, api_key):
+                # Retry
+                headers["Authorization"] = f"Bearer {access_token}"
+                try:
+                    response = requests.post(url, json=payload, headers=headers)
+                    response.raise_for_status()
+                    result = response.json()
+                    return result.get('response', None)
+                except requests.exceptions.RequestException as e2:
+                    print(f"Error after refreshing token: {e2}")
+                    return None
+            else:
+                print("Failed to refresh token or re-login.")
+                return None
+        else:
+            print(f"Error during run_flow: {e}")
+            return None
     except requests.exceptions.RequestException as e:
         print(f"Error during run_flow: {e}")
         return None
@@ -183,12 +253,14 @@ def run_flow(user, api_key, flow_name, message, history='', vault='home', conver
 
 def run_flow_stream(user, api_key, flow_name, message, history='', vault='home', conversation_user_id=None):
     global access_token
-    # Authenticate using API key if access_token is None
+
+    # Authenticate if needed
     if access_token is None:
         success = login_with_api(user, api_key)
         if not success:
             print("Authentication failed.")
             return None
+
     url = f"{API_BASE_URL}/flow-stream"
     payload = {
         "flow_id": flow_name,
@@ -201,12 +273,14 @@ def run_flow_stream(user, api_key, flow_name, message, history='', vault='home',
         "Content-Type": "application/json",
         "Authorization": f"Bearer {access_token}"
     }
+
     full_response = ''
     logs = []
+
     try:
         with requests.post(url, json=payload, headers=headers, stream=True) as response:
             response.raise_for_status()
-            event_type = None  # Initialize event_type
+            event_type = None
             for line in response.iter_lines():
                 if line:
                     decoded_line = line.decode('utf-8')
@@ -223,6 +297,43 @@ def run_flow_stream(user, api_key, flow_name, message, history='', vault='home',
                         elif event_type == 'done':
                             break
             return {"response": full_response, "logs": logs}
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 401:
+            # Attempt token refresh
+            if refresh_access_token(user, api_key):
+                # Retry streaming request with new token
+                headers["Authorization"] = f"Bearer {access_token}"
+                full_response = ''
+                logs = []
+                try:
+                    with requests.post(url, json=payload, headers=headers, stream=True) as response:
+                        response.raise_for_status()
+                        event_type = None
+                        for line in response.iter_lines():
+                            if line:
+                                decoded_line = line.decode('utf-8')
+                                if decoded_line.startswith('event: '):
+                                    event_type = decoded_line[7:].strip()
+                                elif decoded_line.startswith('data: '):
+                                    data = json.loads(decoded_line[6:])
+                                    if event_type == 'message':
+                                        content = data.get('content', '')
+                                        full_response += content
+                                        print(content, end='', flush=True)
+                                    elif event_type == 'log':
+                                        logs.append(data)
+                                    elif event_type == 'done':
+                                        break
+                    return {"response": full_response, "logs": logs}
+                except requests.exceptions.RequestException as e2:
+                    print(f"Error during second run_flow_stream attempt: {e2}")
+                    return None
+            else:
+                print("Failed to refresh token or re-login.")
+                return None
+        else:
+            print(f"Error during run_flow_stream: {e}")
+            return None
     except requests.exceptions.RequestException as e:
         print(f"Error during run_flow_stream: {e}")
         return None

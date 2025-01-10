@@ -248,22 +248,21 @@ It has built-in rate limiting, auto retries, and automatic chat histroy slicing,
 
 ## The get_chat() function:
 ```python
-get_chat( 
-        text = None, # the text to respond to
-        history = None, # conversation history
-        summary = False, # generate a summary of the text
-        get_context = False, # retrieves vector similary search results as context to augment the response (RAG)
-        n_context = 4, # how many items to retrieve and use as context 
-        return_context = False, # returns the context items
-        history_search = False, # integrates conversation history into the vector similarity search
-        smart_history_search = False, # uses ChatGPT to generate a search query given the conversation history
-        model = 'gpt-3.5-turbo', # ChatGPT by default - change to 'gpt-4' or any of the other models
-        include_context_meta = False, # include item metadata in the RAG response
-        custom_prompt = False, # a custom prompt to use in place of the default 
-        local = False, # performs vector search locally
-        temperature = 0, # randomness of the model 0 = none, 0.5 = mid, 1 = most
-        timeout = 45 # how many seconds to wait when not receiving a response from the AI 
-        )
+def get_chat(
+    text: str = None,              # Input text to process
+    history: str = '',             # Conversation history
+    summary: bool = False,         # Generate summary instead of normal response
+    get_context: bool = False,     # Enable vector similarity search for context
+    n_context: int = 4,           # Number of context items to retrieve
+    return_context: bool = False,  # Include context items in response
+    history_search: bool = False,  # Use history in vector search
+    smart_history_search: bool = False,  # Use AI to generate search query from history
+    model: str = None,            # AI model to use (defaults to system default)
+    include_context_meta: bool = False,  # Include metadata in context
+    custom_prompt: bool = False,   # Custom prompt template
+    temperature: int = 0,         # Response randomness (0-1)
+    timeout: int = 300           # API timeout in seconds
+)
 ```
 
 ```python
@@ -335,17 +334,6 @@ You can summarize any text, no matter how large - even an entire book all at onc
 # get summary, no matter how large the input text
 summary = vault.get_chat(text, summary=True)
 ```
-<br>
-
-Want to make it a certain length?
-```python
-# make a summary under a legnth of 1000 characters
-summary = vault.get_chat(text, summary=True)
-
-while len(summary) > 1000:
-    summary = vault.get_chat(summary, summary=True)
-```
-
 <br>
 <br>
 <br>

@@ -210,7 +210,7 @@ class Vault:
             Loads the AI functions - internal function
         '''
 
-        if not self.ai_loaded:
+        if not self.ai_loaded or model:
             self.ai_loaded = True
 
             if model:

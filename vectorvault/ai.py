@@ -115,7 +115,7 @@ class OpenAIPlatform(LLMPlatform):
                 try:
                     response = openai.chat.completions.create(
                         model=model,
-                        temperature=temperature,
+                        temperature=temperature if temperature else 0,
                         messages=messages
                     )
                     response_queue.put(response.choices[0].message.content)
@@ -150,7 +150,7 @@ class OpenAIPlatform(LLMPlatform):
                 try:
                     response = openai.chat.completions.create(
                         model=model,
-                        temperature=temperature,
+                        temperature=temperature if temperature else 0,
                         messages=messages,
                         stream=True
                     )
@@ -250,7 +250,7 @@ class GroqPlatform(LLMPlatform):
             try:
                 response = self.client.chat.completions.create(
                     model=model,
-                    temperature=temperature,
+                    temperature=temperature if temperature else 0,
                     messages=messages
                 )
                 response_queue.put(response.choices[0].message.content)
@@ -271,7 +271,7 @@ class GroqPlatform(LLMPlatform):
             try:
                 response = self.client.chat.completions.create(
                     model=model,
-                    temperature=temperature,
+                    temperature=temperature if temperature else 0,
                     messages=messages,
                     stream=True
                 )
@@ -347,7 +347,7 @@ class AnthropicPlatform(LLMPlatform):
                 response = self.client.messages.create(
                     model=model,
                     messages=messages,  # Already in the correct format
-                    temperature=temperature,
+                    temperature=temperature if temperature else 0,
                     max_tokens=8192
                 )
                 response_queue.put(response.content[0].text)
@@ -369,7 +369,7 @@ class AnthropicPlatform(LLMPlatform):
                 response = self.client.messages.create(
                     model=model,
                     messages=messages,  # Already in the correct format
-                    temperature=temperature,
+                    temperature=temperature if temperature else 0,
                     max_tokens=8192,
                     stream=True
                 )

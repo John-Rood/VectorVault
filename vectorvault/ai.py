@@ -248,7 +248,6 @@ class DeepSeekPlatform(LLMPlatform):
             try:
                 response = self.client.chat.completions.create(
                     model=model,
-                    temperature=temperature if temperature else 0,
                     messages=messages
                 )
                 response_queue.put(response.choices[0].message.content)
@@ -269,7 +268,6 @@ class DeepSeekPlatform(LLMPlatform):
             try:
                 response = self.client.chat.completions.create(
                     model=model,
-                    temperature=temperature if temperature else 0,
                     messages=messages,
                     stream=True
                 )

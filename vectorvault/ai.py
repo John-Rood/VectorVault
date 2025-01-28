@@ -12,7 +12,8 @@ def get_all_models(namespaced=False):
     platforms = [
         ('openai', OpenAIPlatform()),
         ('groq', GroqPlatform()),
-        ('anthropic', AnthropicPlatform())
+        ('anthropic', AnthropicPlatform()),
+        ('deepseek', DeepSeekPlatform())  
     ]
     all_models = {}
     for platform_name, platform in platforms:
@@ -28,7 +29,8 @@ def get_front_models(namespaced=False):
     platforms = [
         ('openai', OpenAIPlatform()),
         ('groq', GroqPlatform()),
-        ('anthropic', AnthropicPlatform())
+        ('anthropic', AnthropicPlatform()),
+        ('deepseek', DeepSeekPlatform())  
     ]
     front_models = {}
     for platform_name, platform in platforms:

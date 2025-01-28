@@ -40,6 +40,22 @@ rag_response = vault.get_chat("Your question here", get_context=True)
 print(rag_response)
 ```
 
+# DeepSeek Update
+```python
+# DeepSeek's V3 chat model:
+response = vault.get_chat("Your question here", get_context=True, model='deepseek-chat')
+print(response)
+
+# DeepSeek's R1 reasoning model :
+response = vault.get_chat("Your question here", get_context=True, model='deepseek-reasoner')
+print(response)
+```
+Learn more about the DeepSeek V3 [here](https://api-docs.deepseek.com/news/news1226).
+<br>
+Learn more about the DeepSeek R1 [here](https://api-docs.deepseek.com/news/news250120).
+
+
+
 ## Key Concepts
 
 - **Vaults**: Isolated serverless Vector databases. No limits, inifitely scalable.

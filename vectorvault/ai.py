@@ -222,6 +222,103 @@ class OpenAIPlatform(LLMPlatform):
                     return self.model_token_limits['default']
 
 
+# DeepSeek Platform Implementation
+class DeepSeekPlatform(LLMPlatform):
+    def __init__(self, api_key=None):
+        if api_key:
+            self.client = openai.OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+
+        self.model_token_limits = {
+            'deepseek-chat': 64000,  # Example token limit, adjust as needed
+            'deepseek-reasoner': 128000,  # Example token limit, adjust as needed
+            'default': 'deepseek-chat'
+        }
+        self.front_model_token_limits = {
+            'deepseek-chat': 64000,
+            'deepseek-reasoner': 128000,
+            'default': 'deepseek-chat'
+        }
+        self.default_model = self.model_token_limits['default']
+
+    def make_call(self, messages, model, temperature, timeout=None):
+        timeout = timeout
+        def call_api(response_queue):
+            try:
+                response = self.client.chat.completions.create(
+                    model=model,
+                    temperature=temperature if temperature else 0,
+                    messages=messages
+                )
+                response_queue.put(response.choices[0].message.content)
+            except Exception as e:
+                response_queue.put(e)
+
+        response_queue = queue.Queue()
+        api_thread = threading.Thread(target=call_api, args=(response_queue,))
+        api_thread.start()
+        try:
+            return response_queue.get(timeout=timeout)
+        except queue.Empty:
+            print("Request timed out")
+            return None
+
+    def stream_call(self, messages, model, temperature, timeout=None):
+        def call_api():
+            try:
+                response = self.client.chat.completions.create(
+                    model=model,
+                    temperature=temperature if temperature else 0,
+                    messages=messages,
+                    stream=True
+                )
+                for chunk in response:
+                    message = chunk.choices[0].delta.content
+                    if message:
+                        yield message
+            except Exception as e:
+                yield str(e)
+
+        return call_api()
+
+    def get_tokens(self, string: str, encoding_name: str = "cl100k_base") -> int:
+        encoding = tiktoken.get_encoding(encoding_name)
+        try:
+            num_tokens = len(encoding.encode(string))
+            return num_tokens
+        except Exception as e:
+            raise Exception(f"An unexpected error occurred: {e}")
+
+    def text_to_speech(self, text, model="default", voice="default"):
+        # Implement text-to-speech if available
+        pass
+
+    def transcribe_audio(self, file, model="default"):
+        # Implement audio transcription if available
+        pass
+
+    def model_check(self, token_count, model):
+        if model not in self.model_token_limits.keys():
+            return model
+        else:
+            # Filter out the 'default' key and create suitable_models dictionary
+            suitable_models = {
+                model_name: tokens 
+                for model_name, tokens in self.model_token_limits.items() 
+                if isinstance(tokens, int) and tokens >= token_count
+            }
+            
+            if model in suitable_models:
+                return model
+            else:
+                if suitable_models:  # Check if we found any suitable models
+                    new_model = min(suitable_models, key=suitable_models.get)
+                    print('model switch from model:', model, 'to model:', new_model)
+                    return new_model
+                else:
+                    # If no suitable models found, return the default model
+                    return self.model_token_limits['default']
+                
+
 # Groq Platform Implementation
 class GroqPlatform(LLMPlatform):
     def __init__(self, api_key=None):

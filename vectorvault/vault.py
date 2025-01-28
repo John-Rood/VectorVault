@@ -26,7 +26,7 @@ import random
 from threading import Thread as T
 from datetime import datetime, timedelta
 from typing import List, Union
-from .ai import openai, OpenAIPlatform, AnthropicPlatform, GroqPlatform, get_all_models, LLMClient
+from .ai import openai, OpenAIPlatform, AnthropicPlatform, GroqPlatform, DeepSeekPlatform, LLMClient, get_all_models
 from .cloud_api import call_cloud_save, run_flow, run_flow_stream
 from .cloudmanager import CloudManager, as_completed, ThreadPoolExecutor
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement, load_json
@@ -35,7 +35,8 @@ from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cl
 class Vault:
     def __init__(self, user: str = None, api_key: str = None, openai_key: str = None, vault: str = None, 
                  embeddings_model: str = None, verbose: bool = False, conversation_user_id: str = None, 
-                 fine_tuned_context_window = 128000, groq_key: str = None, anthropic_key: str = None):
+                 fine_tuned_context_window = 128000, groq_key: str = None, anthropic_key: str = None, 
+                 deepseek_key: str = None):
         ''' 
         >>> Create a vector database instance:
         ```
@@ -102,6 +103,7 @@ class Vault:
             self.openai = OpenAIPlatform()
         self.groq = GroqPlatform(groq_key)
         self.anthropic = AnthropicPlatform(anthropic_key)
+        self.deepseek = DeepSeekPlatform(deepseek_key)
 
 
     def get_total_items(self, vault: str = None):
@@ -159,7 +161,7 @@ class Vault:
 
         Args:
             model_name (str): The name of the fine-tuned model.
-            platform (str): The target platform ('openai', 'groq', 'anthropic').
+            platform (str): The target platform ('openai', 'groq', 'anthropic', 'deepseek').
             token_limit (int): The token limit for the fine-tuned model.
         """
         if platform == 'openai':
@@ -168,6 +170,8 @@ class Vault:
             platform_instance = self.groq
         elif platform == 'anthropic':
             platform_instance = self.anthropic
+        elif platform == 'deepseek':
+            platform_instance = self.deepseek
         else:
             raise ValueError(f"Unknown platform: {platform}")
         
@@ -195,6 +199,8 @@ class Vault:
             return LLMClient(self.groq, fine_tuned_context_window=self.fine_tuned_context_window)
         elif model in self.openai.model_token_limits:
             return LLMClient(self.openai, fine_tuned_context_window=self.fine_tuned_context_window)
+        elif model in self.deepseek.model_token_limits:
+            return LLMClient(self.deepseek, fine_tuned_context_window=self.fine_tuned_context_window)
         else:
             raise ValueError(f"Model '{model}' not found in any platform.")
 

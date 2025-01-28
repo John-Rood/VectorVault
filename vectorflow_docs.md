@@ -2,11 +2,7 @@
 
 The Vault class provides methods for executing and streaming flows using a configured vault environment. These methods facilitate interaction with the Decision AI platform.
 
-## Methods
-
-### run_flow
-
-Executes a flow synchronously and returns the complete response.
+### The run_flow method:
 
 ```python
 def run_flow(

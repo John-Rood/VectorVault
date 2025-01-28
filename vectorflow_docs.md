@@ -19,7 +19,7 @@ def run_flow(
 ```
 
 #### Parameters:
-- `flow_name` (str): The name of the flow to execute (e.g., 'dri artemis')
+- `flow_name` (str): The name of the flow to execute (e.g., 'some flow name')
 - `message` (str): The input message to be processed by the flow
 - `history` (str, optional): Previous conversation history. Defaults to empty string
 - `vault` (Any, optional): Override the default vault configuration. If not provided, uses the instance's vault

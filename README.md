@@ -97,3 +97,6 @@ Learn more about the DeepSeek R1 [here](https://api-docs.deepseek.com/news/news2
 - Join our [Discord community](https://discord.gg/AkMsP9Uq) for support and discussions.
 
 Start building with Vector Vault today and experience the future of RAG-native, cloud-native vector databases!
+
+## A Note from the Author
+I built this platform to save time and help go from idea to reality faster. You can deploy in an instant and get to the front end seamlessly. It's a vertically integrated Agentic management platform. What that means is that the vector database, cloud services, and agentic flow builder was all built in-house and fully integrated from the start. Everything works together really well, super fast, and always reliably. Vector Vault is hosting agentic interactions every day for dozens of enterprises around the globe. I wanted to make the platform free initially, but I needed to revert to pay model due to malicious attacks and API abuse. The cloud storage and services cost money and a pay wall is the easiest way to keep out bad actors, but I made it 30 days free so you can check it out and see if you like it. You can click on billing and cancel at any time, so no worries. Sign up and see how much faster and easier it is to develop RAG Apps and AI Agents with Vector Vault.

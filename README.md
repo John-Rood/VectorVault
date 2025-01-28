@@ -59,8 +59,8 @@ Learn more about DeepSeek R1 [here](https://api-docs.deepseek.com/news/news25012
 ## Key Concepts
 
 - **Vaults**: Isolated serverless Vector databases. No limits, inifitely scalable.
-- **RAG-Native**: Vector Similarity Search Retrieval Augmented Generation by default - fully customizable with params
-- **Cloud Engine**: We process operations and AI references in the Vector Vault cloud, making it easy for you to integrate to the front end and build real applications
+- **RAG-Native**: Vector Similarity Search - Retrieval Augmented Generatioy - fully customizable with params
+- **Cloud Engine**: We process operations and AI references in the Vector Vault cloud, making it easy for you to integrate to the front end quickly and securely
 
 ## Advanced Features
 

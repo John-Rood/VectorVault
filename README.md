@@ -50,9 +50,9 @@ print(response)
 response = vault.get_chat("Your question here", get_context=True, model='deepseek-reasoner')
 print(response)
 ```
-Learn more about the DeepSeek V3 [here](https://api-docs.deepseek.com/news/news1226).
+Learn more about DeepSeek V3 [here](https://api-docs.deepseek.com/news/news1226).
 <br>
-Learn more about the DeepSeek R1 [here](https://api-docs.deepseek.com/news/news250120).
+Learn more about DeepSeek R1 [here](https://api-docs.deepseek.com/news/news250120).
 
 
 

@@ -7,8 +7,6 @@ The Vector Vault [platform](https://app.vectorvault.io) has a Agent Builder. It'
 
 ![Vector Flow Building](/digital%20assets/Vector%20Flow%20Build%20Flow.gif)
 
-<br>
-
 #### 2. Set default variables
 
 ![Vector Flow Default Variables](/digital%20assets/Vector%20Flow%20Default%20Variables.gif)

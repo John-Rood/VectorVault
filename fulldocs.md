@@ -211,24 +211,7 @@ for result in similar_data:
 <br>
 <br>
 <br>
-
-The exact same call, but from command line:
-```
-curl -X POST "https://api.vectorvault.io/get_similar" \
-     -H "Content-Type: application/json" \
-     -d '{
-        "user": "your_username",
-        "api_key": "your_api_key",
-        "openi_key": "your_openai_api_key",
-        "vault": "your_vault_name",
-        "text": "Your text input"
-     }'
-```
->> [{"data":"NASA Mars Exploration... *(shortend for brevity)*","metadata":{"created_at":"2023-05-29T19:21:20.846023","item_id":0,"name":"webdump-0","updated_at":"2023-05-29T19:21:20.846028"}}]
-    
-<br>
-
-Back to Python, here's how to print the data and metadata together:
+Here's how to print the data and metadata together:
 ```python
 for result in similar_data:
     print(result['data'])

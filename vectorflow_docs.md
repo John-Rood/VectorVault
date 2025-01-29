@@ -1,6 +1,25 @@
-# Vault Flow Methods Documentation
+# Vector Flow Documentation
 
-The Vault class provides methods for executing and streaming flows using a configured vault environment. These methods facilitate interaction with the Decision AI platform.
+The Vector Vault [platform](https://app.vectorvault.io) has a Agent Builder. It's called Vector Flow. It's a visual UI for building AI agents with drag and drop logic. Connect the outcomes to control the conversation path. Execute code, make api calls, all while having a seamless conversation. This is currently powering Agentic applications for enterprises around the globe. The [Vector Vault JavaScript package](https://github.com/John-Rood/VectorVault-js) has methods for calling those flows on the front end, but sometimes you also need to run those flows in the backend. This documentation is for such a case.
+
+## How Vector Flow Works:
+#### 1. Build a flow
+
+![Vector Flow Building](/digital%20assets/Vector%20Flow%20Build%20Flow.gif)
+
+<br>
+
+#### 2. Set default variables
+
+![Vector Flow Default Variables](/digital%20assets/Vector%20Flow%20Default%20Variables.gif)
+
+
+#### 3. Click 'Open Chat' to test the flow
+
+![Vector Flow Chat](/digital%20assets/Vector%20Flow%20Example%20Chat.gif)
+
+#### 4. Call in your code, 
+i.e.:  `vault.run_flow(flow_name="a dog flow", message="I have a golden retreiver named Buddy. What kind of dog food would be best for him?")`
 
 ### The run_flow method:
 

@@ -26,7 +26,7 @@ import random
 from threading import Thread as T
 from datetime import datetime, timedelta
 from typing import List, Union
-from .ai import openai, OpenAIPlatform, AnthropicPlatform, GroqPlatform, DeepSeekPlatform, LLMClient, get_all_models
+from .ai import openai, OpenAIPlatform, AnthropicPlatform, GroqPlatform, LLMClient, get_all_models
 from .cloud_api import call_cloud_save, run_flow, run_flow_stream
 from .cloudmanager import CloudManager, as_completed, ThreadPoolExecutor
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement, load_json
@@ -103,7 +103,6 @@ class Vault:
             self.openai = OpenAIPlatform()
         self.groq = GroqPlatform(groq_key)
         self.anthropic = AnthropicPlatform(anthropic_key)
-        self.deepseek = DeepSeekPlatform(deepseek_key)
 
 
     def get_total_items(self, vault: str = None):
@@ -199,8 +198,6 @@ class Vault:
             return LLMClient(self.groq, fine_tuned_context_window=self.fine_tuned_context_window)
         elif model in self.openai.model_token_limits:
             return LLMClient(self.openai, fine_tuned_context_window=self.fine_tuned_context_window)
-        elif model in self.deepseek.model_token_limits:
-            return LLMClient(self.deepseek, fine_tuned_context_window=self.fine_tuned_context_window)
         else:
             raise ValueError(f"Model '{model}' not found in any platform.")
 

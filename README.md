@@ -89,7 +89,7 @@ Once saved, this personality is automatically used in all future responses from 
 You can also set custom prompts that will wrap your user’s message before sending to the model.
 
 ```python
-# For RAG responses, vector similar search results are injected into `context`, while the user's message is the `content`
+# For RAG responses, vector similar data is injected into `context`, and the user's message is in `content`
 context_prompt = """You have access to the following context: {context}
 Answer using a formal tone:
 {content}"""

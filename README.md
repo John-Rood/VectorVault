@@ -79,7 +79,7 @@ that always uses uplifting language and friendly emojis 😄."""
 vault.save_personality_message(personality_text)
 ```
 
-Once saved, this personality is automatically used in all future responses.
+Once saved, this personality is automatically used in all future responses from this vault.
 
 
 <br>

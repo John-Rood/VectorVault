@@ -7,9 +7,9 @@ Vector Vault is a cutting-edge, cloud-native and RAG-native vector database solu
 ## Key Features
 
 
-- **RAG-Native Architecture**: Perform Retrieval-Augmented Generation in one line of code.
 - **Unparalleled Simplicity**: Implement sophisticated AI features with minimal code.
-- **Full-Stack Integration**: Use our Python package for backend operations and our JavaScript package for easy front-end integration.
+- **Full-Stack**: Use our Python package for backend operations and our JavaScript package for easy front-end integration.
+- **RAG-Native Architecture**: Perform Retrieval-Augmented Generation in one line of code.
 - **Cloud Engine**: Our service handles vector search, retrieval, and AI model interactions, simplifying your architecture.
 - **Unlimited Isolated Databases**: Create and access an infinite number of vector databases, ideal for multi-tenant applications.
 - **Provider-Agnostic**: Switch between AI providers (OpenAI, Anthropic, Groq, etc.) without changing your workflow.

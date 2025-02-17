@@ -6,46 +6,115 @@ Vector Vault is a cutting-edge, cloud-native and RAG-native vector database solu
 
 ## Key Features
 
+
 - **RAG-Native Architecture**: Perform Retrieval-Augmented Generation in one line of code.
 - **Unparalleled Simplicity**: Implement sophisticated AI features with minimal code.
 - **Full-Stack Integration**: Use our Python package for backend operations and our JavaScript package for easy front-end integration.
-- **Cloud-Engine**: Our service handles vector search, retrieval, and AI model interactions, simplifying your architecture.
+- **Cloud Engine**: Our service handles vector search, retrieval, and AI model interactions, simplifying your architecture.
 - **One-Line Operations**: Save to the cloud vector database and generate RAG responses in one line of code.
 - **Developer-Centric**: Focus on your application logic rather than complex AI and front-end integrations.
 - **Unlimited Isolated Databases**: Create and access an infinite number of vector databases, ideal for multi-tenant applications.
+- **Provider-Agnostic**: Switch between AI providers (OpenAI, Anthropic, Groq, etc.) without changing your workflow.
+
 
 ## Quick Start
 
-Install Vector Vault:
+#### Install:
 ```bash
 pip install vector-vault
 ```
 
-Basic usage:
+#### Basic Usage:
+
 ```python
 from vectorvault import Vault
 
-vault = Vault(user='YOUR_EMAIL',
-              api_key='YOUR_API_KEY', 
-              openai_key='YOUR_OPENAI_KEY',
-              vault='NAME_OF_VAULT')
+# Initialize Vault
+vault = Vault(
+    user='YOUR_EMAIL',
+    api_key='YOUR_VECTOR_VAULT_API_KEY', 
+    openai_key='YOUR_OPENAI_API_KEY',
+    vault='MY_NEW_VAULT',
+    verbose=True
+)
 
-# Add data to your vault
-vault.add('some text')
-vault.get_vectors()
-vault.save()
+# Add text data to your vault
+vault.add('some text') # automatic chunk sizing
+vault.get_vectors() # generates vectors for the all the data you added
+vault.save() # saves data and vectors to the cloud
 
 # Get AI-powered RAG responses
-rag_response = vault.get_chat("Your question here", get_context=True)
+rag_response = vault.get_chat("What is this vault about?", get_context=True)
 print(rag_response)
 ```
+<br>
+---------------------------------------------
+
+## Platform Agnostic:
+Vector Vault supports multiple AI model platforms - OpenAI, Anthropic, Groq, Grok, and more - all under the same interface. Simply pass in the appropriate API keys upon initialization:
+```python
+vault = Vault(
+    user='YOUR_EMAIL',
+    api_key='YOUR_VECTOR_VAULT_API_KEY', 
+    openai_key='YOUR_OPENAI_API_KEY',      
+    anthropic_key='YOUR_ANTHROPIC_API_KEY', # optional 
+    groq_key='YOUR_GROQ_API_KEY',           # optional 
+    grok_key='YOUR_GROK_API_KEY',           # optional 
+    vault='MY_NEW_VAULT',
+    verbose=True
+)
+```
+
+No matter which provider you choose, downstream methods like get_chat(...) remain the same. You can seamlessly switch providers later without rewriting your code.
+
+<br>
+---------------------------------------------
+
+## Adding Personality & Custom Prompts
+Vector Vault allows you to define a global “personality” for your AI responses, as well as custom prompts for both context-based and non-context-based queries. This is extremely helpful for brand consistency, specialized tones, or role-playing scenario
+
+#### Setting a Personality
+```python
+# Define your brand’s or chatbot’s personality
+personality_text = """You are an enthusiastic and helpful assistant 
+that always uses uplifting language and friendly emojis 😄."""
+vault.save_personality_message(personality_text)
+```
+
+Once saved, this personality is automatically used in all future responses.
+
+
+<br>
+---------------------------------------------
+
+## Custom Prompts
+You can also set custom prompts that will wrap your user’s message before sending to the model.
+
+```python
+# For RAG responses, vector similar search results are injected into `context`, while the user's message is the `content`
+context_prompt = """You have access to the following context: {context}
+Answer using a formal tone:
+{content}"""
+vault.save_custom_prompt(context_prompt, context=True)
+```
+Now, whenever you do:
+
+```python
+response = vault.get_chat("What's new in the world of data science?", get_context=True)
+```
+Vector Vault automatically uses your context_prompt before sending to the LLM. By editing this custom_prompt, you can ensure your RAG responses come out perfect every time.
+
+<br>
+---------------------------------------------
 
 
 ## Key Concepts
 
-- **Vaults**: Isolated serverless Vector databases. No limits, inifitely scalable.
-- **RAG-Native**: Vector Similarity Search - Retrieval Augmented Generation - fully customizable with params
-- **Cloud Engine**: We process operations and AI references in the Vector Vault cloud, making it easy for you to integrate to the front end quickly and securely
+- **Vaults**: Serverless vector databases. Create as many as you need.
+- **RAG-Native**: Add data, ask questions, retrieve relevant context from your Vault, and generate AI responses in one step.
+- **Cloud Engine**: Our backend handles heavy lifting and integrates seamlessly with multiple AI providers.
+- **Personality & Custom Prompts**: Easily store, retrieve, and modify custom roles/tones/prompts for brand consistency.
+- **Provider Agnosticism**: Switch from OpenAI to Anthropic or any other platform by changing a single parameter. The rest of your code stays the same.
 
 ## Advanced Features
 
@@ -63,11 +132,11 @@ print(rag_response)
 
 ## Why Vector Vault?
 
-- **Simplicity**: Easier to use than traditional vector databases and AI integrations.
+- **Simplicity**: More straightforward than rolling your own vector database or hooking up multiple AI integrations.
 - **RAG Optimization**: Built from the ground up for Retrieval-Augmented Generation workflows.
-- **Customization**: Add specific knowledge to your Vault and tailor AI responses to your needs.
-- **Scalability**: Fully serverless platform offering unparalleled scalability.
-- **Time and Resource Saving**: Dramatically reduce development time for AI feature integration.
+- **Customization**: Override prompts, personalities, or entire models with minimal code.
+- **Scalability**: Serverless approach means no scaling overhead. Build prototypes or enterprise apps all the same.
+- **Time and Resource Saving**: Drastically reduce your AI development lifecycle.
 
 ## Getting Started
 

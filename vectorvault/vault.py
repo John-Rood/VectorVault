@@ -35,8 +35,8 @@ from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cl
 class Vault:
     def __init__(self, user: str = None, api_key: str = None, openai_key: str = None, vault: str = None, 
                  embeddings_model: str = None, verbose: bool = False, conversation_user_id: str = None, 
-                 fine_tuned_context_window = 128000, groq_key: str = None, anthropic_key: str = None, 
-                 deepseek_key: str = None):
+                 fine_tuned_context_window = 128000, groq_key: str = None, anthropic_key: str = None
+                 ):
         ''' 
         >>> Create a vector database instance:
         ```
@@ -63,15 +63,6 @@ class Vault:
         >>> Change the model with the `model` param in get_chat:
         `gpt4_rag_answer = vault.get_chat('some question', get_context=True, model='gpt-4')`
 
-        >>> Change the personality of your bot with the personality_message:
-        ```
-        vault = Vault(user='your_email',
-              api_key='vectorvault_api',
-              openai_key='openai_api',
-              vault='your_vault_name',
-              personality_message='Answer like you are Snoop Dogg',
-              verbose=False)
-        ```
         '''
         self.user = user.lower()
         self.vault = vault.strip() if vault else 'home'
@@ -199,7 +190,9 @@ class Vault:
         elif model in self.openai.model_token_limits:
             return LLMClient(self.openai, fine_tuned_context_window=self.fine_tuned_context_window)
         else:
-            raise ValueError(f"Model '{model}' not found in any platform.")
+            print(f"Model '{model}' not found in any platform -> adding as a fine-tuned OpenAI model...")
+            self.add_fine_tuned_model_to_platform(model)
+            return LLMClient(self.openai, fine_tuned_context_window=self.fine_tuned_context_window)
 
 
     @property

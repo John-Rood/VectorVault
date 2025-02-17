@@ -36,9 +36,9 @@ vault = Vault(
     verbose=True
 )
 
-# Add text data to your vault
+# Build your vault
 vault.add('some text') # automatic chunk sizing
-vault.get_vectors() # generates vectors for the all the data you added
+vault.get_vectors() # generates vectors for the all data 
 vault.save() # saves data and vectors to the cloud
 
 # Get AI-powered RAG responses

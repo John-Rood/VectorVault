@@ -38,8 +38,8 @@ vault = Vault(
 
 # Build your vault
 vault.add('some text') # automatic chunk sizing
-vault.get_vectors() # generates vectors for the all data 
-vault.save() # saves data and vectors to the cloud
+vault.get_vectors() # generate vectors for the all data 
+vault.save() # save data and vectors to the cloud
 
 # Get AI-powered RAG responses
 rag_response = vault.get_chat("What is this vault about?", get_context=True)

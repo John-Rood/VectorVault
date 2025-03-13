@@ -6,6 +6,8 @@ import openai
 import tiktoken
 import anthropic
 import groq
+import base64
+import httpx
 
 
 def get_all_models(namespaced=False):
@@ -40,48 +42,145 @@ def get_front_models(namespaced=False):
         front_models.update(models)
     return front_models
 
+def encode_image(image_path):
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
+    
 
 # Platform-agnostic model token limits and default models
 class LLMPlatform(ABC):
     @abstractmethod
     def __init__(self):
+        """
+        Initialize the platform, setting up any required clients, API keys, or
+        default model configurations.
+        Attributes:
+            model_token_limits (dict): A dictionary mapping model names to their maximum token limits.
+            default_model (str or None): The model name to use if no model is specified in calls.
+        """
         self.model_token_limits = {}
         self.default_model = None
 
     @abstractmethod
-    def make_call(self, messages, model, temperature, timeout=None):
+    def make_call(self, messages, model, temperature=None, timeout=None):
+        """
+        Make a request to the language model with a list of messages and receiv
+        a single text-based response
+        Args
+            messages (list): A list of message dicts. Each dict typically include
+                             a "role" (e.g., "system", "user", "assistant") and a "content"
+                             If using multimodal features, "content" may be a list of items,
+                             e.g., [{"type": "text", "text": "Hello"}, {"type": "image_url", ...}].
+            model (str): The name or identifier of the model to call.
+            temperature (float, optional): The sampling temperature. Some models
+                                           may not support this parameter.
+            timeout (int, optional): How long in seconds to wait before timing out.
+        Returns:
+            str: The text response from the model, or an error string/exception if something fails.
+        """
         pass
 
     @abstractmethod
-    def stream_call(self, messages, model, temperature, timeout=None):
+    def stream_call(self, messages, model, temperature=None, timeout=None):
+        """
+        Make a streaming request to the language model. Yields tokens or chunks
+        of text over time rather than waiting for a single completed response.
+        Args:
+            messages (list): Same format as make_call(), but may include multimodal content.
+            model (str): The model name or identifier.
+            temperature (float, optional): The sampling temperature. Some models
+                                           may not support this parameter.
+            timeout (int, optional): Timeout in seconds.
+        Yields:
+            str: Pieces of the response as they arrive from the model.
+        """
         pass
 
     @abstractmethod
     def get_tokens(self, string, encoding_name="cl100k_base"):
+        """
+        Compute the number of tokens in a given string, using a specified tokenizer.
+        Args:
+            string (str): The text to be tokenized.
+            encoding_name (str): The name of the tokenizer/encoding. Defaults to
+                                 "cl100k_base", but can differ by model.
+        Returns:
+            int: The number of tokens in the string.
+        """
         pass
 
     @abstractmethod
     def text_to_speech(self, text, model="tts-1", voice="onyx"):
+        """
+        Convert text to speech using a TTS model.
+        Args:
+            text (str): The text to be converted to speech.
+            model (str): The TTS model name.
+            voice (str): The voice style or ID.
+        Returns:
+            A file-like object or path to the generated audio (implementation-specific).
+
+        """
         pass
 
     @abstractmethod
     def transcribe_audio(self, file, model="whisper-1"):
+        """
+        Transcribe an audio file into text.
+        Args:
+            file: A file-like object or path to an audio file.
+            model (str): The transcription model name.
+        Returns:
+            str or dict: The transcription result. Exact structure depends on implementation.
+        """
         pass
 
     @abstractmethod
     def model_check(self, token_count, model):
+        """
+        Given a token_count and a requested model, verify if the request fits
+        within that model's token limit. If it doesn't, return a fallback model.
+        Args:
+            token_count (int): The number of tokens in this request/response.
+            model (str): The requested model identifier.
+        Returns:
+            str: A model name that can handle the token_count. Possibly returns
+                 the original model or a fallback/default model.
+        """
         pass
+
+    @abstractmethod
+    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, timeout=None):
+        """
+        Handle an image-based request (multimodal). This method should build
+        the appropriate messages structure (or accept an already-formed one)
+        for sending to a model that supports images.
+        Args:
+            image_path (str, optional): Path to a local image file to be read/encoded.
+            image_url (str, optional): A publicly accessible URL pointing to the image.
+            user_text (str, optional): Additional instructions or user prompt.
+            model (str, optional): The model to call. Default can be platform.default_model.
+            timeout (int, optional): How long to wait before timing out.
+        Returns:
+            str: The model’s textual description/analysis of the provided image.
+        """
+        pass
+
+
 
 # OpenAI Platform Implementation
 class OpenAIPlatform(LLMPlatform):
     def __init__(self):
         self.model_token_limits = {
+            'gpt-4.5-preview': 128000,
+            'gpt-4.5-preview-2025-02-27': 128000,
             'o1': 200000,
             'o1-2024-12-17': 200000,
             'o1-mini': 128000,
-            'o1-preview': 128000,
             'o1-preview-2024-09-12': 128000,
             'o1-mini-2024-09-12': 128000,
+            'o3-mini': 200000,
+            'o3-mini-2025-01-31': 200000,
             'gpt-4-turbo': 128000,
             'gpt-4o-mini': 128000,
             'gpt-4o': 128000,
@@ -98,77 +197,83 @@ class OpenAIPlatform(LLMPlatform):
         }
         self.front_model_token_limits = {
             'o1': 128000,
+            'o3-mini': 128000,
             'o1-mini': 128000,
+            'gpt-4.5-preview': 128000,
             'gpt-4o-mini': 128000,
             'gpt-4o': 128000,
-            'gpt-4': 8000,
             'default': 'gpt-4o'
         }
-        self.different_inference_list = ['o1', 'o1-2024-12-17', 'o1-preview', 'o1-mini', 'o1-preview-2024-09-12', 'o1-mini-2024-09-12']
+        self.img_capable = [
+            'o1', 'gpt-4o', 'gpt-4o-mini',
+            'gpt-4.5-preview', 'gpt-4.5-preview-2025-02-27'
+        ]
+        self.no_stream_list = [
+            'o1-2024-12-17', 'o1-preview-2024-09-12', 'o1-mini-2024-09-12'
+        ]
+        self.no_temperature_list = [
+            'o1', 'o1-mini', 'o1-2024-12-17',
+            'o1-preview-2024-09-12', 'o1-mini-2024-09-12',
+            'o3', 'o3-mini', 'o3-mini-2025-01-31'
+        ]
         self.default_model = self.model_token_limits['default']
 
-    def make_call(self, messages, model, temperature, timeout=None):
-        # This function will be run in a separate thread
+    def make_call(self, messages, model, temperature=None, timeout=None):
         timeout = timeout
         def call_api(response_queue):
-            if model not in self.different_inference_list:
-                try:
-                    response = openai.chat.completions.create(
-                        model=model,
-                        temperature=temperature if temperature else 0,
-                        messages=messages
-                    )
-                    response_queue.put(response.choices[0].message.content)
-                except Exception as e:
-                    response_queue.put(e)
-            else:
-                try:
-                    response = openai.chat.completions.create(
-                        model=model,
-                        messages=messages
-                    )
-                    response_queue.put(response.choices[0].message.content)
-                except Exception as e:
-                    response_queue.put(e)
-
+            try:
+                # Build params
+                params = {
+                    "model": model,
+                    "messages": messages
+                }
+                # Include temperature only if the model actually supports it
+                if temperature is not None and temperature != 0 and model not in self.different_inference_list:
+                    params["temperature"] = temperature
+                response = openai.chat.completions.create(**params)
+                response_queue.put(response.choices[0].message.content)
+            except Exception as e:
+                response_queue.put(e)
+                
         response_queue = queue.Queue()
         api_thread = threading.Thread(target=call_api, args=(response_queue,))
         api_thread.start()
         try:
-            # Wait for the response with a timeout
-            return response_queue.get(timeout=timeout)  # Timeout in seconds
+            return response_queue.get(timeout=timeout)
         except queue.Empty:
-            # Handle timeout
             print("Request timed out")
             return None
-
-    def stream_call(self, messages, model, temperature, timeout=None):
+            
+    def stream_call(self, messages, model, temperature=None, timeout=None):
         timeout = timeout
 
         def call_api():
-            if model not in self.different_inference_list:
-                try:
-                    response = openai.chat.completions.create(
-                        model=model,
-                        temperature=temperature if temperature else 0,
-                        messages=messages,
-                        stream=True
-                    )
+            try:
+                # Build params
+                params = {
+                    "model": model,
+                    "messages": messages
+                }
+
+                # Conditionally add temperature if the model supports it
+                if temperature is not None and temperature != 0 and model not in self.no_temperature_list:
+                    params["temperature"] = temperature if temperature else 0
+
+                # If streaming is allowed for this model
+                if model not in self.no_stream_list:
+                    params["stream"] = True
+                    response = openai.chat.completions.create(**params)
                     for chunk in response:
                         message = chunk.choices[0].delta.content
                         if message:
                             yield message
-                except Exception as e:
-                    yield str(e)
-            else:
-                try:
-                    response = openai.chat.completions.create(
-                        model=model,
-                        messages=messages
-                    )
+                else:
+                    # Non-streaming fallback
+                    response = openai.chat.completions.create(**params)
                     yield response.choices[0].message.content
-                except Exception as e:
-                    yield str(e)
+
+            except Exception as e:
+                yield str(e)
 
         return call_api()
 
@@ -220,6 +325,49 @@ class OpenAIPlatform(LLMPlatform):
                 else:
                     # If no suitable models found, return the default model
                     return self.model_token_limits['default']
+
+    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None):
+        """
+        Demonstration implementation of an image inference method for OpenAIPlatform.
+        For GPT-4o or other multimodal-capable model, you can build the messages 
+        payload here and call make_call. If you want to handle images differently,
+        adapt as needed.
+        """
+        model = model if model else self.default_model
+        if image_path is None and image_url is None:
+            raise ValueError("Must specify either image_path or image_url.")
+
+        if image_path:
+            base64_img = encode_image(image_path)
+            image_payload = {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/png;base64,{base64_img}"
+                }
+            }
+        else:
+            image_payload = {
+                "type": "image_url",
+                "image_url": {
+                    "url": image_url
+                }
+            }
+
+        content = [
+            {
+                "type": "text",
+                "text": user_text if user_text else "Describe this image."
+            },
+            image_payload
+        ]
+
+        messages = [
+            {
+                "role": "user",
+                "content": content
+            }
+        ]
+        return self.make_call(messages, model, temperature=None, timeout=timeout) if not stream else self.stream_call(messages, model, temperature=None, timeout=timeout)
 
 
 # Groq Platform Implementation
@@ -322,6 +470,12 @@ class GroqPlatform(LLMPlatform):
                     # If no suitable models found, return the default model
                     return self.model_token_limits['default']
 
+    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, timeout=None):
+        """
+        If GroqPlatform doesn't support image tasks, raise an exception or simply pass.
+        """
+        raise NotImplementedError("GroqPlatform does not currently support image inference.")
+    
 # Anthropic (Claude) Platform Implementation
 class AnthropicPlatform(LLMPlatform):
     def __init__(self, api_key=None):
@@ -421,26 +575,79 @@ class AnthropicPlatform(LLMPlatform):
                 else:
                     # If no suitable models found, return the default model
                     return self.model_token_limits['default']
-        
+
+    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None):
+        model = model if model else self.default_model
+
+        if image_path is None and image_url is None:
+            raise ValueError("Must specify either image_path or image_url.")
+
+        if image_path:
+            image_data = encode_image(image_path)
+            media_type = "image/jpeg" if image_path.lower().endswith((".jpg", ".jpeg")) else "image/png"
+            image_payload = {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": media_type,
+                    "data": image_data
+                }
+            }
+        else:
+            # Fetch and encode image from URL
+            response = httpx.get(image_url)
+            if response.status_code != 200:
+                raise ValueError(f"Failed to fetch image from URL: {image_url}")
+            media_type = response.headers.get("Content-Type", "image/jpeg")
+            image_data = base64.b64encode(response.content).decode("utf-8")
+            image_payload = {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": media_type,
+                    "data": image_data
+                }
+            }
+
+        content = [
+            image_payload,
+            {
+                "type": "text",
+                "text": user_text if user_text else "Describe this image."
+            }
+        ]
+
+        messages = [
+            {
+                "role": "user",
+                "content": content
+            }
+        ]
+
+        if stream:
+            return self.stream_call(messages, model, temperature, timeout=timeout)
+        else:
+            return self.make_call(messages, model, temperature, timeout=timeout)
+
+                
 
 # LLM Client that uses the platform-agnostic interface
 class LLMClient:
-    def __init__(self, platform: LLMPlatform, personality_message: str = None, main_prompt: str = None, verbose: bool = False, timeout: int = 300, fine_tuned_context_window=128000):
+    def __init__(self, platform: LLMPlatform, personality_message: str = None, main_prompt: str = None, main_prompt_with_context: str = None, verbose: bool = False, timeout: int = 300, fine_tuned_context_window=128000):
         self.platform = platform
         self.verbose = verbose
         self.default_model = self.platform.default_model
         self.timeout = timeout
         self.fine_tuned_context_window = fine_tuned_context_window
-        self.main_prompt = "Question: {content}"
-        self.main_prompt_with_context = """Use the following Context to answer the Question at the end.
-Answer as if you were the modern voice of the context, without referencing the context or mentioning
-the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
+        self.main_prompt = main_prompt if main_prompt else "Question: {content}"
+        self.main_prompt_with_context = main_prompt_with_context if main_prompt_with_context else """Use the following Context to answer the Question at the end.
+    Answer as if you were the modern voice of the context, without referencing the context or mentioning
+    the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
 
-Additional Context: {context}
+    Additional Context: {context}
 
-Question: {content}
-""" if not main_prompt else main_prompt
-
+    Question: {content}
+    """    
         self.personality_message = personality_message if personality_message else """Answer directly and be helpful"""
         self.context_prompt = self.main_prompt_with_context + '\n' + f'({self.personality_message})' + '\n'
         self.prompt = self.main_prompt + '\n\n' + f'({self.personality_message})' + '\n'
@@ -656,7 +863,71 @@ Continue from where it leaves off by summarizing the next segment content: {cont
     
     def get_tokens(self, string: str, encoding_name: str = "cl100k_base") -> int:
         """Get token count for a string using the platform's tokenizer"""
-        return self.platform.get_tokens(string, encoding_name)
+        return self.platform.get_tokens(string, encoding_name)    
+    
+    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None):
+        """
+        Perform image inference using the underlying platform's image_inference method.
+
+        Args:
+            image_path (str, optional): Path to a local image file.
+            image_url (str, optional): URL of an image.
+            user_text (str, optional): Prompt or instructions for the model.
+            model (str, optional): Model to use. Defaults to platform's default model.
+            stream (bool, optional): Whether to stream the response.
+            temperature (float, optional): Sampling temperature.
+            timeout (int, optional): Timeout in seconds.
+
+        Returns:
+            str or generator: Model's response as text or a generator if streaming.
+        """
+        model = model if model else self.default_model
+        token_count = self.platform.get_tokens(user_text if user_text else "")
+        model = self.platform.model_check(token_count, model)
+
+        if stream:
+            return self.platform.image_inference(
+                image_path=image_path,
+                image_url=image_url,
+                user_text=user_text,
+                model=model,
+                stream=True,
+                temperature=temperature,
+                timeout=timeout
+            )
+        else:
+            return self.platform.image_inference(
+                image_path=image_path,
+                image_url=image_url,
+                user_text=user_text,
+                model=model,
+                stream=False,
+                temperature=temperature,
+                timeout=timeout
+            )
+        
+    def model_token_limit(self, model=None):
+        """
+        Get the token limit for the specified model or the default model.
+        
+        Args:
+            model (str, optional): The model identifier to get the token limit for.
+                                If not provided, uses the default model.
+        
+        Returns:
+            int: The maximum token limit for the specified model or a default
+                context window size if the model is not found in the platform's
+                token limits dictionary.
+        """
+        model = model if model else self.default_model
+        
+        # Check if the model exists in the platform's model_token_limits dictionary
+        if model in self.platform.model_token_limits:
+            # Return the token limit for the model
+            return self.platform.model_token_limits[model]
+        else:
+            # If model not found, return the default fine-tuned context window size
+            return self.fine_tuned_context_window
 
 
 class ModelsProperty:

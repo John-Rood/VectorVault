@@ -35,8 +35,8 @@ from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cl
 class Vault:
     def __init__(self, user: str = None, api_key: str = None, openai_key: str = None, vault: str = None, 
                  embeddings_model: str = None, verbose: bool = False, conversation_user_id: str = None, 
-                 fine_tuned_context_window = 128000, groq_key: str = None, anthropic_key: str = None
-                 ):
+                 model = None, groq_key: str = None, anthropic_key: str = None,
+                 main_prompt = None, main_prompt_with_context = None, personality_message = None):
         ''' 
         >>> Create a vector database instance:
         ```
@@ -86,7 +86,7 @@ class Vault:
         self.ai_loaded = False
         self.rate_limiter = RateLimiter(max_attempts=30)
         self.cuid = conversation_user_id
-        self.fine_tuned_context_window = fine_tuned_context_window
+        self.model = model # your chosen defualt model
         self.all_models = get_all_models()
         if openai_key:
             openai.api_key = openai_key
@@ -94,6 +94,17 @@ class Vault:
             self.openai = OpenAIPlatform()
         self.groq = GroqPlatform(groq_key)
         self.anthropic = AnthropicPlatform(anthropic_key)
+        self.fine_tuned_context_window = 128000
+        self.main_prompt = main_prompt if main_prompt else "Question: {content}"
+        self.main_prompt_with_context = main_prompt_with_context if main_prompt_with_context else """Use the following Context to answer the Question at the end.
+    Answer as if you were the modern voice of the context, without referencing the context or mentioning
+    the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
+
+    Additional Context: {context}
+
+    Question: {content}
+    """    
+        self.personality_message = personality_message if personality_message else """Answer directly and be helpful"""
 
 
     def get_total_items(self, vault: str = None):
@@ -183,21 +194,28 @@ class Vault:
         Returns:
             LLMPlatform: The appropriate platform instance.
         """
+        client_kwargs = {
+            "fine_tuned_context_window": self.fine_tuned_context_window,
+            "main_prompt": self.main_prompt,
+            "main_prompt_with_context": self.main_prompt_with_context,
+            "personality_message": self.personality_message
+        }
+
         if model in self.anthropic.model_token_limits:
-            return LLMClient(self.anthropic, fine_tuned_context_window=self.fine_tuned_context_window)
+            return LLMClient(self.anthropic, **client_kwargs)
         elif model in self.groq.model_token_limits:
-            return LLMClient(self.groq, fine_tuned_context_window=self.fine_tuned_context_window)
+            return LLMClient(self.groq, **client_kwargs)
         elif model in self.openai.model_token_limits:
-            return LLMClient(self.openai, fine_tuned_context_window=self.fine_tuned_context_window)
+            return LLMClient(self.openai, **client_kwargs)
         else:
             print(f"Model '{model}' not found in any platform -> adding as a fine-tuned OpenAI model...")
             self.add_fine_tuned_model_to_platform(model)
-            return LLMClient(self.openai, fine_tuned_context_window=self.fine_tuned_context_window)
+            return LLMClient(self.openai, **client_kwargs)
 
 
     @property
     def ai(self):
-        self.load_ai()  
+        self.load_ai() 
         return self._ai
             
 
@@ -215,9 +233,12 @@ class Vault:
                 self._ai = self.get_client_from_model(model=self.all_models['default'])
 
             try: 
-                self._ai.main_prompt_with_context = self.fetch_custom_prompt()
-                self._ai.main_prompt = self.fetch_custom_prompt(context=False)
-                self._ai.personality_message = self.fetch_personality_message()
+                cstm_mn = self.main_prompt != self._ai.main_prompt
+                cstm_mnwc = self.main_prompt_with_context != self._ai.main_prompt_with_context
+                cstm_pm = self.personality_message != self._ai.personality_message
+                self._ai.main_prompt_with_context = self.main_prompt_with_context if cstm_mnwc else self.fetch_custom_prompt()
+                self._ai.main_prompt = self.main_prompt if cstm_mn else self.fetch_custom_prompt(context=False)
+                self._ai.personality_message = self.personality_message if cstm_pm else self.fetch_personality_message()
                 self._ai.set_prompts()
             except:
                 pass
@@ -1169,7 +1190,9 @@ class Vault:
             include_context_meta: bool = False, 
             custom_prompt: bool = False, 
             temperature: int = 0, 
-            timeout: int = 300
+            timeout: int = 300,
+            image_path: str = None,
+            image_url: str = None,
             ):
         '''
             Chat get response from OpenAI's ChatGPT. 
@@ -1214,57 +1237,73 @@ class Vault:
                 inputs = [0]
 
         response = ''
-        for segment in inputs:
-            attempts = 0
-            while True:
-                try:
-                    # Make API call
-                    if summary and not get_context:
-                        token_limit = self._ai.model_token_limits.get(model, 4000)
-                        total_tokens = self._ai.get_tokens(segment)
-                        response = ""
 
-                        for i in range(math.ceil(total_tokens / token_limit)):
-                            # Calculate start and end indices for the current chunk
-                            start_index = i * token_limit
-                            end_index = min((i + 1) * token_limit, total_tokens)
-                            # Extract the current chunk from the segment
-                            current_chunk = segment[start_index:end_index]
-                            # Process the current chunk and concatenate the response
-                            response += ' ' + self._ai.summarize(current_chunk, model=model, custom_prompt=custom_prompt, temperature=temperature)
-                            self.rate_limiter.on_success()
+        if image_path or image_url:
+            # Image inference logic
+            if self.verbose:
+                print("Performing image inference...")
 
-                    elif text and get_context and not summary:
-                        if smart_history_search:
-                            custom_entry = f"Using the current message, with the message history, what subject is the user is focused on. \nCurrent message: {text}. \n\nPrevious messages: {history}."
-                            search_input = self._ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
-                        else:
-                            search_input = segment + history if history_search else segment
-                            
-                        context = self.get_similar(search_input, n=n_context)
-                        input_ = str(context) if include_context_meta else ''
-                        for text in context:
-                            input_ += text['data']
+            response = self._ai.platform.image_inference(
+                image_path=image_path,
+                image_url=image_url,
+                user_text=text,
+                model=model,
+                temperature=temperature,
+                timeout=timeout
+            )
+            
+        else: 
+            for segment in inputs:
+                attempts = 0
+                while True:
+                    try:
+                        # Make API call
+                        if summary and not get_context:
+                            token_limit = self._ai.model_token_limit(model)
+                            total_tokens = self._ai.get_tokens(segment)
+                            response = ""
 
-                        response = self._ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
-                    else: # Custom prompt only
-                        if inputs[0] == 0:
-                            response = self._ai.llm(model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
-                        else:
-                            response = self._ai.llm(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
-                            
-                    # If the call is successful, reset the backoff
-                    self.rate_limiter.on_success()
-                    break
-                except Exception as e:
-                    # If the call fails, apply the backoff
-                    attempts += 1
-                    print(traceback.format_exc())
-                    print(f"API Error: {e}. Backing off for {self.rate_limiter.current_delay} seconds.")
-                    self.rate_limiter.on_failure()
-                    if attempts >= self.rate_limiter.max_attempts:
-                        print(f"API Failed too many times, exiting loop: {e}.")
+                            for i in range(math.ceil(total_tokens / token_limit)):
+                                # Calculate start and end indices for the current chunk
+                                start_index = i * token_limit
+                                end_index = min((i + 1) * token_limit, total_tokens)
+                                # Extract the current chunk from the segment
+                                current_chunk = segment[start_index:end_index]
+                                # Process the current chunk and concatenate the response
+                                response += ' ' + self._ai.summarize(current_chunk, model=model, custom_prompt=custom_prompt, temperature=temperature)
+                                self.rate_limiter.on_success()
+
+                        elif text and get_context and not summary:
+                            if smart_history_search:
+                                custom_entry = f"Using the current message, with the message history, what subject is the user is focused on. \nCurrent message: {text}. \n\nPrevious messages: {history}."
+                                search_input = self._ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
+                            else:
+                                search_input = segment + history if history_search else segment
+                                
+                            context = self.get_similar(search_input, n=n_context)
+                            input_ = str(context) if include_context_meta else ''
+                            for text in context:
+                                input_ += text['data']
+
+                            response = self._ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
+                        else: # Custom prompt only
+                            if inputs[0] == 0:
+                                response = self._ai.llm(model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
+                            else:
+                                response = self._ai.llm(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
+                                
+                        # If the call is successful, reset the backoff
+                        self.rate_limiter.on_success()
                         break
+                    except Exception as e:
+                        # If the call fails, apply the backoff
+                        attempts += 1
+                        print(traceback.format_exc())
+                        print(f"API Error: {e}. Backing off for {self.rate_limiter.current_delay} seconds.")
+                        self.rate_limiter.on_failure()
+                        if attempts >= self.rate_limiter.max_attempts:
+                            print(f"API Failed too many times, exiting loop: {e}.")
+                            break
 
         self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {response}') if self.cuid else None
         print("get chat time --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
@@ -1288,7 +1327,9 @@ class Vault:
             metatag_suffixes: bool = False, 
             custom_prompt: bool = False, 
             temperature: int = 0, 
-            timeout: int = 300
+            timeout: int = 300,
+            image_path: str = None,
+            image_url: str = None,
             ):
         '''
             Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream()
@@ -1326,99 +1367,117 @@ class Vault:
                 inputs = []
                 
         counter = 0
-        for segment in inputs:
-            start_time = time.time()
-            exceptions = 0
-            full_response = ''
-            while True:
-                try:
-                    if summary and not get_context:
-                        try:
-                            token_limit = self._ai.model_token_limits.get(model, 4000)
-                            total_tokens = self._ai.get_tokens(segment)
 
-                            for i in range(math.ceil(total_tokens / token_limit)):
-                                # Calculate start and end indices for the current chunk
-                                start_index = i * token_limit
-                                end_index = min((i + 1) * token_limit, total_tokens)
-                                # Extract the current chunk from the segment
-                                current_chunk = segment[start_index:end_index]
-                                # Process the current chunk and concatenate the response
-                                for word in self._ai.summarize_stream(current_chunk, model=model, custom_prompt=custom_prompt, temperature=temperature):
+        if image_path or image_url:
+            # Image inference logic
+            if self.verbose:
+                print("Performing image inference...")
+
+            for i in self._ai.platform.image_inference(
+                image_path=image_path,
+                image_url=image_url,
+                user_text=text,
+                model=model,
+                temperature=temperature,
+                timeout=timeout
+            ):
+                yield i
+            yield '!END'
+            
+        else: 
+            for segment in inputs:
+                start_time = time.time()
+                exceptions = 0
+                full_response = ''
+                while True:
+                    try:
+                        if summary and not get_context:
+                            try:
+                                token_limit = self._ai.model_token_limit(model)
+                                total_tokens = self._ai.get_tokens(segment)
+
+                                for i in range(math.ceil(total_tokens / token_limit)):
+                                    # Calculate start and end indices for the current chunk
+                                    start_index = i * token_limit
+                                    end_index = min((i + 1) * token_limit, total_tokens)
+                                    # Extract the current chunk from the segment
+                                    current_chunk = segment[start_index:end_index]
+                                    # Process the current chunk and concatenate the response
+                                    for word in self._ai.summarize_stream(current_chunk, model=model, custom_prompt=custom_prompt, temperature=temperature):
+                                        full_response += word
+                                        yield word
+                                    yield ' '
+
+                                self.rate_limiter.on_success()
+                            except Exception as e:
+                                raise e
+                            if counter == len(inputs):
+                                self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
+                                yield '!END'
+                                self.rate_limiter.on_success()
+                        
+                        elif text and get_context and not summary:
+                            if smart_history_search:
+                                custom_entry = f"Using the current message, with the message history, what is the user is focused on. \nCurrent message: {text}. \n\nPrevious messages: {history}."
+                                search_input = self._ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
+                            else:
+                                search_input = segment + history if history_search else segment
+                            
+                            context = self.get_similar(search_input, n=n_context)
+                            input_ = str(context) if include_context_meta else ''
+                            for text in context:
+                                input_ += text['data']
+
+                            try:
+                                for word in self._ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature):
                                     full_response += word
                                     yield word
-                                yield ' '
+                                self.rate_limiter.on_success()
+                            except Exception as e:
+                                raise e
 
-                            self.rate_limiter.on_success()
-                        except Exception as e:
-                            raise e
-                        if counter == len(inputs):
-                            self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
-                            yield '!END'
-                            self.rate_limiter.on_success()
-                    
-                    elif text and get_context and not summary:
-                        if smart_history_search:
-                            custom_entry = f"Using the current message, with the message history, what is the user is focused on. \nCurrent message: {text}. \n\nPrevious messages: {history}."
-                            search_input = self._ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
+                            if return_context:
+                                for item in context:
+                                    if not metatag:
+                                        for tag in item['metadata']:
+                                            yield str(item['metadata'][f'{tag}'])
+                                    else:
+                                        if metatag_prefixes:
+                                            if metatag_suffixes:
+                                                for i in range(len(metatag)):
+                                                    yield str(metatag_prefixes[i]) + str(item['metadata'][f'{metatag[i]}']) + str(metatag_suffixes[i])
+                                            else:
+                                                for i in range(len(metatag)):
+                                                    yield str(metatag_prefixes[i]) + str(item['metadata'][f'{metatag[i]}'])
+                                    yield item['data']
+                                self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
+                                yield '!END'
+                                self.rate_limiter.on_success()
+                            else:
+                                self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
+                                yield '!END'
+                                self.rate_limiter.on_success()
+
                         else:
-                            search_input = segment + history if history_search else segment
-                        
-                        context = self.get_similar(search_input, n=n_context)
-                        input_ = str(context) if include_context_meta else ''
-                        for text in context:
-                            input_ += text['data']
-
-                        try:
-                            for word in self._ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature):
-                                full_response += word
-                                yield word
-                            self.rate_limiter.on_success()
-                        except Exception as e:
-                            raise e
-
-                        if return_context:
-                            for item in context:
-                                if not metatag:
-                                    for tag in item['metadata']:
-                                        yield str(item['metadata'][f'{tag}'])
-                                else:
-                                    if metatag_prefixes:
-                                        if metatag_suffixes:
-                                            for i in range(len(metatag)):
-                                                yield str(metatag_prefixes[i]) + str(item['metadata'][f'{metatag[i]}']) + str(metatag_suffixes[i])
-                                        else:
-                                            for i in range(len(metatag)):
-                                                yield str(metatag_prefixes[i]) + str(item['metadata'][f'{metatag[i]}'])
-                                yield item['data']
+                            try:
+                                for word in self._ai.llm_stream(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature):
+                                    full_response += word
+                                    yield word
+                                self.rate_limiter.on_success()
+                            except Exception as e:
+                                raise e
                             self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
                             yield '!END'
-                            self.rate_limiter.on_success()
-                        else:
-                            self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
-                            yield '!END'
-                            self.rate_limiter.on_success()
 
-                    else:
-                        try:
-                            for word in self._ai.llm_stream(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature):
-                                full_response += word
-                                yield word
-                            self.rate_limiter.on_success()
-                        except Exception as e:
-                            raise e
-                        self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
-                        yield '!END'
-
-                    self.rate_limiter.on_success()
-                    break
-                except Exception as e:
-                    exceptions += 1
-                    print(f"API Error: {e}. Applying backoff.")
-                    self.rate_limiter.on_failure()
-                    if exceptions >= self.rate_limiter.max_attempts:
-                        print(f"API Failed too many times, exiting loop: {e}.")
+                        self.rate_limiter.on_success()
                         break
+                    except Exception as e:
+                        exceptions += 1
+                        print(f"API Error: {e}. Applying backoff.")
+                        self.rate_limiter.on_failure()
+                        if exceptions >= self.rate_limiter.max_attempts:
+                            print(f"API Failed too many times, exiting loop: {e}.")
+                            break
             
         print("get chat time --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
             
@@ -1589,8 +1648,7 @@ class Vault:
             vault = self.vault if not vault else vault,
             conversation_user_id = self.cuid,
             )
-
-
+        
 class RateLimiter:
     def __init__(self, max_attempts=30):
         self.base_delay = 1  # Base delay of 1 second

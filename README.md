@@ -2,7 +2,7 @@
 
 ![Vector Vault Header](https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/297fde6c-f5b4-4076-83bc-81dcfdbffebe/Vector+Vault+Header+5000.jpg)
 
-Vector Vault is a cutting-edge, cloud-native and RAG-native vector database solution that revolutionizes AI integration in applications. Our platform seamlessly combines vector databases, similarity search, and AI model interactions into a single, easy-to-use service.
+Vector Vault is a cutting-edge, cloud-native and RAG-native vector database solution that revolutionizes AI integration in applications. Our platform seamlessly combines vector databases, similarity search, and AI model interactions into a single, easy-to-use service. See our [full docs](https://github.com/John-Rood/VectorVault/tree/main/fulldocs.md) or our [JS repo](https://github.com/John-Rood/VectorVault-js) for more information.
 
 ## Key Features
 

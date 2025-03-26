@@ -263,8 +263,7 @@ class Vault:
             if self.ai_loaded:
                 personality_message = self._ai.personality_message
             else: # only when called externally in some situations
-                self.load_ai()
-                personality_message = self._ai.personality_message
+                personality_message = self.personality_message
                 
         return personality_message
     
@@ -291,7 +290,7 @@ class Vault:
                 prompt = self._ai.main_prompt_with_context if context else self._ai.prompt
             else: # only when called externally in some situations
                 self.load_ai()
-                prompt = self._ai.main_prompt_with_context if context else self._ai.prompt
+                prompt = self.main_prompt_with_context if context else self.main_prompt
             
         return prompt
 

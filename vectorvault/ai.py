@@ -487,11 +487,11 @@ class AnthropicPlatform(LLMPlatform):
             'claude-3-5-sonnet-latest': 200000,
             'claude-3-5-haiku-20241022': 200000,
             'claude-3-5-haiku-latest': 200000,
-            'default': 'claude-3-5-sonnet-latest'
+            'default': 'claude-3-7-sonnet-latest'
         }
         self.front_model_token_limits = {
-            'claude-3-5-sonnet-latest': 200000,
-            'default': 'claude-3-5-sonnet-20241022'
+            'claude-3-7-sonnet-latest': 200000,
+            'default': 'claude-3-7-sonnet-20241022'
         }
         self.default_model = self.model_token_limits['default']
 

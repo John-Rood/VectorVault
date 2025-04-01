@@ -27,7 +27,7 @@ from threading import Thread as T
 from datetime import datetime, timedelta
 from typing import List, Union
 from .ai import openai, OpenAIPlatform, AnthropicPlatform, GroqPlatform, LLMClient, get_all_models
-from .cloud_api import call_cloud_save, run_flow, run_flow_stream
+from .cloud_api import call_cloud_save, run_flow, run_flow_stream, run_flow_resume
 from .cloudmanager import CloudManager, as_completed, ThreadPoolExecutor
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement, load_json
 
@@ -1626,7 +1626,20 @@ class Vault:
         return history
     
 
-    def run_flow(self, flow_name, message, history: str = '', vault = None):
+    def run_flow(self, flow_name, message, history: str = '', vault = None, 
+                 parent_save_state_id = None, run_flow_var_name = None):
+        """
+        Returns response from a flow execution.
+        
+        Args:
+            flow_name: Name of the flow to execute
+            message: Message to send to the flow
+            history: Previous conversation history
+            vault: Custom vault to use (defaults to self.vault)
+            
+        Returns:
+            Full response from the flow execution
+        """
         return run_flow(
             user = self.user,
             api_key=self.api,
@@ -1635,19 +1648,68 @@ class Vault:
             history=history,
             vault = self.vault if not vault else vault,
             conversation_user_id = self.cuid,
-            )
-
-    def stream_flow(self, flow_name, message, history: str = '', vault = None):
-        yield run_flow_stream(
-            user = self.user,
-            api_key=self.api,
-            flow_name=flow_name,
-            message=message,
-            history=history,
-            vault = self.vault if not vault else vault,
-            conversation_user_id = self.cuid,
+            parent_save_state_id = parent_save_state_id,
+            run_flow_var_name = run_flow_var_name
             )
         
+    def stream_flow(self, flow_name, message, history: str = '', vault = None, 
+                    parent_save_state_id = None, run_flow_var_name = None):
+        """
+        Streams response from a flow execution.
+        
+        Args:
+            flow_name: Name of the flow to execute
+            message: Message to send to the flow
+            history: Previous conversation history
+            vault: Custom vault to use (defaults to self.vault)
+            
+        Yields:
+            Stream events from the flow execution
+        """
+        # Get the generator from run_flow_stream
+        stream_generator = run_flow_stream(
+            user = self.user,
+            api_key = self.api,
+            flow_name = flow_name,
+            message = message,
+            history = history,
+            vault = self.vault if not vault else vault,
+            conversation_user_id = self.cuid,
+            parent_save_state_id = parent_save_state_id,
+            run_flow_var_name = run_flow_var_name
+        )
+        
+        # Yield each event from the generator
+        for event in stream_generator:
+            yield event
+        
+
+    def run_flow_resume(self, response_data, save_state_id):
+        """
+        Streams response from a saved flow state.
+        
+        Args:
+            flow_name: Name of the flow to execute
+            message: Message to send to the flow
+            history: Previous conversation history
+            vault: Custom vault to use (defaults to self.vault)
+            
+        Yields:
+            Stream events from the flow execution
+        """
+        # Get the generator from run_flow_stream
+        stream_generator = run_flow_resume(
+            user = self.user,
+            api_key = self.api,
+            response_data = response_data,
+            save_state_id = save_state_id,
+        )
+        
+        # Yield each event from the generator
+        for event in stream_generator:
+            yield event
+
+
 class RateLimiter:
     def __init__(self, max_attempts=30):
         self.base_delay = 1  # Base delay of 1 second

@@ -295,55 +295,6 @@ def run_flow_stream(user, api_key, flow_name, message, history='', vault='home',
         print(f"Error during run_flow_stream: {e}")
         yield f"error: {str(e)}"
 
-def run_flow_resume(user, api_key, response_data, save_state_id):
-    access_token = get_access_token(user, api_key)
-
-    url = f"{API_BASE_URL}/flow-stream-resume"
-    payload = {
-        "response_data": response_data,
-        "save_state_id": save_state_id,
-    }
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {access_token}"
-    }
-    
-    try:
-        with requests.post(url, json=payload, headers=headers, stream=True) as response:
-            response.raise_for_status()
-            for line in response.iter_lines():
-                if line:
-                    decoded_line = line.decode('utf-8')
-                    yield decoded_line
-                            
-    except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 401:
-            # Attempt token refresh
-            if refresh_access_token(user, api_key):
-                # Retry streaming request with new token
-                headers["Authorization"] = f"Bearer {access_token}"
-                
-                try:
-                    with requests.post(url, json=payload, headers=headers, stream=True) as response:
-                        response.raise_for_status()
-                        for line in response.iter_lines():
-                            if line:
-                                decoded_line = line.decode('utf-8')
-                                yield decoded_line
-                                        
-                except requests.exceptions.RequestException as e2:
-                    print(f"Error during second run_flow_stream attempt: {e2}")
-                    yield f"error: {str(e2)}"
-            else:
-                print("Failed to refresh token or re-login.")
-                yield "error: Failed to refresh token or re-login."
-        else:
-            print(f"Error during run_flow_stream: {e}")
-            yield f"error: {str(e)}"
-    except requests.exceptions.RequestException as e:
-        print(f"Error during run_flow_stream: {e}")
-        yield f"error: {str(e)}"
-
 def get_access_token(user, api_key):
     global access_token
     # Authenticate if needed

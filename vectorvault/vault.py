@@ -27,7 +27,7 @@ from threading import Thread as T
 from datetime import datetime, timedelta
 from typing import List, Union
 from .ai import openai, OpenAIPlatform, AnthropicPlatform, GroqPlatform, LLMClient, get_all_models
-from .cloud_api import call_cloud_save, run_flow, run_flow_stream, run_flow_resume
+from .cloud_api import call_cloud_save, run_flow, run_flow_stream
 from .cloudmanager import CloudManager, as_completed, ThreadPoolExecutor
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement, load_json
 
@@ -1683,32 +1683,6 @@ class Vault:
         for event in stream_generator:
             yield event
         
-
-    def run_flow_resume(self, response_data, save_state_id):
-        """
-        Streams response from a saved flow state.
-        
-        Args:
-            flow_name: Name of the flow to execute
-            message: Message to send to the flow
-            history: Previous conversation history
-            vault: Custom vault to use (defaults to self.vault)
-            
-        Yields:
-            Stream events from the flow execution
-        """
-        # Get the generator from run_flow_stream
-        stream_generator = run_flow_resume(
-            user = self.user,
-            api_key = self.api,
-            response_data = response_data,
-            save_state_id = save_state_id,
-        )
-        
-        # Yield each event from the generator
-        for event in stream_generator:
-            yield event
-
 
 class RateLimiter:
     def __init__(self, max_attempts=30):

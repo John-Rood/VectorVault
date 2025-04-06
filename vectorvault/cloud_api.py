@@ -191,8 +191,8 @@ def call_cloud_save(user, api_key, vault, embeddings_model, text, meta=None, nam
         return None
 
 
-def run_flow(user, api_key, flow_name, message, history='', vault='home', conversation_user_id=None, 
-             parent_save_state_id=None, run_flow_var_name=None):
+def run_flow(user, api_key, flow_name, message, history='', conversation_user_id=None, 
+             parent_save_state_id=None, run_flow_var_name=None, session_id = None):
     access_token = get_access_token(user, api_key)
 
     url = f"{API_BASE_URL}/flow"
@@ -200,10 +200,10 @@ def run_flow(user, api_key, flow_name, message, history='', vault='home', conver
         "flow_id": flow_name,
         "message": message,
         "history": history,
-        "vault": vault,
         "conversation_user_id": conversation_user_id,
         'parent_save_state_id': parent_save_state_id, 
         'run_flow_var_name': run_flow_var_name, 
+        'session_id': session_id, 
     }
     headers = {
         "Content-Type": "application/json",
@@ -240,8 +240,8 @@ def run_flow(user, api_key, flow_name, message, history='', vault='home', conver
         return None
 
 
-def run_flow_stream(user, api_key, flow_name, message, history='', vault='home', conversation_user_id=None, 
-                   parent_save_state_id=None, run_flow_var_name=None):
+def run_flow_stream(user, api_key, flow_name, message, history='', conversation_user_id=None, 
+                   parent_save_state_id=None, run_flow_var_name=None, session_id=None):
     access_token = get_access_token(user, api_key)
 
     url = f"{API_BASE_URL}/flow-stream"
@@ -249,10 +249,10 @@ def run_flow_stream(user, api_key, flow_name, message, history='', vault='home',
         "flow_id": flow_name,
         "message": message,
         "history": history,
-        "vault": vault,
         "conversation_user_id": conversation_user_id,
         'parent_save_state_id': parent_save_state_id, 
         'run_flow_var_name': run_flow_var_name, 
+        'session_id': session_id, 
     }
     headers = {
         "Content-Type": "application/json",

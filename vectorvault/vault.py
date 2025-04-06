@@ -28,7 +28,7 @@ from datetime import datetime, timedelta
 from typing import List, Union
 from .ai import openai, OpenAIPlatform, AnthropicPlatform, GroqPlatform, LLMClient, get_all_models
 from .cloud_api import call_cloud_save, run_flow, run_flow_stream
-from .cloudmanager import CloudManager, as_completed, ThreadPoolExecutor
+from .cloudmanager import CloudManager, VaultStorageManager, as_completed, ThreadPoolExecutor
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement, load_json
 
 
@@ -71,6 +71,7 @@ class Vault:
         self.embeddings_model = embeddings_model if embeddings_model else 'text-embedding-3-small'
         self.dims = 1536 if embeddings_model != 'text-embedding-3-large' else 3072
         self.cloud_manager = CloudManager(self.user, self.api, self.vault)
+        self.storage = VaultStorageManager(self.vault, self.cloud_manager)
         print(f'Connected vault: {self.vault}') if self.verbose else 0
         self.vectors = get_vectors(self.dims)
         self.x = 0
@@ -91,7 +92,7 @@ class Vault:
         if openai_key:
             openai.api_key = openai_key
             self.openai_key = openai_key
-            self.openai = OpenAIPlatform()
+        self.openai = OpenAIPlatform()
         self.groq = GroqPlatform(groq_key)
         self.anthropic = AnthropicPlatform(anthropic_key)
         self.fine_tuned_context_window = 128000
@@ -1626,8 +1627,8 @@ class Vault:
         return history
     
 
-    def run_flow(self, flow_name, message, history: str = '', vault = None, 
-                 parent_save_state_id = None, run_flow_var_name = None):
+    def run_flow(self, flow_name, message, history: str = '', parent_save_state_id = None, 
+                 run_flow_var_name = None, session_id = None):
         """
         Returns response from a flow execution.
         
@@ -1646,14 +1647,14 @@ class Vault:
             flow_name=flow_name,
             message=message,
             history=history,
-            vault = self.vault if not vault else vault,
             conversation_user_id = self.cuid,
             parent_save_state_id = parent_save_state_id,
-            run_flow_var_name = run_flow_var_name
+            run_flow_var_name = run_flow_var_name,
+            session_id = session_id
             )
         
-    def stream_flow(self, flow_name, message, history: str = '', vault = None, 
-                    parent_save_state_id = None, run_flow_var_name = None):
+    def stream_flow(self, flow_name, message, history: str = '', parent_save_state_id = None, 
+                    run_flow_var_name = None, session_id = None):
         """
         Streams response from a flow execution.
         
@@ -1673,16 +1674,55 @@ class Vault:
             flow_name = flow_name,
             message = message,
             history = history,
-            vault = self.vault if not vault else vault,
             conversation_user_id = self.cuid,
             parent_save_state_id = parent_save_state_id,
-            run_flow_var_name = run_flow_var_name
+            run_flow_var_name = run_flow_var_name,
+            session_id = session_id
         )
         
         # Yield each event from the generator
         for event in stream_generator:
             yield event
         
+    
+    def create_storage_dir(self, path: str) -> None:
+        """
+        Creates a directory at the given path.
+        """
+        self.storage.create_directory(path)
+
+    def create_storage_item(self, path: str, value: str) -> None:
+        """
+        Creates a new item (file) at the given path with 'value' as its content.
+        """
+        self.storage.create_item(path, value)
+
+    def list_storage_labels(self, path: str = None) -> list[dict]:
+        """
+        Lists all items and directories under 'path'.
+        Returns a list of dicts, each dict containing 'name' and 'type' ('directory' or 'item').
+        """
+        return self.storage.list_labels(path)
+
+    def get_storage_item(self, path: str) -> str:
+        """
+        Retrieves the text value of an existing item at 'path'.
+        """
+        return self.storage.get_item(path)
+
+    def update_storage_item(self, path: str, new_value: str) -> None:
+        """
+        Overwrites the content of an existing item at 'path' with 'new_value'.
+        """
+        self.storage.update_item(path, new_value)
+
+    def delete_storage_dir(self, path: str) -> None:
+        """
+        Deletes the specified path (either an item or an entire directory).
+        If it's a directory, deletes everything within it recursively.
+        """
+        self.storage.delete_label(path)
+
 
 class RateLimiter:
     def __init__(self, max_attempts=30):

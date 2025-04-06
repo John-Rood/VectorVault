@@ -177,3 +177,129 @@ class CloudManager:
         item_path = self.cloud_name(self.vault, uuid, self.user, self.api, item=True)
         blob = self.cloud.blob(item_path)
         return blob.exists(self.storage_client)
+        
+    def upload_text_to_cloud(self, path, text):
+        self.upload_to_cloud(path, text)
+
+    def list_objects(self, prefix):
+        blobs = self.cloud.list_blobs(prefix=prefix)
+        return [blob.name for blob in blobs]
+
+    
+
+class VaultStorageManager:
+    """
+    A manager class to handle creation and retrieval of directories and items in the vault.
+    """
+
+    def __init__(self, vault: str, cloud_manager):
+        self.vault = vault + '/storage'
+        self.cloud_manager = cloud_manager
+
+    def create_directory(self, path: str) -> None:
+        """
+        Creates an empty 'directory marker' or a way to denote a folder at 'path'.
+        Implementation depends on how your cloud_manager represents directories.
+        For example, you might create a special marker file named ".directory" to
+        indicate that this path is a folder.
+        """
+        directory_marker_path = f"{self.vault}/{path}/.directory"
+        # Option 1: Just upload an empty file to mark it as a directory
+        self.cloud_manager.upload_text_to_cloud(directory_marker_path, "")
+    
+    def create_item(self, path: str, value: str) -> None:
+        """
+        Creates an item at the given path with the provided value.
+        If the path already exists as a directory, raise an error or handle accordingly.
+        """
+        item_path = f"{self.vault}/{path}"
+        self.cloud_manager.upload_text_to_cloud(item_path, value)
+    
+    def list_labels(self, path: str = None) -> list[dict]:
+        """
+        Lists all items and sub-directories under the given path.
+        Automatically detects directories based on common prefixes.
+        """
+        base_path = f"{self.vault}"
+        if path:
+            base_path = f"{base_path}/{path}"
+        
+        # Ensure the base path ends with a slash for proper prefix matching
+        if not base_path.endswith('/'):
+            base_path += '/'
+        
+        # Get all objects with this prefix
+        all_objects = self.cloud_manager.list_objects(base_path)
+        
+        # Process results to find immediate children
+        result = []  # Use a list instead of a set
+        directories = set()  # Set is fine for strings
+        
+        for obj_path in all_objects:
+            # Skip the base path itself
+            if obj_path == base_path:
+                continue
+                
+            # Remove the base path to get the relative path
+            rel_path = obj_path[len(base_path):]
+            
+            # If it contains a slash, it's in a subdirectory
+            if '/' in rel_path:
+                # The first segment is a directory
+                dir_name = rel_path.split('/')[0]
+                directories.add(dir_name)
+            else:
+                # It's an immediate item in this directory
+                result.append({"name": rel_path, "type": "item"})
+        
+        # Add all identified directories
+        for dir_name in directories:
+            # Check if this directory is already in the result
+            if not any(item.get("name") == dir_name and item.get("type") == "directory" for item in result):
+                result.append({"name": dir_name, "type": "directory"})
+        
+        # Sort the result
+        return sorted(result, key=lambda x: x["name"])
+
+    def get_item(self, path: str) -> str:
+        """
+        Retrieves item text from the path. If the path is a directory, raise an error or return None.
+        """
+        item_path = f"{self.vault}/{path}"
+        value = self.cloud_manager.download_text_from_cloud(item_path)
+        return value
+
+    def update_item(self, path: str, new_value: str) -> None:
+        """
+        Overwrites existing item content. If path is a directory, handle error or do nothing.
+        """
+        item_path = f"{self.vault}/{path}"
+        self.cloud_manager.upload_text_to_cloud(item_path, new_value)
+
+    def delete_label(self, path: str) -> None:
+        """
+        Deletes a directory (recursively) or a single item, depending on what's at path.
+        If there's a .directory marker, remove everything under it. If it's a single file, remove just that file.
+        """
+        base_path = f"{self.vault}/{path}"
+        
+        # Check if it's an item or directory by listing objects
+        objects_to_delete = self.cloud_manager.list_objects(base_path)
+
+        if not objects_to_delete:
+            # Possibly no object, means maybe it's a single file
+            # Attempt single-file delete
+            blob = self.cloud_manager.cloud.blob(base_path)
+            if blob.exists(self.cloud_manager.storage_client):
+                self.cloud_manager.delete_blob(blob)
+        else:
+            # If we have multiple objects, it's definitely a directory
+            for obj_path in objects_to_delete:
+                blob = self.cloud_manager.cloud.blob(obj_path)
+                if blob.exists(self.cloud_manager.storage_client):
+                    self.cloud_manager.delete_blob(blob)
+            
+            # Also delete the directory marker
+            marker_blob = self.cloud_manager.cloud.blob(base_path + "/.directory")
+            if marker_blob.exists(self.cloud_manager.storage_client):
+                self.cloud_manager.delete_blob(marker_blob)

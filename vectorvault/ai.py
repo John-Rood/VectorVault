@@ -14,6 +14,7 @@ def get_all_models(namespaced=False):
     platforms = [
         ('openai', OpenAIPlatform()),
         ('groq', GroqPlatform()),
+        ('grok', GrokPlatform()),
         ('anthropic', AnthropicPlatform()),
     ]
     all_models = {}
@@ -30,6 +31,7 @@ def get_front_models(namespaced=False):
     platforms = [
         ('openai', OpenAIPlatform()),
         ('groq', GroqPlatform()),
+        ('grok', GrokPlatform()),
         ('anthropic', AnthropicPlatform()),
     ]
     front_models = {}
@@ -476,6 +478,183 @@ class GroqPlatform(LLMPlatform):
         """
         raise NotImplementedError("GroqPlatform does not currently support image inference.")
     
+
+###############################################################################
+#                            Grok (xAI) Platform                              #
+###############################################################################
+class GrokPlatform(LLMPlatform):
+    def __init__(self, api_key=None):
+        # The real client object from the OpenAI library, pointing to xAI's base URL:
+        if api_key is not None:
+            self.client = openai.OpenAI(
+                api_key=api_key,
+                base_url="https://api.x.ai/v1",
+            )
+
+        # Example model token limits for xAI Grok (adjust as needed)
+        self.model_token_limits = {
+            "grok-3-latest": 16000,
+            "grok-3-beta": 16000,
+            "grok-3-fast-beta": 16000,
+            "grok-3-mini-beta": 8000,
+            "grok-2-vision-latest": 16000,
+            "default": "grok-3-latest",
+        }
+        self.front_model_token_limits = {
+            "grok-3-latest": 16000,
+            "grok-3-beta": 16000,
+            "grok-3-fast-beta": 16000,
+            "grok-3-mini-beta": 8000,
+            "grok-2-vision-latest": 16000,
+            "default": "grok-3-latest",
+        }
+
+        self.default_model = self.model_token_limits["default"]
+
+    def make_call(self, messages, model, temperature=None, timeout=None):
+        """
+        Non-streaming call to xAI /v1/chat/completions 
+        using the `OpenAI` client set to base_url="https://api.x.ai/v1".
+        """
+        def call_api(response_queue):
+            try:
+                params = {
+                    "model": model,
+                    "messages": messages,
+                }
+                # If you need temperature:
+                if temperature is not None:
+                    params["temperature"] = temperature
+
+                response = self.client.chat.completions.create(**params)
+                # xAI returns a structure similar to OpenAI’s
+                response_queue.put(response.choices[0].message.content)
+            except Exception as e:
+                response_queue.put(e)
+
+        response_queue = queue.Queue()
+        api_thread = threading.Thread(target=call_api, args=(response_queue,))
+        api_thread.start()
+        try:
+            # Wait for the response up to `timeout` seconds
+            return response_queue.get(timeout=timeout)
+        except queue.Empty:
+            print("Request timed out")
+            return None
+
+    def stream_call(self, messages, model, temperature=None, timeout=None):
+        """
+        Streaming call to xAI /v1/chat/completions 
+        with "stream": True.
+        """
+        def call_api():
+            try:
+                params = {
+                    "model": model,
+                    "messages": messages,
+                    "stream": True,  # enable streaming
+                }
+                
+                response = self.client.chat.completions.create(**params)
+                for chunk in response:
+                    yield chunk.choices[0].delta.content
+            except Exception as e:
+                yield str(e)
+
+        return call_api()
+
+    def get_tokens(self, string: str, encoding_name: str = None) -> int:
+        """
+        Naive fallback: approximate token count by len(string)/4.
+        """
+        return round(len(string) / 4)
+
+    def text_to_speech(self, text, model="default", voice="default"):
+        # xAI/Grok does not mention TTS; implement if the API supports it.
+        pass
+
+    def transcribe_audio(self, file, model="default"):
+        # xAI/Grok does not mention audio transcription; implement if the API supports it.
+        pass
+
+    def model_check(self, token_count, model):
+        """
+        If the requested model can't handle the token_count,
+        switch to the smallest model that can, else default.
+        """
+        if model not in self.model_token_limits:
+            return model
+        suitable_models = {
+            m_name: limit
+            for m_name, limit in self.model_token_limits.items()
+            if isinstance(limit, int) and limit >= token_count
+        }
+        if model in suitable_models:
+            return model
+        else:
+            if suitable_models:
+                new_model = min(suitable_models, key=suitable_models.get)
+                print('model switch from model:', model, 'to model:', new_model)
+                return new_model
+            else:
+                return self.model_token_limits['default']
+
+    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, timeout=None):
+        """
+        For vision-capable models like "grok-2-vision-latest", we can send:
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": <URL>, "detail": "high"}
+                    },
+                    {
+                        "type": "text",
+                        "text": "Describe what's in this image."
+                    }
+                ]
+            }
+        ]
+        """
+        model = model if model else self.default_model
+        if not image_path and not image_url:
+            raise ValueError("Must specify either image_path or image_url.")
+
+        # Build the "content" array
+        if image_path:
+            with open(image_path, "rb") as f:
+                data = base64.b64encode(f.read()).decode("utf-8")
+            image_payload = {
+                "type": "image_url",
+                "image_url": {
+                    # xAI typically expects a real URL, but can handle base64 data:
+                    "url": f"data:image/png;base64,{data}",
+                    "detail": "high"
+                }
+            }
+        else:
+            image_payload = {
+                "type": "image_url",
+                "image_url": {
+                    "url": image_url,
+                    "detail": "high"
+                }
+            }
+
+        content = [
+            image_payload,
+            {
+                "type": "text",
+                "text": user_text if user_text else "Describe this image."
+            }
+        ]
+
+        messages = [{"role": "user", "content": content}]
+        return self.make_call(messages, model=model, temperature=0, timeout=timeout)
+
+
 # Anthropic (Claude) Platform Implementation
 class AnthropicPlatform(LLMPlatform):
     def __init__(self, api_key=None):
@@ -629,7 +808,7 @@ class AnthropicPlatform(LLMPlatform):
         else:
             return self.make_call(messages, model, temperature, timeout=timeout)
 
-                
+
 
 # LLM Client that uses the platform-agnostic interface
 class LLMClient:

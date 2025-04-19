@@ -192,7 +192,8 @@ def call_cloud_save(user, api_key, vault, embeddings_model, text, meta=None, nam
 
 
 def run_flow(user, api_key, flow_name, message, history='', conversation_user_id=None, 
-             parent_save_state_id=None, run_flow_var_name=None, session_id = None):
+             parent_save_state_id=None, run_flow_var_name=None, session_id = None, invoke_method = None,
+             internal_vars = None):
     access_token = get_access_token(user, api_key)
 
     url = f"{API_BASE_URL}/flow"
@@ -204,6 +205,8 @@ def run_flow(user, api_key, flow_name, message, history='', conversation_user_id
         'parent_save_state_id': parent_save_state_id, 
         'run_flow_var_name': run_flow_var_name, 
         'session_id': session_id, 
+        'invoke_method': invoke_method, 
+        'internal_vars': internal_vars, 
     }
     headers = {
         "Content-Type": "application/json",
@@ -241,7 +244,8 @@ def run_flow(user, api_key, flow_name, message, history='', conversation_user_id
 
 
 def run_flow_stream(user, api_key, flow_name, message, history='', conversation_user_id=None, 
-                   parent_save_state_id=None, run_flow_var_name=None, session_id=None):
+                   parent_save_state_id=None, run_flow_var_name=None, session_id=None, invoke_method = None,
+                   internal_vars = None):
     access_token = get_access_token(user, api_key)
 
     url = f"{API_BASE_URL}/flow-stream"
@@ -253,6 +257,8 @@ def run_flow_stream(user, api_key, flow_name, message, history='', conversation_
         'parent_save_state_id': parent_save_state_id, 
         'run_flow_var_name': run_flow_var_name, 
         'session_id': session_id, 
+        'invoke_method': invoke_method, 
+        'internal_vars': internal_vars, 
     }
     headers = {
         "Content-Type": "application/json",

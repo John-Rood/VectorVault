@@ -26,7 +26,7 @@ import random
 from threading import Thread as T
 from datetime import datetime, timedelta
 from typing import List, Union
-from .ai import openai, OpenAIPlatform, AnthropicPlatform, GroqPlatform, LLMClient, get_all_models
+from .ai import openai, OpenAIPlatform, AnthropicPlatform, GroqPlatform, GrokPlatform, LLMClient, get_all_models
 from .cloud_api import call_cloud_save, run_flow, run_flow_stream
 from .cloudmanager import CloudManager, VaultStorageManager, as_completed, ThreadPoolExecutor
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement, load_json
@@ -35,7 +35,7 @@ from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cl
 class Vault:
     def __init__(self, user: str = None, api_key: str = None, openai_key: str = None, vault: str = None, 
                  embeddings_model: str = None, verbose: bool = False, conversation_user_id: str = None, 
-                 model = None, groq_key: str = None, anthropic_key: str = None,
+                 model = None, groq_key: str = None, grok_key: str = None, anthropic_key: str = None,
                  main_prompt = None, main_prompt_with_context = None, personality_message = None):
         ''' 
         >>> Create a vector database instance:
@@ -94,6 +94,7 @@ class Vault:
             self.openai_key = openai_key
         self.openai = OpenAIPlatform()
         self.groq = GroqPlatform(groq_key)
+        self.grok = GrokPlatform(grok_key)
         self.anthropic = AnthropicPlatform(anthropic_key)
         self.fine_tuned_context_window = 128000
         self.main_prompt = main_prompt if main_prompt else "Question: {content}"
@@ -163,13 +164,15 @@ class Vault:
 
         Args:
             model_name (str): The name of the fine-tuned model.
-            platform (str): The target platform ('openai', 'groq', 'anthropic', 'deepseek').
+            platform (str): The target platform ('openai', 'groq', 'grok', 'anthropic', 'deepseek').
             token_limit (int): The token limit for the fine-tuned model.
         """
         if platform == 'openai':
             platform_instance = self.openai
         elif platform == 'groq':
             platform_instance = self.groq
+        elif platform == 'grok':
+            platform_instance = self.grok
         elif platform == 'anthropic':
             platform_instance = self.anthropic
         elif platform == 'deepseek':
@@ -206,6 +209,8 @@ class Vault:
             return LLMClient(self.anthropic, **client_kwargs)
         elif model in self.groq.model_token_limits:
             return LLMClient(self.groq, **client_kwargs)
+        elif model in self.grok.model_token_limits:
+            return LLMClient(self.grok, **client_kwargs)
         elif model in self.openai.model_token_limits:
             return LLMClient(self.openai, **client_kwargs)
         else:
@@ -1628,7 +1633,8 @@ class Vault:
     
 
     def run_flow(self, flow_name, message, history: str = '', parent_save_state_id = None, 
-                 run_flow_var_name = None, session_id = None):
+                 run_flow_var_name = None, session_id = None, invoke_method = None, 
+                 internal_vars: dict = None):
         """
         Returns response from a flow execution.
         
@@ -1650,11 +1656,14 @@ class Vault:
             conversation_user_id = self.cuid,
             parent_save_state_id = parent_save_state_id,
             run_flow_var_name = run_flow_var_name,
-            session_id = session_id
+            session_id = session_id,
+            invoke_method = invoke_method,
+            internal_vars = internal_vars
             )
         
     def stream_flow(self, flow_name, message, history: str = '', parent_save_state_id = None, 
-                    run_flow_var_name = None, session_id = None):
+                    run_flow_var_name = None, session_id = None, invoke_method = None, 
+                    internal_vars: dict = None):
         """
         Streams response from a flow execution.
         
@@ -1677,7 +1686,9 @@ class Vault:
             conversation_user_id = self.cuid,
             parent_save_state_id = parent_save_state_id,
             run_flow_var_name = run_flow_var_name,
-            session_id = session_id
+            session_id = session_id,
+            invoke_method = invoke_method,
+            internal_vars = internal_vars
         )
         
         # Yield each event from the generator

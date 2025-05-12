@@ -174,37 +174,30 @@ class LLMPlatform(ABC):
 class OpenAIPlatform(LLMPlatform):
     def __init__(self):
         self.model_token_limits = {
-            'gpt-4.5-preview': 128000,
-            'gpt-4.5-preview-2025-02-27': 128000,
             'o1': 200000,
-            'o1-2024-12-17': 200000,
             'o1-mini': 128000,
-            'o1-preview-2024-09-12': 128000,
-            'o1-mini-2024-09-12': 128000,
-            'o3-mini': 200000,
-            'o3-mini-2025-01-31': 200000,
-            'gpt-4-turbo': 128000,
+            'o3': 200000,
+            'o3-mini': 128000,
+            'o4-mini': 200000,
+            'gpt-4.1': 1000000,
+            'gpt-4.1-nano': 1000000,
             'gpt-4o-mini': 128000,
             'gpt-4o': 128000,
-            'gpt-4o-2024-08-06': 128000,
-            'gpt-4-turbo-preview': 128000,
-            'gpt-4-1106-preview': 128000,
-            'gpt-4-0125-preview': 128000,
-            'gpt-4-0314': 8000,
-            'gpt-4-0613': 8000,
-            'gpt-4': 8000,
+            'gpt-4o-audio-preview': 128000,
+            'chatgpt-4o-latest': 128000,
             'gpt-3.5-turbo': 16000,
-            'gpt-3.5-turbo-0125': 16000,
-            'default': 'gpt-4o'
+            'default': 'gpt-4.1'
         }
         self.front_model_token_limits = {
-            'o1': 128000,
+            'o3': 200000,
             'o3-mini': 128000,
-            'o1-mini': 128000,
-            'gpt-4.5-preview': 128000,
-            'gpt-4o-mini': 128000,
+            'o4-mini': 200000,
+            'gpt-4.1': 1000000,
+            'gpt-4.1-nano': 1000000,
             'gpt-4o': 128000,
-            'default': 'gpt-4o'
+            'gpt-3.5-turbo': 16000,
+            'chatgpt-4o-latest': 128000,
+            'default': 'gpt-4.1'
         }
         self.img_capable = [
             'o1', 'gpt-4o', 'gpt-4o-mini',

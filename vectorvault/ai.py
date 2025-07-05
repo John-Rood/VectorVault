@@ -177,6 +177,7 @@ class OpenAIPlatform(LLMPlatform):
             'o1': 200000,
             'o1-mini': 128000,
             'o3': 200000,
+            'o3-pro': 200000,
             'o3-mini': 128000,
             'o4-mini': 200000,
             'gpt-4.1': 1000000,
@@ -186,10 +187,11 @@ class OpenAIPlatform(LLMPlatform):
             'gpt-4o-audio-preview': 128000,
             'chatgpt-4o-latest': 128000,
             'gpt-3.5-turbo': 16000,
-            'default': 'gpt-4.1'
+            'default': 'chatgpt-4o-latest'
         }
         self.front_model_token_limits = {
             'o3': 200000,
+            'o3-pro': 200000,
             'o3-mini': 128000,
             'o4-mini': 200000,
             'gpt-4.1': 1000000,
@@ -197,7 +199,7 @@ class OpenAIPlatform(LLMPlatform):
             'gpt-4o': 128000,
             'gpt-3.5-turbo': 16000,
             'chatgpt-4o-latest': 128000,
-            'default': 'gpt-4.1'
+            'default': 'chatgpt-4o-latest'
         }
         self.img_capable = [
             'o1', 'gpt-4o', 'gpt-4o-mini',
@@ -486,18 +488,16 @@ class GrokPlatform(LLMPlatform):
 
         # Example model token limits for xAI Grok (adjust as needed)
         self.model_token_limits = {
-            "grok-3-latest": 16000,
-            "grok-3-beta": 16000,
-            "grok-3-fast-beta": 16000,
-            "grok-3-mini-beta": 8000,
-            "grok-2-vision-latest": 16000,
+            "grok-3-latest": 128000,
+            "grok-3-fast-latest": 128000,
+            "grok-3-mini": 128000,
+            "grok-3-mini-fast": 128000,
+            "grok-2-vision-latest": 32000,
             "default": "grok-3-latest",
         }
         self.front_model_token_limits = {
-            "grok-3-latest": 16000,
-            "grok-3-beta": 16000,
-            "grok-3-fast-beta": 16000,
-            "grok-3-mini-beta": 8000,
+            "grok-3-latest": 128000,
+            "grok-3-mini": 128000,
             "grok-2-vision-latest": 16000,
             "default": "grok-3-latest",
         }
@@ -655,15 +655,19 @@ class AnthropicPlatform(LLMPlatform):
             self.client = anthropic.Anthropic(api_key=api_key)
 
         self.model_token_limits = {
+            'claude-opus-4-0': 200000,
+            'claude-sonnet-4-0': 200000,
             'claude-3-5-sonnet-20241022': 200000,
             'claude-3-5-sonnet-latest': 200000,
             'claude-3-5-haiku-20241022': 200000,
             'claude-3-5-haiku-latest': 200000,
-            'default': 'claude-3-7-sonnet-latest'
+            'default': 'claude-sonnet-4-0'
         }
         self.front_model_token_limits = {
+            'claude-opus-4-0': 200000,
+            'claude-sonnet-4-0': 200000,
             'claude-3-7-sonnet-latest': 200000,
-            'default': 'claude-3-7-sonnet-20241022'
+            'default': 'claude-sonnet-4-0'
         }
         self.default_model = self.model_token_limits['default']
 

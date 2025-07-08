@@ -1553,7 +1553,7 @@ class Vault:
             if word != '!END':
                 yield f"data: {json.dumps({'data': word})} \n\n"
             else:
-                yield f"event: done\ndata: {json.dumps({'done': True})}\n\n"
+                yield f"event: done\ndata: {json.dumps({'data': ''})}\n\n"
 
     def update_conversation_history(self, conversation_id, message, metadata_list = None):
         self.reload_vectors()

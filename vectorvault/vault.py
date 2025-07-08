@@ -1550,10 +1550,9 @@ class Vault:
             For cloud application yielding the chat stream, like a flask app
         '''
         for word in function:
-            if word != '!END':
-                yield f"data: {json.dumps({'data': word})} \n\n"
-            else:
-                yield f"event: done\ndata: {json.dumps({'data': ''})}\n\n"
+            yield f"data: {json.dumps({'data': word})} \n\n"
+            if word == '!END':
+                yield f"event: done\n\n"
 
     def update_conversation_history(self, conversation_id, message, metadata_list = None):
         self.reload_vectors()

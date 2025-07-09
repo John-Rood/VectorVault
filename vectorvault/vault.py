@@ -334,6 +334,88 @@ class Vault:
         print(f"upload time --- {(time.time() - start_time)} seconds --- {total_saved_items} items saved") if self.verbose else 0
             
 
+    def create_vault(self, vault_name: str = None):
+        '''
+            Creates and registers a new vault without requiring data to be added first.
+            The vault will be properly listed in vault mappings and vault lists.
+            
+            Args:
+                vault_name (str, optional): Name of the vault to create. 
+                                          If None, uses the current vault name.
+        '''
+        vault_name = vault_name if vault_name else self.vault
+        start_time = time.time()
+        
+        # Initialize empty structures
+        empty_map = {}
+        empty_vectors = get_vectors(self.dims)
+        
+        # Check if vault already exists
+        try:
+            existing_vaults = self.cloud_manager.download_vaults_list_from_cloud()
+            if vault_name in existing_vaults:
+                print(f"Vault '{vault_name}' already exists") if self.verbose else 0
+                return
+        except:
+            existing_vaults = []
+
+        # Create empty mapping file
+        map_temp_file_path = None
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+            map_temp_file_path = temp_file.name
+            json.dump(empty_map, temp_file, indent=2)
+        
+        self.cloud_manager.upload_temp_file(map_temp_file_path, name_map(vault_name, self.user, self.api))
+        if os.path.exists(map_temp_file_path):
+            self.delete_temp_file(map_temp_file_path)
+
+        # Create empty vectors file
+        empty_vectors.build(10)  # Build the index before saving (even if empty)
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            vector_temp_file_path = temp_file.name
+            empty_vectors.save(vector_temp_file_path)
+            byte = os.path.getsize(vector_temp_file_path)
+            self.cloud_manager.upload_temp_file(vector_temp_file_path, name_vecs(vault_name, self.user, self.api, byte))
+        
+        self.delete_temp_file(vector_temp_file_path)
+
+        # Add vault to vault list
+        all_vaults = existing_vaults
+        if vault_name not in all_vaults:
+            all_vaults.append(vault_name)
+            self.cloud_manager.upload_vaults_list(all_vaults)
+
+        # Update vault data with initial metadata
+        try:
+            vault_data = self.cloud_manager.get_mapping()
+        except:
+            vault_data = []
+        
+        # Check if vault already exists in data
+        existing_vault_names = [v['vault'] for v in vault_data]
+        if vault_name not in existing_vault_names:
+            vault_data.append({
+                'vault': vault_name,
+                'total_items': 0,
+                'last_update': time.time(),
+                'last_use': time.time(),
+                'total_use': 1
+            })
+
+            # Save updated vault data
+            with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+                data_temp_file_path = temp_file.name
+                json.dump(vault_data, temp_file, indent=2)
+
+            self.cloud_manager.upload_temp_file(data_temp_file_path, f'{self.cloud_manager.username}.json')
+            self.delete_temp_file(data_temp_file_path)
+
+        # Trigger cloud data update
+        self.cloud_manager.build_data_update()
+        
+        print(f"Vault '{vault_name}' created successfully --- {(time.time() - start_time):.2f} seconds") if self.verbose else 0
+
+
     def clear_cache(self):
         '''
             Clears the cache for all the loaded items 
@@ -421,7 +503,7 @@ class Vault:
         return self.cloud_manager.list_vaults('')
     
 
-    def save_mapping(self, vault=None):
+    def save_mapping(self, vault = None):
         vault = self.vault if not vault else vault
         map_temp_file_path = None
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:

@@ -111,6 +111,8 @@ vault = Vault(user='your_eamil',
 <br>
 `vault.add_n_save("text string")` : Combines the above three functions into a sinlge call -> *add(), get_vectors(), and save()* 
 <br>
+`vault.create_vault(vault_name)` : Creates and registers a new empty vault without requiring data to be added first. <i>vault_name parameter is optional - if not provided, uses current vault name</i>
+<br>
 `vault.delete()` : Deletes the current Vault and all contents. 
 <br>
 `vault.delete_items(item_ids)` : "item_ids" is a list of integers to delete from the vault - *i.e. [id1, id2, id3, ...]*
@@ -192,6 +194,43 @@ vault.save()
 ```
 Small save loads are usually finished in less than a second. Large loads depend on total data size. 
 >> A 2000 page book (e.g. the Bible) would take ~30 seconds. A test was done adding 37 books. The `get_vectors()` function took 8 minutes and 56 seconds. (For comparison, processing via OpenAI's standard embedding function, that you can find in their documentation, would take over two days). This exponentially faster processing time is due to our built in concurrency and internal text uploading methods that are optimized for speed and have built-in rate limiting.
+
+<br>
+<br>
+
+# Vault Management:
+
+## Creating Vaults:
+You can create empty vaults that are properly registered and will appear in your vault listings, even without adding data first:
+
+```python
+from vectorvault import Vault
+
+# Connect to your account
+vault = Vault(user='YOUR_EMAIL',
+              api_key='YOUR_API_KEY', 
+              openai_key='YOUR_OPENAI_KEY',
+              vault='new_vault_name')
+
+# Create a named vault 
+vault.create_vault()
+
+# List all your vaults to see the newly created one
+all_vaults = vault.get_vaults()
+print(all_vaults)
+```
+
+The `create_vault()` function will:
+- Create an empty mapping file for the vault
+- Initialize an empty vector index 
+- Register the vault in your vault list
+- Add proper metadata (0 items, creation timestamp)
+- Make the vault immediately accessible via `get_vaults()`
+
+This is especially useful for:
+- Setting up vault structures before adding data
+- Creating vaults programmatically for multi-tenant applications
+- Organizing your data into separate domains before population
 
 <br>
 <br>

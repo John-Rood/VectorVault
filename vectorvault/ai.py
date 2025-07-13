@@ -488,7 +488,8 @@ class GrokPlatform(LLMPlatform):
 
         # Example model token limits for xAI Grok (adjust as needed)
         self.model_token_limits = {
-            "grok-3-latest": 128000,
+            "grok-4": 256000,
+            "grok-3": 128000,
             "grok-3-fast-latest": 128000,
             "grok-3-mini": 128000,
             "grok-3-mini-fast": 128000,
@@ -496,7 +497,8 @@ class GrokPlatform(LLMPlatform):
             "default": "grok-3-latest",
         }
         self.front_model_token_limits = {
-            "grok-3-latest": 128000,
+            "grok-4": 128000,
+            "grok-3": 128000,
             "grok-3-mini": 128000,
             "grok-2-vision-latest": 16000,
             "default": "grok-3-latest",

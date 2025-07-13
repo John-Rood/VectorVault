@@ -70,10 +70,15 @@ class Vault:
         self.verbose = verbose
         self.embeddings_model = embeddings_model if embeddings_model else 'text-embedding-3-small'
         self.dims = 1536 if embeddings_model != 'text-embedding-3-large' else 3072
-        self.cloud_manager = CloudManager(self.user, self.api, self.vault)
-        self.storage = VaultStorageManager(self.vault, self.cloud_manager)
-        print(f'Connected vault: {self.vault}') if self.verbose else 0
-        self.vectors = get_vectors(self.dims)
+        
+        # Lazy initialization - these will be created when first accessed
+        self._cloud_manager = None
+        self._storage = None
+        self._vectors = None
+        self._all_models = None
+        self._platforms_initialized = False
+        
+        # Initialize state variables
         self.x = 0
         self.x_checked = False
         self.x_loaded_checked = False
@@ -88,14 +93,24 @@ class Vault:
         self.rate_limiter = RateLimiter(max_attempts=30)
         self.cuid = conversation_user_id
         self.model = model # your chosen defualt model
-        self.all_models = get_all_models()
+        
+        # Store API keys for lazy initialization
+        self.openai_key = openai_key
+        self.groq_key = groq_key
+        self.grok_key = grok_key
+        self.anthropic_key = anthropic_key
+        
+        # Set OpenAI API key if provided
         if openai_key:
             openai.api_key = openai_key
-            self.openai_key = openai_key
-        self.openai = OpenAIPlatform()
-        self.groq = GroqPlatform(groq_key)
-        self.grok = GrokPlatform(grok_key)
-        self.anthropic = AnthropicPlatform(anthropic_key)
+        
+        # Store platform instances for lazy initialization
+        self._openai = None
+        self._groq = None
+        self._grok = None
+        self._anthropic = None
+        
+        # Configuration settings
         self.fine_tuned_context_window = 128000
         self.main_prompt = main_prompt if main_prompt else "Question: {content}"
         self.main_prompt_with_context = main_prompt_with_context if main_prompt_with_context else """Use the following Context to answer the Question at the end.
@@ -108,6 +123,77 @@ class Vault:
     """    
         self.personality_message = personality_message if personality_message else """Answer directly and be helpful"""
 
+    @property
+    def cloud_manager(self):
+        """Lazy initialization of cloud manager"""
+        if self._cloud_manager is None:
+            if self.user is None or self.api is None:
+                raise ValueError("User and API key are required for cloud operations")
+            self._cloud_manager = CloudManager(self.user, self.api, self.vault)
+        return self._cloud_manager
+
+    @property
+    def storage(self):
+        """Lazy initialization of storage manager"""
+        if self._storage is None:
+            self._storage = VaultStorageManager(self.vault, self.cloud_manager)
+        return self._storage
+
+    @property
+    def vectors(self):
+        """Lazy initialization of vectors"""
+        if self._vectors is None:
+            self._vectors = get_vectors(self.dims)
+        return self._vectors
+
+    @vectors.setter
+    def vectors(self, value):
+        """Allow setting vectors directly"""
+        self._vectors = value
+
+    @property
+    def all_models(self):
+        """Lazy initialization of all models"""
+        if self._all_models is None:
+            self._all_models = get_all_models()
+        return self._all_models
+
+    def _initialize_platforms(self):
+        """Initialize AI platforms only when needed"""
+        if not self._platforms_initialized:
+            self._openai = OpenAIPlatform()
+            self._groq = GroqPlatform(self.groq_key)
+            self._grok = GrokPlatform(self.grok_key)
+            self._anthropic = AnthropicPlatform(self.anthropic_key)
+            self._platforms_initialized = True
+
+    @property
+    def openai(self):
+        """Lazy initialization of OpenAI platform"""
+        if self._openai is None:
+            self._initialize_platforms()
+        return self._openai
+
+    @property
+    def groq(self):
+        """Lazy initialization of Groq platform"""
+        if self._groq is None:
+            self._initialize_platforms()
+        return self._groq
+
+    @property
+    def grok(self):
+        """Lazy initialization of Grok platform"""
+        if self._grok is None:
+            self._initialize_platforms()
+        return self._grok
+
+    @property
+    def anthropic(self):
+        """Lazy initialization of Anthropic platform"""
+        if self._anthropic is None:
+            self._initialize_platforms()
+        return self._anthropic
 
     def get_total_items(self, vault: str = None):
         '''
@@ -450,7 +536,7 @@ class Vault:
         print('Deleting started. Note: this can take a while for large datasets') if self.verbose else 0
             
         # Clear the local vector data
-        self.vectors = get_vectors(self.dims)
+        self._vectors = get_vectors(self.dims)
         self.items.clear()
         self.cloud_manager.delete()
         self.x = 0
@@ -753,7 +839,8 @@ class Vault:
         t = T(target=self.load_mapping())
         t.start()
         temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(vault, self.user, self.api))
-        self.vectors.load(temp_file_path)
+        self._vectors = get_vectors(self.dims)
+        self._vectors.load(temp_file_path)
         self.delete_temp_file(temp_file_path)
         t.join()
         self.vecs_loaded = True
@@ -770,7 +857,7 @@ class Vault:
             vector = self.vectors.get_item_vector(i)
             new_index.add_item(i, vector)
         self.x = count + 1
-        self.vectors = new_index
+        self._vectors = new_index
         self.vecs_loaded = False
 
 
@@ -881,7 +968,7 @@ class Vault:
         self.delete_temp_file(vector_temp_file_path)
         self.save_mapping(vault)
         self.items.clear()
-        self.vectors = get_vectors(self.dims)
+        self._vectors = get_vectors(self.dims)
         self.x_checked = False
         self.vecs_loaded = False
         self.saved_already = False

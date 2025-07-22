@@ -199,8 +199,7 @@ def call_cloud_save(user, api_key, vault, embeddings_model, text, meta=None, nam
         return None
 
 def run_flow(user, api_key, flow_name, message, history='', conversation_user_id=None, 
-             parent_save_state_id=None, run_flow_var_name=None, session_id=None, invoke_method=None,
-             internal_vars=None, max_retries=2):
+             invoke_method=None, internal_vars=None, max_retries=2, **kwargs):
     
     for attempt in range(max_retries + 1):  # +1 for initial attempt
         # Get a fresh token for each retry
@@ -215,12 +214,11 @@ def run_flow(user, api_key, flow_name, message, history='', conversation_user_id
             "message": message,
             "history": history,
             "conversation_user_id": conversation_user_id,
-            'parent_save_state_id': parent_save_state_id, 
-            'run_flow_var_name': run_flow_var_name, 
-            'session_id': session_id, 
             'invoke_method': invoke_method, 
             'internal_vars': internal_vars, 
         }
+        # Add all kwargs to payload dynamically
+        payload.update(kwargs)
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {current_token}"
@@ -263,8 +261,7 @@ def run_flow(user, api_key, flow_name, message, history='', conversation_user_id
             return None
 
 def run_flow_stream(user, api_key, flow_name, message, history='', conversation_user_id=None, 
-                   parent_save_state_id=None, run_flow_var_name=None, session_id=None, invoke_method=None,
-                   internal_vars=None, max_retries=2):
+                   invoke_method=None, internal_vars=None, max_retries=2, **kwargs):
     
     for attempt in range(max_retries + 1):  # +1 for initial attempt
         try:
@@ -280,12 +277,11 @@ def run_flow_stream(user, api_key, flow_name, message, history='', conversation_
                 "message": message,
                 "history": history,
                 "conversation_user_id": conversation_user_id,
-                'parent_save_state_id': parent_save_state_id, 
-                'run_flow_var_name': run_flow_var_name, 
-                'session_id': session_id, 
                 'invoke_method': invoke_method, 
                 'internal_vars': internal_vars, 
             }
+            # Add all kwargs to payload dynamically
+            payload.update(kwargs)
             headers = {
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {current_token}"

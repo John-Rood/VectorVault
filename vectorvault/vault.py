@@ -1802,9 +1802,8 @@ class Vault:
         return history
     
 
-    def run_flow(self, flow_name, message, history: str = '', parent_save_state_id = None, 
-                 run_flow_var_name = None, session_id = None, invoke_method = None, 
-                 internal_vars: dict = None):
+    def run_flow(self, flow_name, message, history: str = '', invoke_method = None, 
+                 internal_vars: dict = None, **kwargs):
         """
         Returns response from a flow execution.
         
@@ -1812,7 +1811,8 @@ class Vault:
             flow_name: Name of the flow to execute
             message: Message to send to the flow
             history: Previous conversation history
-            vault: Custom vault to use (defaults to self.vault)
+            invoke_method: Method to invoke for the flow
+            internal_vars: Internal variables to pass to the flow
             
         Returns:
             Full response from the flow execution
@@ -1824,16 +1824,13 @@ class Vault:
             message=message,
             history=history,
             conversation_user_id = self.cuid,
-            parent_save_state_id = parent_save_state_id,
-            run_flow_var_name = run_flow_var_name,
-            session_id = session_id,
             invoke_method = invoke_method,
-            internal_vars = internal_vars
+            internal_vars = internal_vars,
+            **kwargs
             )
         
-    def stream_flow(self, flow_name, message, history: str = '', parent_save_state_id = None, 
-                    run_flow_var_name = None, session_id = None, invoke_method = None, 
-                    internal_vars: dict = None):
+    def stream_flow(self, flow_name, message, history: str = '', invoke_method = None, 
+                    internal_vars: dict = None, **kwargs):
         """
         Streams response from a flow execution.
         
@@ -1841,7 +1838,8 @@ class Vault:
             flow_name: Name of the flow to execute
             message: Message to send to the flow
             history: Previous conversation history
-            vault: Custom vault to use (defaults to self.vault)
+            invoke_method: Method to invoke for the flow
+            internal_vars: Internal variables to pass to the flow
             
         Yields:
             Stream events from the flow execution
@@ -1854,11 +1852,9 @@ class Vault:
             message = message,
             history = history,
             conversation_user_id = self.cuid,
-            parent_save_state_id = parent_save_state_id,
-            run_flow_var_name = run_flow_var_name,
-            session_id = session_id,
             invoke_method = invoke_method,
-            internal_vars = internal_vars
+            internal_vars = internal_vars,
+            **kwargs
         )
         
         # Yield each event from the generator

@@ -1,151 +1,184 @@
-# Vector Vault
+# Vector Vault: A Foundational Platform for Autonomous AI Agents
 
 ![Vector Vault Header](https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/297fde6c-f5b4-4076-83bc-81dcfdbffebe/Vector+Vault+Header+5000.jpg)
 
-Vector Vault is a cutting-edge, cloud-native and RAG-native vector database solution that revolutionizes AI integration in applications. Our platform seamlessly combines vector databases, similarity search, and AI model interactions into a single, easy-to-use service. See our [full docs](https://github.com/John-Rood/VectorVault/tree/main/fulldocs.md) or our [JS repo](https://github.com/John-Rood/VectorVault-js) for more information.
+**Vector Vault is a foundational platform for building, deploying, and operating autonomous AI agents.** While most tools focus on creating chatbots, we're engineering the production-grade infrastructure for **persistent, stateful agents** that execute complex tasks over time—with or without human supervision.
 
-## Key Features
+This isn't just a better vector database. It's the **execution layer for the agentic future.**
 
+## 🚀 Beyond Chatbots: Welcome to Autonomous AI
 
-- **Simple**: Implement sophisticated AI features with minimal code.
-- **Full-Stack**: Use our Python package for backend operations and our JavaScript package for easy front-end integration.
-- **RAG-Native**: Perform Retrieval-Augmented Generation in one line of code.
-- **Cloud Engine**: Our service handles vector search, retrieval, and AI model interactions, simplifying your architecture.
-- **Platform-Agnostic**: Change models without changing your code (OpenAI, Anthropic, Groq, etc.)
-- **Unlimited Isolated Databases**: Create and access an infinite number of vector databases, ideal for multi-tenant applications.
+The AI industry is rapidly moving from simple request-response systems to **autonomous digital workers.** Vector Vault provides the core infrastructure to build agents that:
 
+- **Persist and adapt** across multiple, asynchronous interactions.
+- **Execute complex, multi-step workflows** independently.
+- **Maintain state** while scaling in a serverless environment.
+- **Learn and evolve** from every interaction.
+- **Operate autonomously** for hours, days, or indefinitely.
 
-## Quick Start
+### Vector Flow: Visual Agent Construction
+Build sophisticated AI agents visually at **[app.vectorvault.io/vector-flow](https://app.vectorvault.io/vector-flow)**.
+
+![Vector Flow Demo](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExa3FhcnB4MWEyeDdmNTRvNWVyODRoa3czMm9nM3RudDd5dW84Y3lwNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/RAQQEzEZHjDwISYK8n/giphy.gif)
+
+- **Drag-and-drop agent design** with advanced reasoning patterns.
+- **Multi-platform AI integration** (OpenAI, Claude, Grok, Groq, Gemini).
+- **Python execution** in secure, sandboxed containers (run code inside your flows).
+- **API integrations** and external tool access.
+- **Real-time deployment** with instant production updates.
+
+### Built on PAR (Persistent Agentic Runtime)
+Vector Flow runs on a **Persistent Agentic Runtime**. Compute remains **serverless & stateless**, but each agent’s state is stored durably in the cloud.  
+• **Continuous state** – agents pick up exactly where they left off, no context rebuilding.  
+• **Temporal autonomy** – agents respond to events over minutes, hours, or days.  
+• **Scalable execution** – state lives in PAR while stateless workers spin up on-demand to process steps.
+
+This architecture is what lets Vector Vault move beyond chatbots and power long-running, auditable AI systems.
+
+## ⚡ Quick Start: Your First Autonomous Agent
 
 #### Install:
 ```bash
 pip install vector-vault
 ```
 
-#### Basic Usage:
+#### Build an Intelligent Agent in Minutes:
 
 ```python
 from vectorvault import Vault
 
-# Initialize Vault
+# Initialize with multi-platform AI support
 vault = Vault(
     user='YOUR_EMAIL',
     api_key='YOUR_VECTOR_VAULT_API_KEY', 
     openai_key='YOUR_OPENAI_API_KEY',
-    vault='MY_NEW_VAULT',
-    verbose=True
+    anthropic_key='YOUR_ANTHROPIC_KEY',  # optional
+    vault='MY_AGENT_VAULT'
 )
 
-# Build your vault
-vault.add('some text') # automatic chunk sizing
-vault.get_vectors() # generate vectors for the all data 
-vault.save() # save data and vectors to the cloud
+# Build your agent's knowledge base
+vault.add('Your domain expertise, technical docs, and procedures...')
+vault.get_vectors()
+vault.save()
 
-# Get AI-powered RAG responses
-rag_response = vault.get_chat("What is this vault about?", get_context=True)
-print(rag_response)
-```
-<br>
----------------------------------------------
+# Deploy autonomous workflows
+agent_response = vault.run_flow(
+    'intelligent_assistant',
+    'Process this new customer inquiry',
+    customer_data={"tier": "premium", "history": [...]},
+    escalation_rules={"urgent": True}
+)
 
-## Platform Agnostic:
-Vector Vault supports multiple AI model platforms - OpenAI, Anthropic, Groq, Grok, and more - all under the same interface. Simply pass in the appropriate API keys upon initialization:
-```python
-vault = Vault(
-    user='YOUR_EMAIL',
-    api_key='YOUR_VECTOR_VAULT_API_KEY', 
-    openai_key='YOUR_OPENAI_API_KEY',      
-    anthropic_key='YOUR_ANTHROPIC_API_KEY', # optional 
-    groq_key='YOUR_GROQ_API_KEY',           # optional 
-    grok_key='YOUR_GROK_API_KEY',           # optional 
-    vault='MY_NEW_VAULT',
-    verbose=True
+# Get context-aware responses with smart history
+response = vault.get_chat(
+    "What about that issue we discussed earlier?",
+    history=conversation_history,
+    get_context=True,
+    smart_history_search=True,  # AI generates contextual search queries
+    model="claude-sonnet-4-0"   # Switch models seamlessly
 )
 ```
 
-No matter which provider you choose, downstream methods like get_chat(...) remain the same. You can seamlessly switch providers later without rewriting your code.
+## 🧠 Platform-Agnostic AI Intelligence
 
-<br>
----------------------------------------------
-
-## Adding Personality & Custom Prompts
-Vector Vault allows you to define a global “personality” for your AI responses, as well as custom prompts for both context-based and non-context-based queries. This is extremely helpful for brand consistency, specialized tones, or role-playing scenario
-
-#### Setting a Personality
-```python
-# Define your brand’s or chatbot’s personality
-personality_text = """You are an enthusiastic and helpful assistant 
-that always uses uplifting language and friendly emojis 😄."""
-vault.save_personality_message(personality_text)
-```
-
-Once saved, this personality is automatically used in all future responses from this vault.
-
-
-<br>
----------------------------------------------
-
-## Custom Prompts
-You can also set custom prompts that will wrap your user’s message before sending to the model.
+Vector Vault supports all leading AI platforms under one interface. Switch between OpenAI, Claude, Grok, and Groq **mid-conversation** without changing your code:
 
 ```python
-# For RAG responses, vector similar data is injected into `context`, and `content` is the user's message 
-context_prompt = """You have access to the following context: {context}
-Answer using a formal tone:
-{content}"""
-vault.save_custom_prompt(context_prompt, context=True)
+# Start with OpenAI for analysis
+response = vault.get_chat("Analyze this data", model="gpt-4o")
+
+# Switch to Claude for reasoning  
+response = vault.get_chat("What's your recommendation based on that?", model="claude-sonnet-4-0")
+
+# Use Grok for creative tasks
+response = vault.get_chat("Now, generate some innovative solutions", model="grok-4")
 ```
-Now, whenever you do:
+
+## 🎯 Smart History Search: Context That Actually Works
+
+Traditional RAG fails when users say "Tell me more about that" or "How do I fix that?" Our **Smart History Search** solves this by using AI to generate a contextual search query based on the conversation history.
 
 ```python
-response = vault.get_chat("What's new in the world of data science?", get_context=True)
+# User: "I'm getting database timeout errors in PostgreSQL"
+# AI: "Here are some common causes..."
+# User: "How do I fix that?"
+
+# WITHOUT smart search: Searches "how do I fix that" → returns random, generic results
+# WITH smart search: Searches "PostgreSQL database timeout errors fix" → returns specific solutions
+
+response = vault.get_chat(
+    "How do I fix that?",  # Vague, contextual query
+    history=conversation_history,
+    get_context=True,
+    smart_history_search=True
+)
 ```
-Vector Vault automatically uses your context_prompt before sending to the LLM. By editing this custom_prompt, you can ensure your RAG responses come out perfect every time.
 
-<br>
----------------------------------------------
+## 🏗️ Advanced Agent Capabilities
 
+### Multimodal Intelligence
+Build agents that can see and understand images and documents.
+```python
+response = vault.get_chat(
+    "Analyze the key takeaways from this financial report",
+    image_path="/path/to/report.pdf", 
+    get_context=True
+)
+```
 
-## Key Concepts
+### Real-Time Streaming
+Create interactive and responsive agent experiences.
+```python
+# Console applications
+response = vault.print_stream(
+    vault.get_chat_stream("Research the latest AI trends", get_context=True)
+)
 
-- **Vaults**: Serverless vector databases. Create as many as you need.
-- **RAG-Native**: Add data, ask questions, retrieve relevant context from your Vault, and generate AI responses in one step.
-- **Cloud Engine**: Our backend handles heavy lifting and integrates seamlessly with multiple AI providers.
-- **Personality & Custom Prompts**: Easily store, retrieve, and modify custom roles/tones/prompts for brand consistency.
-- **Provider Agnosticism**: Switch from OpenAI to Anthropic or any other platform by changing a single parameter. The rest of your code stays the same.
+# Web applications (Server-Sent Events)
+@app.route('/agent-stream')
+def agent_chat():
+    return Response(
+        vault.cloud_stream(vault.get_chat_stream(user_message, get_context=True)),
+        mimetype='text/event-stream'
+    )
+```
 
-## Advanced Features
+## 🌟 Why Vector Vault for Autonomous Agents?
 
-- **Metadata Management**: Easily add and retrieve metadata for your vector entries.
-- **Streaming Responses**: Use `get_chat_stream()` for interactive chat experiences.
-- **Custom Prompts and Personalities**: Tailor AI responses to your specific needs.
+### Build True Agents, Not Just Chatbots
+- Our **Persistent Agentic Runtime** is built for stateful, long-running tasks.
+- Use our **visual flow builder** to design complex reasoning patterns.
+- Achieve **real-time deployment** and enable continuous agent learning.
 
-## Use Cases
+### Deploy with Confidence
+- **Serverless scaling** from prototype to enterprise-grade applications.
+- **Multi-platform AI support** with automatic provider detection.
+- **Comprehensive logging** and observability for every agent action.
 
-- AI-powered customer service chatbots
-- Semantic search in large document collections
-- Personalized content recommendations
-- Intelligent chatbots with access to vast knowledge bases
-- Multi-tenant systems needing isolated vector databases
+### Accelerate Your Development
+- Execute complex AI workflows with **one-line operations**.
+- Go from idea to deployed agent in minutes with the **visual agent builder**.
+- **Instant deployment** with zero infrastructure management.
 
-## Why Vector Vault?
+### Build on a Future-Proof Platform
+- **Unlimited isolated databases** for multi-tenant agent systems.
+- **Advanced RAG** with smart contextual search that actually works.
+- **Continuous innovation** in agentic capabilities to keep you ahead.
 
-- **Simplicity**: More straightforward than rolling your own vector database or hooking up multiple AI integrations.
-- **RAG Optimization**: Built from the ground up for Retrieval-Augmented Generation workflows.
-- **Customization**: Override prompts, personalities, or entire models with minimal code.
-- **Scalability**: Serverless approach means no scaling overhead. Build prototypes or enterprise apps all the same.
-- **Time and Resource Saving**: Drastically reduce your AI development lifecycle.
+## 🚀 The Agentic Future Starts Here
 
-## Getting Started
+Vector Vault isn't just keeping up with the AI revolution—we're **defining it**. While others build better chatbots, we're creating the infrastructure for **digital workers** that think, persist, and execute autonomously.
 
-1. Sign up for a 30-day free trial at [VectorVault.io](https://vectorvault.io) to get your API key.
-2. Install the `vectorvault` package: `pip install vector-vault`
-3. Explore our [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) for tutorials and practical applications.
+### Get Started Today:
+1. **30-day free trial**: [VectorVault.io](https://vectorvault.io)
+2. **Visual agent builder**: [app.vectorvault.io/vector-flow](https://app.vectorvault.io/vector-flow)  
+3. **Install the platform**: `pip install vector-vault`
 
-## Learn More
+### Learn More:
+- **Full Documentation**: [API Reference](https://github.com/John-Rood/VectorVault/tree/main/vectorvault/documentation/fulldocs.md)
+- **Vector Flow Guide**: [Agent Building Documentation](https://github.com/John-Rood/VectorVault/tree/main/vectorvault/documentation/vectorflow_docs.md)
+- **Chat Functions**: [RAG & Streaming Guide](https://github.com/John-Rood/VectorVault/tree/main/vectorvault/documentation/get_chat_docs.md)
+- **Community**: [Discord](https://discord.gg/AkMsP9Uq)
+- **JavaScript SDK**: [VectorVault-js](https://github.com/John-Rood/VectorVault-js)
 
-- Full API Documentation: [Link to API docs](https://github.com/John-Rood/VectorVault/tree/main/fulldocs.md)
-- Interactive Dashboard: [app.vectorvault.io](https://app.vectorvault.io)
-- Join our [Discord community](https://discord.gg/AkMsP9Uq) for support and discussions.
-
-Start building with Vector Vault today and experience the future of RAG-native, cloud-native vector databases!
+**The age of autonomous AI agents is here. Build yours with Vector Vault.**

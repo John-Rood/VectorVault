@@ -49,7 +49,13 @@ Explore our documentation and examples to see how Vector Vault can revolutionize
 - **Effortless Vectorization**: Convert any text data into vectors and add them to your cloud database with minimal effort.
 - **Developer-Centric Approach**: Focus on building your application logic rather than wrestling with complex AI and database integrations.
 - **Unlimited Isolated Databases**: Create and access an infinite number of vector databases, ideal for multi-tenant applications.
-- **One Line**: Save to the cloud vector database in one line of code and gerenate RAG responses in one line of code. Edit the parameters of the call to change anything about the respone or vector search. You have full control, and you get to excercise that control in just one line of code.
+- **One Line**: Save to the cloud vector database in one line of code and generate RAG responses in one line of code. Edit the parameters of the call to change anything about the response or vector search. You have full control, and you get to exercise that control in just one line of code.
+- **Multi-Platform AI Support**: Seamlessly switch between OpenAI, Claude, Grok, Groq, and Gemini models mid-conversation with automatic platform detection.
+- **Advanced Streaming**: Real-time streaming responses with built-in utilities for console and web applications.
+- **Smart History Search**: AI-powered contextual search query generation for multi-turn conversations.
+- **Vector Vault Flows**: Execute complex AI workflows with `run_flow()` and `stream_flow()` functions.
+- **Storage Management**: Built-in cloud storage system for managing files and directories.
+- **Image Processing**: Support for multimodal AI interactions with image analysis capabilities.
 
 ## Getting Started
 
@@ -93,23 +99,108 @@ Install:
 <br>
 `pip install vector-vault` 
 
-Connect:
+# Initialization & API Keys
+
+Vector Vault supports multiple AI platforms. You can provide API keys for any combination of providers:
+
+## Basic Setup (OpenAI Only)
 ```python
 from vectorvault import Vault
 
-vault = Vault(user='your_eamil', 
-              api_key='your_api_key',
+vault = Vault(user='your_email', 
+              api_key='your_vectorvault_api_key',
               openai_key='your_openai_api_key',
               vault='any_vault_name')
-``` 
+```
 
-`vault.add("text string")` : Loads data to be added to the Vault, with automatic text splitting for long texts
+## Multi-Platform Setup (All Providers)
+```python
+from vectorvault import Vault
+
+vault = Vault(user='your_email', 
+              api_key='your_vectorvault_api_key',
+              openai_key='your_openai_api_key',      # For GPT models, embeddings
+              groq_key='your_groq_api_key',          # For Groq's fast inference
+              grok_key='your_grok_api_key',          # For xAI's Grok models  
+              anthropic_key='your_anthropic_api_key', # For Claude models
+              vault='any_vault_name',
+              verbose=False,
+              model='gpt-4o')  # Set your preferred default model
+```
+
+## API Key Requirements
+
+### Required
+- **`api_key`**: Your Vector Vault API key (always required)
+- **`openai_key`**: Required for embeddings and OpenAI models
+
+### Optional (for multi-platform support)
+- **`groq_key`**: Get fast inference with Groq's optimized models
+- **`grok_key`**: Access xAI's Grok models for creative tasks
+- **`anthropic_key`**: Use Claude models for reasoning and analysis
+
+## Platform-Specific Models
+
+```python
+# OpenAI models (requires openai_key)
+vault.get_chat("Hello", model="gpt-4o")
+vault.get_chat("Hello", model="gpt-4o-mini") 
+vault.get_chat("Hello", model="o1")
+
+# Groq models (requires groq_key)
+vault.get_chat("Hello", model="llama3-70b-8192")
+vault.get_chat("Hello", model="mixtral-8x7b-32768")
+
+# Grok models (requires grok_key)  
+vault.get_chat("Hello", model="grok-4")
+vault.get_chat("Hello", model="grok-3")
+
+# Claude models (requires anthropic_key)
+vault.get_chat("Hello", model="claude-sonnet-4-0")
+vault.get_chat("Hello", model="claude-3-5-sonnet-20241022")
+```
+
+## Getting API Keys
+
+- **Vector Vault**: Sign up at [vectorvault.io](https://vectorvault.io) for 30-day free trial
+- **OpenAI**: Get your key at [platform.openai.com](https://platform.openai.com)
+- **Groq**: Sign up at [console.groq.com](https://console.groq.com)  
+- **xAI (Grok)**: Get access at [console.x.ai](https://console.x.ai)
+- **Anthropic**: Apply for API access at [console.anthropic.com](https://console.anthropic.com)
+
+## Advanced Initialization Options
+
+```python
+vault = Vault(
+    user='your_email',
+    api_key='your_vectorvault_api_key',
+    openai_key='your_openai_key',
+    vault='vault_name',
+    
+    # Performance & Behavior
+    verbose=True,                    # Enable detailed logging
+    embeddings_model='text-embedding-3-large',  # Use larger embedding model
+    
+    # Conversation Features  
+    conversation_user_id='user123',  # Enable conversation history
+    model='claude-sonnet-4-0',       # Set default model
+    
+    # Custom Prompting (overrides saved prompts/personality)
+    main_prompt="Answer: {content}",
+    main_prompt_with_context="Context: {context}\nQuestion: {content}",
+    personality_message="Be concise and helpful"
+)
+```
+
+**Lazy Initialization**: Vector Vault uses lazy initialization for improved performance. Cloud connections, AI platforms, and vectors are only initialized when first accessed, making vault creation nearly instant. 
+
+`vault.add("text string", meta=None, name=None, split=False, split_size=1000, max_threshold=16000)` : Loads data to be added to the Vault, with automatic text splitting for long texts. Can include metadata and custom name. `split=True` forces text splitting.
 <br>
 `vault.get_vectors()` : Retrieves vectors embeddings for all loaded data
 <br>
 `vault.save()` : Saves all loaded data with embeddings to the Vault (cloud), along with any metadata
 <br>
-`vault.add_n_save("text string")` : Combines the above three functions into a sinlge call -> *add(), get_vectors(), and save()* 
+`vault.add_n_save("text string", meta=None, name=None, split=False, split_size=1000, max_threshold=16000)` : Combines the above three functions into a single call -> *add(), get_vectors(), and save()* 
 <br>
 `vault.create_vault(vault_name)` : Creates and registers a new empty vault without requiring data to be added first. <i>vault_name parameter is optional - if not provided, uses current vault name</i>
 <br>
@@ -123,7 +214,7 @@ vault = Vault(user='your_eamil',
 <br>
 `vault.get_similar("text string", n)` : Vector similarity search. Returns similar texts from the Vault for any given input text - Processes vectors in the Vector Vault Cloud. `text` is required. `n` is optional, default = 4
 <br>
-`vault.get_similar_local("text string", n)` : Vector similarity search. Returns similar texts from the Vault for any given input text - Processes vectors locally. *This local version is speed optimization for production deployments.*
+`vault.get_similar("text string", n, include_distances, vault)` : Vector similarity search. Returns similar texts from the Vault for any given input text. `include_distances=True` adds distance field to results. `vault` parameter allows searching a different vault.
 <br>
 `vault.get_total_items()` : Returns the total number of items in the Vault
 <br>
@@ -138,13 +229,55 @@ vault = Vault(user='your_eamil',
 
 `vault.get_tokens("text string")` : Returns the number of tokens for any input text
 <br>
-`vault.save_custom_prompt('''your custom prompt here''')` : Saves prompt to the Vault as default. Whenever you call "get_chat()" with parameter "get_context=True", the custom prompt you saved will be used 
+`vault.save_custom_prompt('''your custom prompt here''', context=True)` : Saves prompt to the Vault as default. `context=True` saves context prompt, `context=False` saves main prompt
 <br>
-`vault.fetch_custom_prompt()` : Retrieves the default prompt from the Vault
+`vault.fetch_custom_prompt(context=True)` : Retrieves the default prompt from the Vault. `context=True` gets context prompt, `context=False` gets main prompt
 <br>
-`vault.save_personality('your desired personality traits here')` : Saves a new personality as Vault default to be used anytime you chat with it. Now, whenever you call "get_chat()", the personality you saved will be used in the response
+`vault.save_personality_message('your desired personality traits here')` : Saves a new personality as Vault default to be used anytime you chat with it
 <br>
-`vault.fetch_personality()` : Retrieves the default personality from the Vault
+`vault.fetch_personality_message()` : Retrieves the default personality from the Vault
+<br>
+`vault.edit_item_meta(item_id, metadata)` : Edit and save any item's metadata
+<br>
+`vault.clear_cache()` : Clears the cache for all loaded items
+<br>
+`vault.duplicate_vault(new_vault_name)` : Creates a complete copy of the current vault with a new name
+<br>
+`vault.get_all_vaults()` : Returns a list of all vaults in the current vault directory
+<br>
+`vault.list_cloud_vaults()` : Returns a list of all cloud vaults
+<br>
+`vault.remap_item_numbers()` : Fixes item numbering if gaps exist (removes deleted item gaps)
+<br>
+`vault.make_3d_map(highlight_id, return_html)` : Creates a 3D visualization of vector data with clustering
+<br>
+`vault.split_text(text, min_threshold, max_threshold)` : Splits large text into manageable chunks for processing
+<br>
+`vault.download_database_to_json(return_meta)` : Download all vault items to JSON format. `return_meta=True` includes metadata
+<br>
+`vault.upload_database_from_json(json_data)` : Replace entire vault from JSON data (use with caution)
+<br>
+`vault.add_item_with_vector(text, vector, meta, name)` : Add item with pre-computed vector
+<br>
+`vault.print_stream(function, printing=True)` : Pretty print streaming responses to console. `printing=False` disables formatting
+<br>
+`vault.cloud_stream(function)` : Format streaming responses for web applications (Server-Sent Events)
+<br>
+`vault.run_flow(flow_name, message, history, invoke_method, internal_vars)` : Execute a Vector Vault Flow and return response
+<br>
+`vault.stream_flow(flow_name, message, history, invoke_method, internal_vars)` : Execute a Vector Vault Flow with streaming response
+<br>
+`vault.create_storage_dir(path)` : Creates a directory in vault storage
+<br>
+`vault.create_storage_item(path, value)` : Creates a storage item with content
+<br>
+`vault.list_storage_labels(path)` : Lists all storage items and directories
+<br>
+`vault.get_storage_item(path)` : Retrieves content of a storage item
+<br>
+`vault.update_storage_item(path, new_value)` : Updates storage item content
+<br>
+`vault.delete_storage_dir(path)` : Deletes storage directory or item
 <br>
 `vault.get_chat_stream()` : All the same params as "get_chat()", but it streams
 <br>
@@ -283,7 +416,9 @@ def get_chat(
     include_context_meta: bool = False,  # Include metadata in context
     custom_prompt: bool = False,   # Custom prompt template
     temperature: int = 0,         # Response randomness (0-1)
-    timeout: int = 300           # API timeout in seconds
+    timeout: int = 300,           # API timeout in seconds
+    image_path: str = None,       # Path to local image file
+    image_url: str = None,        # URL to image for processing
 )
 ```
 
@@ -363,6 +498,24 @@ summary = vault.get_chat(text, summary=True)
 
 # Streaming:
 Use the built-in streaming functionality to get interactive chat streaming with `get_chat_stream()`. It has all the same params as `get_chat()`, but it streams.
+
+```python
+# Console streaming with pretty printing
+response = vault.print_stream(
+    vault.get_chat_stream("Tell me about Vector Vault", get_context=True)
+)
+
+# Web application streaming (Server-Sent Events)
+@app.route('/chat-stream')
+def chat_stream():
+    return Response(
+        vault.cloud_stream(
+            vault.get_chat_stream("User message", get_context=True)
+        ),
+        mimetype='text/event-stream'
+    )
+```
+
 Here's an [app](https://philbrosophy.web.app) we built to showcase what you can do with Vector Vault:
 <br>
 
@@ -573,6 +726,84 @@ Now your AI chatbot sounds just like every other rep!
 
 <br>
 <br>
+# Advanced Features
+
+## Multi-Platform Model Switching
+Switch between AI platforms seamlessly mid-conversation:
+
+```python
+# Start with OpenAI
+response = vault.get_chat("Analyze this data", model="gpt-4o")
+
+# Switch to Claude for opinion
+response = vault.get_chat("What's your take?", model="claude-sonnet-4-0")
+
+# Try Grok for creativity
+response = vault.get_chat("Be creative", model="grok-4")
+```
+
+## Image Processing
+Process images with multimodal AI capabilities:
+
+```python
+# Analyze local image
+response = vault.get_chat(
+    "What do you see in this image?",
+    image_path="/path/to/image.jpg",
+    get_context=True
+)
+
+# Process image from URL
+response = vault.get_chat(
+    "Describe this image",
+    image_url="https://example.com/image.jpg"
+)
+```
+
+## Vector Vault Flows
+Execute complex AI workflows:
+
+```python
+# Execute a flow
+response = vault.run_flow(
+    "customer_support",
+    "I need help with billing",
+    history="Previous conversation..."
+)
+
+# Stream a flow response
+for chunk in vault.stream_flow("research_assistant", "Find papers on AI"):
+    print(chunk, end='', flush=True)
+```
+
+## Storage Management
+Manage files and directories in your vault:
+
+```python
+# Create directory structure
+vault.create_storage_dir("documents/reports")
+
+# Store files
+vault.create_storage_item("documents/readme.txt", "Welcome to Vector Vault")
+
+# List contents
+items = vault.list_storage_labels("documents")
+
+# Retrieve content
+content = vault.get_storage_item("documents/readme.txt")
+```
+
+## Data Export/Import
+Backup and restore your vault data:
+
+```python
+# Export entire vault to JSON
+vault_data = vault.download_database_to_json(return_meta=True)
+
+# Import from JSON (replaces entire vault - use with caution)
+vault.upload_database_from_json(vault_data)
+```
+
 <br>
 <br>
 <br>

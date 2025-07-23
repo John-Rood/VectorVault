@@ -19,8 +19,6 @@ The AI industry is rapidly moving from simple request-response systems to **auto
 ### Vector Flow: Visual Agent Construction
 Build sophisticated AI agents visually at **[app.vectorvault.io/vector-flow](https://app.vectorvault.io/vector-flow)**.
 
-![Vector Flow Demo](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExa3FhcnB4MWEyeDdmNTRvNWVyODRoa3czMm9nM3RudDd5dW84Y3lwNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/RAQQEzEZHjDwISYK8n/giphy.gif)
-
 - **Drag-and-drop agent design** with advanced reasoning patterns.
 - **Multi-platform AI integration** (OpenAI, Claude, Grok, Groq, Gemini).
 - **Python execution** in secure, sandboxed containers (run code inside your flows).

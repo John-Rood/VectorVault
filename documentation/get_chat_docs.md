@@ -131,6 +131,8 @@ for chunk in vault.get_chat_stream(
 
 ## Streaming Utilities
 
+![Vector Vault Streaming Demo](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExa3FhcnB4MWEyeDdmNTRvNWVyODRoa3czMm9nM3RudDd5dW84Y3lwNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/RAQQEzEZHjDwISYK8n/giphy.gif)
+
 Vector Vault provides utility functions to handle streaming responses:
 
 ### print_stream() - Console Output

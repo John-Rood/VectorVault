@@ -498,7 +498,6 @@ summary = vault.get_chat(text, summary=True)
 
 # Streaming:
 Use the built-in streaming functionality to get interactive chat streaming with `get_chat_stream()`. It has all the same params as `get_chat()`, but it streams.
-
 ```python
 # Console streaming with pretty printing
 response = vault.print_stream(
@@ -523,7 +522,6 @@ Here's an [app](https://philbrosophy.web.app) we built to showcase what you can 
 
 See it in action. Check our [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) Colab notebooks.
 
-<br>
 <br>
 <br>
 <br>

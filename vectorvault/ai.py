@@ -8,6 +8,8 @@ import anthropic
 import groq
 import base64
 import httpx
+from google import genai
+from google.genai import types
 
 
 def get_all_models(namespaced=False):
@@ -16,6 +18,7 @@ def get_all_models(namespaced=False):
         ('groq', GroqPlatform()),
         ('grok', GrokPlatform()),
         ('anthropic', AnthropicPlatform()),
+        ('gemini', GeminiPlatform()),
     ]
     all_models = {}
     for platform_name, platform in platforms:
@@ -33,6 +36,7 @@ def get_front_models(namespaced=False):
         ('groq', GroqPlatform()),
         ('grok', GrokPlatform()),
         ('anthropic', AnthropicPlatform()),
+        ('gemini', GeminiPlatform()),
     ]
     front_models = {}
     for platform_name, platform in platforms:
@@ -807,6 +811,276 @@ class AnthropicPlatform(LLMPlatform):
         else:
             return self.make_call(messages, model, temperature, timeout=timeout)
 
+
+
+# Google Gemini Platform Implementation
+class GeminiPlatform(LLMPlatform):
+    def __init__(self, api_key=None):
+        if api_key:
+            self.client = genai.Client(api_key=api_key)
+
+        self.model_token_limits = {
+            'gemini-2.5-pro': 1000000,
+            'gemini-2.5-flash': 1000000,
+            'gemini-2.5-flash-lite': 1000000,
+            'gemini-2.0-flash': 1000000,
+            'default': 'gemini-2.5-flash'
+        }
+        self.front_model_token_limits = {
+            'gemini-2.5-pro': 1000000,
+            'gemini-2.5-flash': 1000000,
+            'gemini-2.0-flash': 1000000,
+            'default': 'gemini-2.5-flash'
+        }
+        self.default_model = self.model_token_limits['default']
+        
+        # Models that support multimodal inputs
+        self.multimodal_models = [
+            'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'
+        ]
+        
+        # Models with thinking capabilities
+        self.thinking_models = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']
+
+    def make_call(self, messages, model, temperature=None, timeout=None):
+        def call_api(response_queue):
+            try:
+                # Check if client is properly initialized
+                if self.client is None:
+                    raise ValueError("Gemini client not initialized. Please provide a valid API key or set GOOGLE_API_KEY environment variable.")
+                
+                # Convert messages to Gemini format
+                contents = self._convert_messages_to_contents(messages)
+                
+                # Build config
+                config_params = {}
+                if temperature is not None:
+                    config_params['temperature'] = temperature
+                
+                # Create config object if we have parameters
+                config = types.GenerateContentConfig(**config_params) if config_params else None
+                
+                # Make the API call
+                params = {
+                    "model": model,
+                    "contents": contents
+                }
+                if config:
+                    params["config"] = config
+                    
+                response = self.client.models.generate_content(**params)
+                response_queue.put(response.text)
+            except Exception as e:
+                response_queue.put(e)
+
+        response_queue = queue.Queue()
+        api_thread = threading.Thread(target=call_api, args=(response_queue,))
+        api_thread.start()
+        try:
+            return response_queue.get(timeout=timeout)
+        except queue.Empty:
+            print("Request timed out")
+            return None
+
+    def stream_call(self, messages, model, temperature=None, timeout=None):
+        def call_api():
+            try:
+                # Check if client is properly initialized
+                if self.client is None:
+                    raise ValueError("Gemini client not initialized. Please provide a valid API key or set GOOGLE_API_KEY environment variable.")
+                
+                # Convert messages to Gemini format
+                contents = self._convert_messages_to_contents(messages)
+                
+                # Build config
+                config_params = {}
+                if temperature is not None:
+                    config_params['temperature'] = temperature
+                
+                # Create config object if we have parameters
+                config = types.GenerateContentConfig(**config_params) if config_params else None
+                
+                # Make the streaming API call
+                params = {
+                    "model": model,
+                    "contents": contents
+                }
+                if config:
+                    params["config"] = config
+                    
+                response = self.client.models.generate_content_stream(**params)
+                for chunk in response:
+                    if chunk.text:
+                        yield chunk.text
+            except Exception as e:
+                yield str(e)
+
+        return call_api()
+
+    def _convert_messages_to_contents(self, messages):
+        """Convert OpenAI-style messages to Gemini contents format"""
+        contents = []
+        
+        for message in messages:
+            role = message.get('role', 'user')
+            content = message.get('content', '')
+            
+            # Skip system messages for now (can be handled with system_instruction in config)
+            if role == 'system':
+                continue
+                
+            # For simple text content
+            if isinstance(content, str):
+                contents.append(content)
+            else:
+                # Handle multimodal content (list of parts)
+                contents.append(content)
+                
+        return contents
+
+    def get_tokens(self, string: str, encoding_name: str = None) -> int:
+        """
+        Get token count for Gemini models using the official count_tokens API.
+        Falls back to estimation if client is not available.
+        """
+        if self.client is not None:
+            try:
+                response = self.client.models.count_tokens(
+                    model=self.default_model,
+                    contents=string
+                )
+                return response.total_tokens
+            except Exception:
+                # Fall back to estimation if API call fails
+                pass
+        
+        # Fallback estimation: 1 token per 4 characters
+        return round(len(string) / 4)
+
+    def text_to_speech(self, text, model="default", voice="default"):
+        # Gemini doesn't currently support TTS in the provided API
+        raise NotImplementedError("Gemini platform does not currently support text-to-speech.")
+
+    def transcribe_audio(self, file, model="default"):
+        # Gemini supports audio input but transcription would be through generate_content
+        # with audio files - not a dedicated transcription endpoint
+        raise NotImplementedError("Use image_inference method with audio files for Gemini audio processing.")
+
+    def model_check(self, token_count, model):
+        if model not in self.model_token_limits.keys():
+            return model
+        else:
+            # Filter out the 'default' key and create suitable_models dictionary
+            suitable_models = {
+                model_name: tokens 
+                for model_name, tokens in self.model_token_limits.items() 
+                if isinstance(tokens, int) and tokens >= token_count
+            }
+            
+            if model in suitable_models:
+                return model
+            else:
+                if suitable_models:  # Check if we found any suitable models
+                    new_model = min(suitable_models, key=suitable_models.get)
+                    print('model switch from model:', model, 'to model:', new_model)
+                    return new_model
+                else:
+                    # If no suitable models found, return the default model
+                    return self.model_token_limits['default']
+
+    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None):
+        """
+        Handle image inference using Gemini's multimodal capabilities.
+        """
+        # Check if client is properly initialized
+        if self.client is None:
+            raise ValueError("Gemini client not initialized. Please provide a valid API key or set GOOGLE_API_KEY environment variable.")
+        
+        model = model if model else self.default_model
+        
+        if model not in self.multimodal_models:
+            raise ValueError(f"Model {model} does not support image inputs.")
+            
+        if image_path is None and image_url is None:
+            raise ValueError("Must specify either image_path or image_url.")
+
+        # Prepare the content list
+        contents = []
+        
+        # Add text prompt
+        if user_text:
+            contents.append(user_text)
+        else:
+            contents.append("Describe this image.")
+            
+        # Add image
+        if image_path:
+            # Read local image file
+            with open(image_path, 'rb') as f:
+                image_bytes = f.read()
+            
+            # Determine MIME type
+            mime_type = "image/jpeg"
+            if image_path.lower().endswith('.png'):
+                mime_type = "image/png"
+            elif image_path.lower().endswith('.gif'):
+                mime_type = "image/gif"
+            elif image_path.lower().endswith('.webp'):
+                mime_type = "image/webp"
+                
+            image_part = types.Part.from_bytes(
+                data=image_bytes,
+                mime_type=mime_type
+            )
+            contents.append(image_part)
+            
+        elif image_url:
+            # Fetch image from URL
+            import requests
+            response = requests.get(image_url)
+            if response.status_code != 200:
+                raise ValueError(f"Failed to fetch image from URL: {image_url}")
+                
+            # Determine MIME type from Content-Type header or URL
+            content_type = response.headers.get('Content-Type', 'image/jpeg')
+            if 'image/' not in content_type:
+                content_type = 'image/jpeg'  # Default fallback
+                
+            image_part = types.Part.from_bytes(
+                data=response.content,
+                mime_type=content_type
+            )
+            contents.append(image_part)
+
+        # Build config
+        config_params = {}
+        if temperature is not None:
+            config_params['temperature'] = temperature
+            
+        config = types.GenerateContentConfig(**config_params) if config_params else None
+
+        # Make the API call
+        try:
+            params = {
+                "model": model,
+                "contents": contents
+            }
+            if config:
+                params["config"] = config
+                
+            if stream:
+                def stream_generator():
+                    response = self.client.models.generate_content_stream(**params)
+                    for chunk in response:
+                        if chunk.text:
+                            yield chunk.text
+                return stream_generator()
+            else:
+                response = self.client.models.generate_content(**params)
+                return response.text
+                
+        except Exception as e:
+            raise Exception(f"Gemini image inference failed: {str(e)}")
 
 
 # LLM Client that uses the platform-agnostic interface

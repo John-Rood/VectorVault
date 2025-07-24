@@ -26,7 +26,7 @@ import random
 from threading import Thread as T
 from datetime import datetime, timedelta
 from typing import List, Union
-from .ai import openai, OpenAIPlatform, AnthropicPlatform, GroqPlatform, GrokPlatform, LLMClient, get_all_models
+from .ai import openai, OpenAIPlatform, AnthropicPlatform, GroqPlatform, GrokPlatform, GeminiPlatform, LLMClient, get_all_models
 from .cloud_api import call_cloud_save, run_flow, run_flow_stream
 from .cloudmanager import CloudManager, VaultStorageManager, as_completed, ThreadPoolExecutor
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement, load_json
@@ -36,7 +36,7 @@ class Vault:
     def __init__(self, user: str = None, api_key: str = None, openai_key: str = None, vault: str = None, 
                  embeddings_model: str = None, verbose: bool = False, conversation_user_id: str = None, 
                  model = None, groq_key: str = None, grok_key: str = None, anthropic_key: str = None,
-                 main_prompt = None, main_prompt_with_context = None, personality_message = None):
+                 gemini_key: str = None, main_prompt = None, main_prompt_with_context = None, personality_message = None):
         ''' 
         >>> Create a vector database instance:
         ```
@@ -99,6 +99,7 @@ class Vault:
         self.groq_key = groq_key
         self.grok_key = grok_key
         self.anthropic_key = anthropic_key
+        self.gemini_key = gemini_key
         
         # Set OpenAI API key if provided
         if openai_key:
@@ -109,6 +110,7 @@ class Vault:
         self._groq = None
         self._grok = None
         self._anthropic = None
+        self._gemini = None
         
         # Configuration settings
         self.fine_tuned_context_window = 128000
@@ -165,6 +167,7 @@ class Vault:
             self._groq = GroqPlatform(self.groq_key)
             self._grok = GrokPlatform(self.grok_key)
             self._anthropic = AnthropicPlatform(self.anthropic_key)
+            self._gemini = GeminiPlatform(self.gemini_key)
             self._platforms_initialized = True
 
     @property
@@ -194,6 +197,13 @@ class Vault:
         if self._anthropic is None:
             self._initialize_platforms()
         return self._anthropic
+
+    @property
+    def gemini(self):
+        """Lazy initialization of Gemini platform"""
+        if self._gemini is None:
+            self._initialize_platforms()
+        return self._gemini
 
     def get_total_items(self, vault: str = None):
         '''
@@ -250,7 +260,7 @@ class Vault:
 
         Args:
             model_name (str): The name of the fine-tuned model.
-            platform (str): The target platform ('openai', 'groq', 'grok', 'anthropic', 'deepseek').
+            platform (str): The target platform ('openai', 'groq', 'grok', 'anthropic', 'gemini').
             token_limit (int): The token limit for the fine-tuned model.
         """
         if platform == 'openai':
@@ -261,8 +271,8 @@ class Vault:
             platform_instance = self.grok
         elif platform == 'anthropic':
             platform_instance = self.anthropic
-        elif platform == 'deepseek':
-            platform_instance = self.deepseek
+        elif platform == 'gemini':
+            platform_instance = self.gemini
         else:
             raise ValueError(f"Unknown platform: {platform}")
         
@@ -297,6 +307,8 @@ class Vault:
             return LLMClient(self.groq, **client_kwargs)
         elif model in self.grok.model_token_limits:
             return LLMClient(self.grok, **client_kwargs)
+        elif model in self.gemini.model_token_limits:
+            return LLMClient(self.gemini, **client_kwargs)
         elif model in self.openai.model_token_limits:
             return LLMClient(self.openai, **client_kwargs)
         else:
@@ -859,102 +871,6 @@ class Vault:
         self.x = count + 1
         self._vectors = new_index
         self.vecs_loaded = False
-
-
-    def make_3d_map(self, highlight_id: int = None, return_html: bool = False):
-        from kneed import KneeLocator
-        from sklearn.cluster import DBSCAN
-        from sklearn.neighbors import NearestNeighbors
-        from sklearn.manifold import TSNE
-        import plotly.graph_objs as go
-
-        def choose_eps(vectors_3d, k=4):
-            # Use NearestNeighbors to find the k-nearest distances for each point
-            neigh = NearestNeighbors(n_neighbors=k)
-            neigh.fit(vectors_3d)
-            distances, indices = neigh.kneighbors(vectors_3d)
-
-            # Sort the distances
-            sorted_distances = np.sort(distances[:, k-1], axis=0)
-
-            # Find the knee point for the k-distance graph
-            kneedle = KneeLocator(range(len(sorted_distances)), sorted_distances, S=1.0, curve='convex', direction='increasing')
-            eps = sorted_distances[kneedle.knee]
-
-            return eps
-        
-        self.load_vectors()
-        # Retrieve all vectors from the index
-        vectors = [self.vectors.get_item_vector(i) for i in range(self.vectors.get_n_items())]
-        # Convert list of vectors to a NumPy array
-        vectors_array = np.array(vectors)
-        # Use t-SNE to project the vectors into 3D space
-        tsne = TSNE(n_components=3, random_state=0)
-        vectors_3d = tsne.fit_transform(vectors_array)
-        eps_val = choose_eps(vectors_3d)
-        # Apply DBSCAN clustering
-        dbscan = DBSCAN(eps=eps_val, min_samples=10)  # These parameters may need tuning
-        cluster_labels = dbscan.fit_predict(vectors_3d)
-
-        # Generate hover text for each point
-        hover_texts = [
-            'ID: {} Cluster: {}'.format(i, 'Outlier' if lbl == -1 else lbl)
-            for i, lbl in enumerate(cluster_labels)
-            ]
-
-        # Trace for all points with cluster coloring
-        trace_all = go.Scatter3d(
-            x=vectors_3d[:, 0],
-            y=vectors_3d[:, 1],
-            z=vectors_3d[:, 2],
-            mode='markers',
-            marker=dict(
-                size=5,
-                color=cluster_labels,  # Color by cluster label
-                colorscale='Viridis',  # Color scale for clusters
-                line=dict(width=0)  # No border around markers
-            ),
-            text=hover_texts,
-            hoverinfo='text',
-            name='Clustered points'
-        )
-
-        data = [trace_all]
-
-        # For the highlighted point, if it exists
-        if highlight_id is not None:
-            trace_highlight = go.Scatter3d(
-                x=[vectors_3d[highlight_id, 0]],
-                y=[vectors_3d[highlight_id, 1]],
-                z=[vectors_3d[highlight_id, 2]],
-                mode='markers',
-                marker=dict(
-                    size=8,
-                    color='red',  # Highlighted point is red
-                ),
-                text=['Highlighted ID: {}'.format(highlight_id)],
-                hoverinfo='text',
-                name='Highlighted point'
-            )
-            data.append(trace_highlight)
-
-        # Layout for the 3D plot
-        layout = go.Layout(
-            title='3D Visualization with DBSCAN Clustering',
-            scene=dict(
-                xaxis=dict(title='Dimension 1'),
-                yaxis=dict(title='Dimension 2'),
-                zaxis=dict(title='Dimension 3'),
-            ),
-            margin=dict(l=0, r=0, b=0, t=0)
-        )
-
-        # Create the figure
-        fig = go.Figure(data=data, layout=layout)
-        if return_html:
-            return fig.to_html(full_html=False, include_plotlyjs='cdn')
-        else:
-            fig.show()
 
 
     def upload_vectors(self, vault = None):

@@ -79,7 +79,7 @@ response = vault.get_chat(
 
 ## 🧠 Platform-Agnostic AI Intelligence
 
-Vector Vault supports all leading AI platforms under one interface. Switch between OpenAI, Claude, Grok, and Groq **mid-conversation** without changing your code:
+Vector Vault supports all leading AI platforms under one interface. Switch between OpenAI, Claude, Grok and Gemini **mid-conversation** without changing your code:
 
 ```python
 # Start with OpenAI for analysis

@@ -184,6 +184,7 @@ class OpenAIPlatform(LLMPlatform):
             'o3-pro': 200000,
             'o3-mini': 128000,
             'o4-mini': 200000,
+            'gpt-4': 32000,
             'gpt-4.1': 1000000,
             'gpt-4.1-nano': 1000000,
             'gpt-4o-mini': 128000,
@@ -201,6 +202,7 @@ class OpenAIPlatform(LLMPlatform):
             'gpt-4.1': 1000000,
             'gpt-4.1-nano': 1000000,
             'gpt-4o': 128000,
+            'gpt-4': 32000,
             'gpt-3.5-turbo': 16000,
             'chatgpt-4o-latest': 128000,
             'default': 'chatgpt-4o-latest'
@@ -663,9 +665,8 @@ class AnthropicPlatform(LLMPlatform):
         self.model_token_limits = {
             'claude-opus-4-0': 200000,
             'claude-sonnet-4-0': 200000,
-            'claude-3-5-sonnet-20241022': 200000,
+            'claude-3-7-sonnet-latest': 200000,
             'claude-3-5-sonnet-latest': 200000,
-            'claude-3-5-haiku-20241022': 200000,
             'claude-3-5-haiku-latest': 200000,
             'default': 'claude-sonnet-4-0'
         }

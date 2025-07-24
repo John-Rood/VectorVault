@@ -123,6 +123,7 @@ vault = Vault(user='your_email',
               groq_key='your_groq_api_key',          # For Groq's fast inference
               grok_key='your_grok_api_key',          # For xAI's Grok models  
               anthropic_key='your_anthropic_api_key', # For Claude models
+              gemini_key='your_gemini_api_key',      # For Google Gemini models
               vault='any_vault_name',
               verbose=False,
               model='gpt-4o')  # Set your preferred default model
@@ -138,6 +139,7 @@ vault = Vault(user='your_email',
 - **`groq_key`**: Get fast inference with Groq's optimized models
 - **`grok_key`**: Access xAI's Grok models for creative tasks
 - **`anthropic_key`**: Use Claude models for reasoning and analysis
+- **`gemini_key`**: Access Google Gemini models for multimodal AI tasks
 
 ## Platform-Specific Models
 
@@ -158,6 +160,10 @@ vault.get_chat("Hello", model="grok-3")
 # Claude models (requires anthropic_key)
 vault.get_chat("Hello", model="claude-sonnet-4-0")
 vault.get_chat("Hello", model="claude-3-5-sonnet-20241022")
+
+# Gemini models (requires gemini_key)
+vault.get_chat("Hello", model="gemini-2.5-pro")
+vault.get_chat("Hello", model="gemini-2.5-flash")
 ```
 
 ## Getting API Keys
@@ -167,6 +173,7 @@ vault.get_chat("Hello", model="claude-3-5-sonnet-20241022")
 - **Groq**: Sign up at [console.groq.com](https://console.groq.com)  
 - **xAI (Grok)**: Get access at [console.x.ai](https://console.x.ai)
 - **Anthropic**: Apply for API access at [console.anthropic.com](https://console.anthropic.com)
+- **Google Gemini**: Get your API key at [aistudio.google.com](https://aistudio.google.com/app/apikey)
 
 ## Advanced Initialization Options
 
@@ -175,6 +182,10 @@ vault = Vault(
     user='your_email',
     api_key='your_vectorvault_api_key',
     openai_key='your_openai_key',
+    groq_key='your_groq_key',        # Optional: For Groq models
+    grok_key='your_grok_key',        # Optional: For Grok models
+    anthropic_key='your_anthropic_key',  # Optional: For Claude models
+    gemini_key='your_gemini_key',    # Optional: For Gemini models
     vault='vault_name',
     
     # Performance & Behavior
@@ -738,6 +749,9 @@ response = vault.get_chat("What's your take?", model="claude-sonnet-4-0")
 
 # Try Grok for creativity
 response = vault.get_chat("Be creative", model="grok-4")
+
+# Use Gemini for multimodal tasks
+response = vault.get_chat("Analyze this", model="gemini-2.5-pro")
 ```
 
 ## Image Processing

@@ -1091,7 +1091,7 @@ class LLMClient:
         self.default_model = self.platform.default_model
         self.timeout = timeout
         self.fine_tuned_context_window = fine_tuned_context_window
-        self.main_prompt = main_prompt if main_prompt else "Question: {content}"
+        self.main_prompt = main_prompt if main_prompt else "{content}"
         self.main_prompt_with_context = main_prompt_with_context if main_prompt_with_context else """Use the following Context to answer the Question at the end.
     Answer as if you were the modern voice of the context, without referencing the context or mentioning
     the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
@@ -1100,13 +1100,13 @@ class LLMClient:
 
     Question: {content}
     """    
-        self.personality_message = personality_message if personality_message else """Answer directly and be helpful"""
-        self.context_prompt = self.main_prompt_with_context + '\n' + f'({self.personality_message})' + '\n'
+        self.personality_message = personality_message if personality_message else ""
+        self.context_prompt = self.main_prompt_with_context + '\n' + f'{self.personality_message}' + '\n'
         self.prompt = self.main_prompt + '\n\n' + f'({self.personality_message})' + '\n'
 
     def set_prompts(self):
-        self.context_prompt = self.main_prompt_with_context + '\n' + f'({self.personality_message})' + '\n'
-        self.prompt = self.main_prompt + '\n\n' + f'({self.personality_message})' + '\n'
+        self.context_prompt = self.main_prompt_with_context + '\n' + f'{self.personality_message}' + '\n'
+        self.prompt = self.main_prompt + '\n\n' + f'{self.personality_message}' + '\n'
 
     def within_context_window(self, text: str = None, model=None):
         if model not in self.platform.model_token_limits.keys():

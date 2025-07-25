@@ -114,7 +114,7 @@ class Vault:
         
         # Configuration settings
         self.fine_tuned_context_window = 128000
-        self.main_prompt = main_prompt if main_prompt else "Question: {content}"
+        self.main_prompt = main_prompt if main_prompt else "{content}"
         self.main_prompt_with_context = main_prompt_with_context if main_prompt_with_context else """Use the following Context to answer the Question at the end.
     Answer as if you were the modern voice of the context, without referencing the context or mentioning
     the fact that any context has been given. Make sure to not just repeat what is referenced. Don't preface or give any warnings at the end.
@@ -123,7 +123,7 @@ class Vault:
 
     Question: {content}
     """    
-        self.personality_message = personality_message if personality_message else """Answer directly and be helpful"""
+        self.personality_message = personality_message if personality_message else ""
 
     @property
     def cloud_manager(self):

@@ -202,7 +202,6 @@ class OpenAIPlatform(LLMPlatform):
             'gpt-4.1': 1000000,
             'gpt-4.1-nano': 1000000,
             'gpt-4o': 128000,
-            'gpt-4': 32000,
             'gpt-3.5-turbo': 16000,
             'chatgpt-4o-latest': 128000,
             'default': 'chatgpt-4o-latest'

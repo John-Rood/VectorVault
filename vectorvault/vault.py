@@ -523,7 +523,7 @@ class Vault:
         self.saved_already = False
 
 
-    def duplicate_vault(self, new_vault_name):
+    def duplicate_vault(self, new_vault_name, embeddings_model=None):
         vault = Vault(user=self.user, api_key=self.api, ai_key=self.ai_key, vault=self.vault, verbose=self.verbose, chat_ai=self.chat_ai)
         vault2 = Vault(user=self.user, api_key=self.api, ai_key=self.ai_key, vault=new_vault_name, verbose=self.verbose, chat_ai=self.chat_ai)
 

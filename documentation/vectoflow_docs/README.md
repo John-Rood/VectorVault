@@ -42,7 +42,7 @@ Vector Flow is your **Agent Operating System**—a visual, no-code platform for 
 
 - [Advanced Flow Builder Features](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_advanced_features.md) - Deep dive into advanced node configurations
 - [Vector Flow Logging](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_logging.md) - Understanding flow execution logs and debugging
-- [Backend Runtime & Integration](https://github.com/John-Rood/VectorVault/tree/main/documentation/vectoflow_docs) - Server-side integration and deployment
+- [Python Integration & Backend Runtime](https://github.com/John-Rood/VectorVault/tree/main/documentation/vectoflow_python) - Server-side integration and deployment
 - [JavaScript Integration](https://github.com/John-Rood/VectorVault-js/blob/main/vectorflow_docs.md) - Client-side integration with Vector Flow
 
 ---

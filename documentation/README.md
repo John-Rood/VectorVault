@@ -3,6 +3,53 @@
 
 Vector Vault is a cutting-edge, cloud-native and RAG-native vector database solution that revolutionizes the way developers integrate AI into their applications. Our platform seamlessly combines vector databases, similarity search, and AI model interactions into a single, easy-to-use service.
 
+## Table of Contents
+
+### Getting Started
+- [Key Features](#key-features)
+- [Getting Started](#getting-started)
+- [Advantages](#advantages)
+- [Use Cases](#use-cases)
+
+### Python API Documentation
+- [Installation](#install)
+- [Initialization & API Keys](#initialization--api-keys)
+  - [Basic Setup (OpenAI Only)](#basic-setup-openai-only)
+  - [Multi-Platform Setup (All Providers)](#multi-platform-setup-all-providers)
+  - [API Key Requirements](#api-key-requirements)
+  - [Platform-Specific Models](#platform-specific-models)
+  - [Getting API Keys](#getting-api-keys)
+  - [Advanced Initialization Options](#advanced-initialization-options)
+
+### Core Operations
+- [Upload Data](#upload)
+- [Vault Management](#vault-management)
+  - [Creating Vaults](#creating-vaults)
+- [Search Your Data](#search-your-data)
+- [Talk to Your Data](#talk-to-your-data)
+  - [The get_chat() Function](#the-get_chat-function)
+  - [Basic Usage](#basic-usage)
+  - [Change the Personality](#change-the-personality)
+
+### Advanced Features
+- [Summarize Anything](#summarize-anything)
+- [Streaming](#streaming)
+- [Metadata Made Easy](#metadata-made-easy)
+  - [Add Any Fields](#add-any-fields)
+- [Vaults](#vaults)
+- [Build an AI Customer Service Chatbot](#build-an-ai-cusomter-service-chatbot)
+- [Advanced Features](#advanced-features)
+  - [Multi-Platform Model Switching](#multi-platform-model-switching)
+  - [Image Processing](#image-processing)
+  - [Vector Vault Flows](#vector-vault-flows) 
+  - [Storage Management](#storage-management)
+  - [Data Export/Import](#data-exportimport)
+
+### Support
+- [Contact](#contact)
+
+---
+
 ## Key Features
 
 - **RAG-Native Architecture**: Perform Retrieval-Augmented Generation in one line of code.
@@ -774,6 +821,8 @@ response = vault.get_chat(
 
 ## Vector Vault Flows
 Execute complex AI workflows:
+
+> **📖 Learn More**: For comprehensive documentation on creating and managing VectorFlow workflows, see the [VectorFlow Documentation](https://github.com/John-Rood/VectorVault/tree/main/documentation/vectoflow_docs).
 
 ```python
 # Execute a flow

@@ -871,7 +871,7 @@ vault.upload_database_from_json(vault_data)
 <br>
 
 # Contact:
-### If have any questions, drop a message in the Vector Vault [Discord channel](https://discord.gg/AkMsP9Uq), happy to help.
+### If have any questions, drop a message in the Vector Vault [Discord channel](https://discord.com/channels/1111817087007084544/1111817087451676835), happy to help.
 
 Happy coding!
 <br>

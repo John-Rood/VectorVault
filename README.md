@@ -174,9 +174,8 @@ Vector Vault isn't just keeping up with the AI revolution—we're **defining it*
 
 ### Learn More:
 - **Full Documentation**: [API Reference](https://github.com/John-Rood/VectorVault/tree/main/vectorvault/documentation/fulldocs.md)
-- **Vector Flow Guide**: [Agent Building Documentation](https://github.com/John-Rood/VectorVault/tree/main/vectorvault/documentation/vectorflow_docs.md)
+- **Vector Flow Guide**: [Agent Building Documentation](https://github.com/John-Rood/VectorVault/tree/main/documentation/vectoflow_docs)
 - **Chat Functions**: [RAG & Streaming Guide](https://github.com/John-Rood/VectorVault/tree/main/vectorvault/documentation/get_chat_docs.md)
-- **Community**: [Discord](https://discord.gg/AkMsP9Uq)
 - **JavaScript SDK**: [VectorVault-js](https://github.com/John-Rood/VectorVault-js)
 
 **The age of autonomous AI agents is here. Build yours with Vector Vault.**

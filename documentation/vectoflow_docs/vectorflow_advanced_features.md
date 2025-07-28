@@ -96,6 +96,8 @@ Now, let's break it down by node type, focusing on advanced features and how the
 ### Action & Integration Nodes
 
 #### ACT Node (Python Code Execution)
+*For detailed ACT node documentation and examples, see: [ACT Node Documentation](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_nodes/vf_act_node.md)*
+
 - **Code Editor**: Python-only with syntax highlighting.
 - **Global Variables**: Access `{variables}` directly (e.g., `print(user_type)`).
 - **Save Dictionary**: Set forward variables via `save['key'] = value` (e.g., for API data).
@@ -107,6 +109,8 @@ Now, let's break it down by node type, focusing on advanced features and how the
 - **Email Details**: From/to, subject, body (supports `{variables}`).
 
 #### MCP SERVER Node
+*For detailed MCP node documentation and examples, see: [MCP Node Documentation](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_nodes/vf_mcp_node.md)*
+
 - **Server URL**: Custom endpoint.
 - **Operations**: List/call tools, list/get prompts.
 - **Arguments**: JSON for tools/prompts.

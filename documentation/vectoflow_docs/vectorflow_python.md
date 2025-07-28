@@ -57,7 +57,7 @@ Predictable, observable, and maintainable is the difference.
 - **Serverless & Stateless:** Hosted on Google Cloud Platform (GCP) for reliability and scale.
 - **VFJSON Format:** Flows are saved as a portable VFJSON object in the cloud.
 - **Secure Execution:** Code runs in isolated containers with controlled environments and restricted module access.
-- **Real-time Logging:** Get complete, auditable visibility into every execution step, output, and error.
+- **Real-time Logging:** Get complete, auditable visibility into every execution step, output, and error. See [Vector Flow Logging](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_logging.md) for detailed logging documentation.
 
 ---
 ## Python API Documentation
@@ -146,6 +146,7 @@ for event in vault.stream_flow(
         print(event[5:], end='') # Remove 'data:' prefix
     elif event.startswith('event: log'):
         # Process structured log events for real-time observability
+        # See Vector Flow Logging docs for log structure details
         continue
 ```
 
@@ -225,7 +226,7 @@ Flows can run other flows as a part of their own execution. This allows you to b
 
 ## Observability & Logging
 
-Vector Flow provides comprehensive, structured JSON logging for complete traceability.
+Vector Flow provides comprehensive, structured JSON logging for complete traceability. For detailed information about log structure, debugging, and advanced logging features, see the [Vector Flow Logging](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_logging.md) documentation.
 
 ### Log Structure
 Every log entry contains:

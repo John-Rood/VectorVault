@@ -42,7 +42,7 @@ Vector Flow is your **Agent Operating System**—a visual, no-code platform for 
 
 - [Advanced Flow Builder Features](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_advanced_features.md) - Deep dive into advanced node configurations
 - [Vector Flow Logging](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_logging.md) - Understanding flow execution logs and debugging
-- [Python Integration & Backend Runtime](https://github.com/John-Rood/VectorVault/tree/main/documentation/vectoflow_docs/vectorflow_python.md) - Server-side integration and deployment
+- [Python Integration & Backend Runtime](https://github.com/John-Rood/VectorVault/tree/main/documentation/vectoflow_docs/vectoflow_python.md) - Server-side integration and deployment
 - [JavaScript Integration](https://github.com/John-Rood/VectorVault-js/blob/main/vectorflow_docs.md) - Client-side integration with Vector Flow
 
 ---
@@ -159,11 +159,11 @@ Vector Flow provides specialized nodes for different aspects of AI agent behavio
 - **NUMBER**: Generate integers for scoring, counting, or mathematical logic
 
 ### Action & Integration Nodes
-- **ACT**: Write Python code for API calls, data processing, or custom logic
+- **ACT**: Write Python code for API calls, data processing, or custom logic - [ACT Node Documentation](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_nodes/vf_act_node.md)
 - **EMAIL**: Send automated emails with dynamic content
 - **DOWNLOAD URL**: Fetch content from websites
 - **GOOGLE SEARCH**: Perform searches and use results in your flow
-- **MCP SERVER**: Connect to external tools and services
+- **MCP SERVER**: Connect to external tools and services - [MCP Node Documentation](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_nodes/vf_mcp_node.md)
 
 ### Data & Storage Nodes
 - **ADD TO VAULT**: Store information in your vector database
@@ -184,7 +184,7 @@ Most nodes can "Set Variable" in their configuration, storing their output for l
 - **CAPTURE** extracts multiple variables at once (e.g., `{first_name}`, `{email}`)
 - **GENERATE** creates one variable with AI-generated content
 - **RESPOND** can save the full response after streaming
-- **ACT** sets variables via Python: `save['customer_data'] = api_response`
+- **ACT** sets variables via Python: `save['customer_data'] = api_response` - [ACT Node Documentation](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_nodes/vf_act_node.md)
 
 ### Using Variables
 Reference any variable in text fields with bracket notation: `{variable_name}`

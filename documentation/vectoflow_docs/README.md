@@ -49,22 +49,34 @@ Vector Flow is your **Agent Operating System**—a visual, no-code platform for 
 
 ## What Makes Vector Flow Powerful
 
-Vector Flow lets you build **agentic AI** by orchestrating Large Language Models (LLMs) in seamless logic flows. You can implement advanced AI patterns like:
+Vector Flow is your **Agent Operating System** for building sophisticated AI that thinks, reasons, and acts. Here's what you can do:
 
-- **Chain-of-Thought (CoT)**: Step-by-step reasoning flows
-- **Tree-of-Thought (ToT)**: Branching decision trees with multiple paths
-- **Graph-of-Thought (GoT)**: Complex interconnected reasoning networks
+### High-Level Overview: What You Can Do with Vector Flow
 
-Your AI responses become an integrated part of the flow logic, not just simple chatbot replies. The result? Agents that can handle complex, multi-step tasks with persistent state across any runtime environment.
+- **Build Agents**: Create AI agents for conversation handling, data extraction, decision-making, and automation
+- **Orchestrate LLMs**: Combine AI nodes for generation, recognition, and logic without coding
+- **Integrate Data**: Use vaults (vector databases) for semantic search and RAG (Retrieval-Augmented Generation)
+- **Run Flexibly**: Test in the builder, deploy as widgets, or execute via APIs in your apps
+- **Scale with Child Flows**: Nest flows for modularity, sharing state and enabling exponential parallel processing
+
+Whether you're automating customer support or building backend AI for software, Vector Flow is the backend runtime that lets you build without limits.
+
+### Advanced Capabilities
+
+- **Long-Running Agents**: Build agents that literally never stop running—perfect for monitoring, automation, and continuous processing. Use the agent control dashboard at **vectorvault.io/agents** with full observability through runtime logging and control through manual stop capabilities. Active agents appear in the "Active" tab, and their complete runtime logs are available in the "Past" tab after stopping.
+
+- **Human-in-the-Loop Workflows**: Create sophisticated flows with nodes that wait for human response before continuing—enabling approval workflows, manual review processes, and collaborative AI-human decision making.
+
+- **Perpetual Runtime**: Flows maintain state across containers, individual runtimes, and wait periods (no matter how long), enabling complex, long-running processes that persist through any interruption.
 
 ### Key Technical Advantages
-
 - **Lightning-Fast Routing**: Recognition nodes complete round-trip decisions in ~1/3 second
-- **Persistent Runtime**: Flows maintain state across containers, individual runtimes, and wait periods (no matter how long)
 - **Parallel Processing**: Child flows share state with parents and can run in parallel for exponential AI processing power
+- **Persistent Runtime**: Flows maintain state across containers, individual runtimes, and wait periods (no 
+matter how long)
 - **Universal Integration**: Run flows programmatically in Python/JS or deploy as embeddable widgets
 
-**Real-world example**: Aegis AI built their entire "AI Firewall" logic in Vector Flow, and run it as their core security software, demonstrating how flows become the intelligent backbone of production systems.
+**Real-world example**: Aegis AI powers their entire "AI Firewall" security platform using Vector Flow as the core decision engine, processing thousands of real-time threat assessments daily. What started as a no-code prototype became their mission-critical production system—no rewrite required.
 
 ## Getting Started:
 

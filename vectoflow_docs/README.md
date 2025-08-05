@@ -40,9 +40,9 @@ Vector Flow is your **Agent Operating System**—a visual, no-code platform for 
 
 ## Related Documentation
 
-- [Advanced Flow Builder Features](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_advanced_features.md) - Deep dive into advanced node configurations
-- [Vector Flow Logging](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_logging.md) - Understanding flow execution logs and debugging
-- [Python Integration & Backend Runtime](https://github.com/John-Rood/VectorVault/tree/main/documentation/vectoflow_docs/vectoflow_python.md) - Server-side integration and deployment
+- [Advanced Flow Builder Features](https://github.com/John-Rood/VectorVault/blob/main/vectoflow_docs/vectorflow_advanced_features.md) - Deep dive into advanced node configurations
+- [Vector Flow Logging](https://github.com/John-Rood/VectorVault/blob/main/vectoflow_docs/vectorflow_logging.md) - Understanding flow execution logs and debugging
+- [Python Integration & Backend Runtime](https://github.com/John-Rood/VectorVault/tree/main/vectoflow_docs/vectoflow_python.md) - Server-side integration and deployment
 - [JavaScript Integration](https://github.com/John-Rood/VectorVault-js/blob/main/vectorflow_docs.md) - Client-side integration with Vector Flow
 
 ---
@@ -104,7 +104,7 @@ Click "Open Chat" to test your flow as you build:
 - **Right Side**: Live logs showing exactly what each node is doing, thinking, and outputting
 - **Real-Time Debugging**: See what goes wrong and fix it immediately by adjusting prompts and logic
 
-This dual-pane setup is your debugging superpower—you can see the AI's "thought process" and iterate until it's perfect. For detailed information about interpreting and using the logging system, see the [Vector Flow Logging documentation](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_logging.md).
+This dual-pane setup is your debugging superpower—you can see the AI's "thought process" and iterate until it's perfect. For detailed information about interpreting and using the logging system, see the [Vector Flow Logging documentation](https://github.com/John-Rood/VectorVault/blob/main/vectoflow_docs/vectorflow_logging.md).
 
 ## Your First Flow: The Dog Expert
 
@@ -171,11 +171,11 @@ Vector Flow provides specialized nodes for different aspects of AI agent behavio
 - **NUMBER**: Generate integers for scoring, counting, or mathematical logic
 
 ### Action & Integration Nodes
-- **ACT**: Write Python code for API calls, data processing, or custom logic - [ACT Node Documentation](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_nodes/vf_act_node.md)
+- **ACT**: Write Python code for API calls, data processing, or custom logic - [ACT Node Documentation](https://github.com/John-Rood/VectorVault/blob/main/vectoflow_docs/vectorflow_nodes/vf_act_node.md)
 - **EMAIL**: Send automated emails with dynamic content
 - **DOWNLOAD URL**: Fetch content from websites
 - **GOOGLE SEARCH**: Perform searches and use results in your flow
-- **MCP SERVER**: Connect to external tools and services - [MCP Node Documentation](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_nodes/vf_mcp_node.md)
+- **MCP SERVER**: Connect to external tools and services - [MCP Node Documentation](https://github.com/John-Rood/VectorVault/blob/main/vectoflow_docs/vectorflow_nodes/vf_mcp_node.md)
 
 ### Data & Storage Nodes
 - **ADD TO VAULT**: Store information in your vector database
@@ -196,7 +196,7 @@ Most nodes can "Set Variable" in their configuration, storing their output for l
 - **CAPTURE** extracts multiple variables at once (e.g., `{first_name}`, `{email}`)
 - **GENERATE** creates one variable with AI-generated content
 - **RESPOND** can save the full response after streaming
-- **ACT** sets variables via Python: `save['customer_data'] = api_response` - [ACT Node Documentation](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_nodes/vf_act_node.md)
+- **ACT** sets variables via Python: `save['customer_data'] = api_response` - [ACT Node Documentation](https://github.com/John-Rood/VectorVault/blob/main/vectoflow_docs/vectorflow_nodes/vf_act_node.md)
 
 ### Using Variables
 Reference any variable in text fields with bracket notation: `{variable_name}`
@@ -258,8 +258,8 @@ Your flows maintain state across any runtime interruption—containers, wait per
 Once your flow works perfectly in the chat interface:
 
 1. **Deploy as Widget**: Create embeddable chat widgets for websites
-2. **Programmatic Integration**: Call flows from Python/JS applications with `vault.run_flow()` or `vault.stream_flow()` (see [Backend Runtime & Integration](https://github.com/John-Rood/VectorVault/tree/main/documentation/vectoflow_docs) and [JavaScript Integration](https://github.com/John-Rood/VectorVault-js/blob/main/vectorflow_docs.md) docs)
-3. **Advanced Features**: Explore model selection, context retrieval, and temperature controls (see [Advanced Flow Builder Features](https://github.com/John-Rood/VectorVault/blob/main/documentation/vectoflow_docs/vectorflow_advanced_features.md))
+2. **Programmatic Integration**: Call flows from Python/JS applications with `vault.run_flow()` or `vault.stream_flow()` (see [Backend Runtime & Integration](https://github.com/John-Rood/VectorVault/tree/main/vectoflow_docs) and [JavaScript Integration](https://github.com/John-Rood/VectorVault-js/blob/main/vectorflow_docs.md) docs)
+3. **Advanced Features**: Explore model selection, context retrieval, and temperature controls (see [Advanced Flow Builder Features](https://github.com/John-Rood/VectorVault/blob/main/vectoflow_docs/vectorflow_advanced_features.md))
 
 ### Integration Example
 ```python
@@ -272,7 +272,7 @@ response = vault.run_flow(
 )
 ```
 
-For complete integration examples and API reference, see the [Backend Runtime & Integration documentation](https://github.com/John-Rood/VectorVault/tree/main/documentation/vectoflow_docs).
+For complete integration examples and API reference, see the [Backend Runtime & Integration documentation](https://github.com/John-Rood/VectorVault/tree/main/vectoflow_docs).
 
 Vector Flow handles the orchestration—you focus on building intelligent agent behavior. Welcome to the Agent Operating System.
 

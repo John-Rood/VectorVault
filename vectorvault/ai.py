@@ -185,26 +185,30 @@ class OpenAIPlatform(LLMPlatform):
             'o3-mini': 128000,
             'o4-mini': 200000,
             'gpt-4': 32000,
-            'gpt-4.1': 1000000,
-            'gpt-4.1-nano': 1000000,
+            'gpt-4.5': 400000,
+            'gpt-4.5-mini': 400000,
+            'gpt-4.5-nano': 400000,
             'gpt-4o-mini': 128000,
             'gpt-4o': 128000,
             'gpt-4o-audio-preview': 128000,
             'chatgpt-4o-latest': 128000,
+            'gpt-5-chat-latest': 400000,
             'gpt-3.5-turbo': 16000,
-            'default': 'chatgpt-4o-latest'
+            'default': 'gpt-5-chat-latest'
         }
         self.front_model_token_limits = {
             'o3': 200000,
             'o3-pro': 200000,
             'o3-mini': 128000,
             'o4-mini': 200000,
-            'gpt-4.1': 1000000,
-            'gpt-4.1-nano': 1000000,
+            'gpt-4.5': 400000,
+            'gpt-4.5-mini': 400000,
+            'gpt-4.5-nano': 400000,
             'gpt-4o': 128000,
             'gpt-3.5-turbo': 16000,
             'chatgpt-4o-latest': 128000,
-            'default': 'chatgpt-4o-latest'
+            'gpt-5-chat-latest': 400000,
+            'default': 'gpt-5-chat-latest'
         }
         self.img_capable = [
             'o1', 'gpt-4o', 'gpt-4o-mini',
@@ -662,6 +666,7 @@ class AnthropicPlatform(LLMPlatform):
             self.client = anthropic.Anthropic(api_key=api_key)
 
         self.model_token_limits = {
+            'claude-opus-4-1': 200000,
             'claude-opus-4-0': 200000,
             'claude-sonnet-4-0': 200000,
             'claude-3-7-sonnet-latest': 200000,
@@ -670,6 +675,7 @@ class AnthropicPlatform(LLMPlatform):
             'default': 'claude-sonnet-4-0'
         }
         self.front_model_token_limits = {
+            'claude-opus-4-1': 200000,
             'claude-opus-4-0': 200000,
             'claude-sonnet-4-0': 200000,
             'claude-3-7-sonnet-latest': 200000,

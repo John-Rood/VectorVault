@@ -26,7 +26,7 @@ import random
 from threading import Thread as T
 from datetime import datetime, timedelta
 from typing import List, Union
-from .ai import openai, OpenAIPlatform, AnthropicPlatform, GroqPlatform, GrokPlatform, GeminiPlatform, LLMClient, get_all_models
+from .ai import openai, OpenAIPlatform, AnthropicPlatform, GrokPlatform, GeminiPlatform, CerebrasPlatform, LLMClient, get_all_models
 from .cloud_api import call_cloud_save, run_flow, run_flow_stream
 from .cloudmanager import CloudManager, VaultStorageManager, as_completed, ThreadPoolExecutor
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement, load_json
@@ -35,8 +35,8 @@ from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cl
 class Vault:
     def __init__(self, user: str = None, api_key: str = None, openai_key: str = None, vault: str = None, 
                  embeddings_model: str = None, verbose: bool = False, conversation_user_id: str = None, 
-                 model = None, groq_key: str = None, grok_key: str = None, anthropic_key: str = None,
-                 gemini_key: str = None, main_prompt = None, main_prompt_with_context = None, personality_message = None):
+                 model = None, grok_key: str = None, anthropic_key: str = None,
+                 gemini_key: str = None, cerebras_key: str = None, main_prompt = None, main_prompt_with_context = None, personality_message = None):
         ''' 
         >>> Create a vector database instance:
         ```
@@ -96,10 +96,10 @@ class Vault:
         
         # Store API keys for lazy initialization
         self.openai_key = openai_key
-        self.groq_key = groq_key
         self.grok_key = grok_key
         self.anthropic_key = anthropic_key
         self.gemini_key = gemini_key
+        self.cerebras_key = cerebras_key
         
         # Set OpenAI API key if provided
         if openai_key:
@@ -107,10 +107,10 @@ class Vault:
         
         # Store platform instances for lazy initialization
         self._openai = None
-        self._groq = None
         self._grok = None
         self._anthropic = None
         self._gemini = None
+        self._cerebras = None
         
         # Configuration settings
         self.fine_tuned_context_window = 128000
@@ -164,10 +164,10 @@ class Vault:
         """Initialize AI platforms only when needed"""
         if not self._platforms_initialized:
             self._openai = OpenAIPlatform()
-            self._groq = GroqPlatform(self.groq_key)
             self._grok = GrokPlatform(self.grok_key)
             self._anthropic = AnthropicPlatform(self.anthropic_key)
             self._gemini = GeminiPlatform(self.gemini_key)
+            self._cerebras = CerebrasPlatform(self.cerebras_key)
             self._platforms_initialized = True
 
     @property
@@ -176,13 +176,6 @@ class Vault:
         if self._openai is None:
             self._initialize_platforms()
         return self._openai
-
-    @property
-    def groq(self):
-        """Lazy initialization of Groq platform"""
-        if self._groq is None:
-            self._initialize_platforms()
-        return self._groq
 
     @property
     def grok(self):
@@ -204,6 +197,13 @@ class Vault:
         if self._gemini is None:
             self._initialize_platforms()
         return self._gemini
+
+    @property
+    def cerebras(self):
+        """Lazy initialization of Cerebras platform"""
+        if self._cerebras is None:
+            self._initialize_platforms()
+        return self._cerebras
 
     def get_total_items(self, vault: str = None):
         '''
@@ -260,13 +260,13 @@ class Vault:
 
         Args:
             model_name (str): The name of the fine-tuned model.
-            platform (str): The target platform ('openai', 'groq', 'grok', 'anthropic', 'gemini').
+            platform (str): The target platform ('openai', 'cerebras', 'grok', 'anthropic', 'gemini').
             token_limit (int): The token limit for the fine-tuned model.
         """
         if platform == 'openai':
             platform_instance = self.openai
-        elif platform == 'groq':
-            platform_instance = self.groq
+        elif platform == 'cerebras':
+            platform_instance = self.cerebras
         elif platform == 'grok':
             platform_instance = self.grok
         elif platform == 'anthropic':
@@ -303,8 +303,8 @@ class Vault:
 
         if model in self.anthropic.model_token_limits:
             return LLMClient(self.anthropic, **client_kwargs)
-        elif model in self.groq.model_token_limits:
-            return LLMClient(self.groq, **client_kwargs)
+        elif model in self.cerebras.model_token_limits:
+            return LLMClient(self.cerebras, **client_kwargs)
         elif model in self.grok.model_token_limits:
             return LLMClient(self.grok, **client_kwargs)
         elif model in self.gemini.model_token_limits:

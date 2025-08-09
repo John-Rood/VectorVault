@@ -5,17 +5,17 @@ from abc import ABC, abstractmethod
 import openai
 import tiktoken
 import anthropic
-import groq
 import base64
 import httpx
 from google import genai
 from google.genai import types
+from cerebras.cloud.sdk import Cerebras
 
 
 def get_all_models(namespaced=False):
     platforms = [
         ('openai', OpenAIPlatform()),
-        ('groq', GroqPlatform()),
+        ('cerebras', CerebrasPlatform()),
         ('grok', GrokPlatform()),
         ('anthropic', AnthropicPlatform()),
         ('gemini', GeminiPlatform()),
@@ -33,7 +33,7 @@ def get_all_models(namespaced=False):
 def get_front_models(namespaced=False):
     platforms = [
         ('openai', OpenAIPlatform()),
-        ('groq', GroqPlatform()),
+        ('cerebras', CerebrasPlatform()),
         ('grok', GrokPlatform()),
         ('anthropic', AnthropicPlatform()),
         ('gemini', GeminiPlatform()),
@@ -375,113 +375,6 @@ class OpenAIPlatform(LLMPlatform):
         ]
         return self.make_call(messages, model, temperature=None, timeout=timeout) if not stream else self.stream_call(messages, model, temperature=None, timeout=timeout)
 
-
-# Groq Platform Implementation
-class GroqPlatform(LLMPlatform):
-    def __init__(self, api_key=None):
-        if api_key: 
-            self.client = groq.Client(api_key=api_key)
-
-        self.model_token_limits = {
-            'llama3-8b-8192': 8192,
-            'llama3-70b-8192': 8192,
-            'mixtral-8x7b-32768': 32768,
-            'gemma-7b-it': 8192,
-            'default': 'llama3-8b-8192'
-        }
-        self.front_model_token_limits = {
-            'llama3-8b-8192': 8192,
-            'llama3-70b-8192': 8192,
-            'mixtral-8x7b-32768': 32768,
-            'gemma-7b-it': 8192,
-            'default': 'llama3-8b-8192'
-        }
-        self.default_model = self.model_token_limits['default']
-
-    def make_call(self, messages, model, temperature, timeout=None):
-        timeout = timeout
-        def call_api(response_queue):
-            try:
-                response = self.client.chat.completions.create(
-                    model=model,
-                    temperature=temperature if temperature else 0,
-                    messages=messages
-                )
-                response_queue.put(response.choices[0].message.content)
-            except Exception as e:
-                response_queue.put(e)
-
-        response_queue = queue.Queue()
-        api_thread = threading.Thread(target=call_api, args=(response_queue,))
-        api_thread.start()
-        try:
-            return response_queue.get(timeout=timeout)
-        except queue.Empty:
-            print("Request timed out")
-            return None
-
-    def stream_call(self, messages, model, temperature, timeout=None):
-        def call_api():
-            try:
-                response = self.client.chat.completions.create(
-                    model=model,
-                    temperature=temperature if temperature else 0,
-                    messages=messages,
-                    stream=True
-                )
-                for chunk in response:
-                    message = chunk.choices[0].delta.content
-                    if message:
-                        yield message
-            except Exception as e:
-                yield str(e)
-
-        return call_api()
-
-    def get_tokens(self, string: str, encoding_name: str = None) -> int:
-        # Implement token counting for Groq
-        # Assuming similar to OpenAI
-        # Since no encoding specified, we can estimate tokens
-        # For simplicity, assume 1 token per 4 characters
-        num_tokens = len(string) / 4
-        return int(num_tokens)
-
-    def text_to_speech(self, text, model="default", voice="default"):
-        # Implement text-to-speech if available
-        pass
-
-    def transcribe_audio(self, file, model="default"):
-        # Implement audio transcription if available
-        pass
-
-    def model_check(self, token_count, model):
-        if model not in self.model_token_limits.keys():
-            return model
-        else:
-            # Filter out the 'default' key and create suitable_models dictionary
-            suitable_models = {
-                model_name: tokens 
-                for model_name, tokens in self.model_token_limits.items() 
-                if isinstance(tokens, int) and tokens >= token_count
-            }
-            
-            if model in suitable_models:
-                return model
-            else:
-                if suitable_models:  # Check if we found any suitable models
-                    new_model = min(suitable_models, key=suitable_models.get)
-                    print('model switch from model:', model, 'to model:', new_model)
-                    return new_model
-                else:
-                    # If no suitable models found, return the default model
-                    return self.model_token_limits['default']
-
-    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, timeout=None):
-        """
-        If GroqPlatform doesn't support image tasks, raise an exception or simply pass.
-        """
-        raise NotImplementedError("GroqPlatform does not currently support image inference.")
-    
 
 ###############################################################################
 #                            Grok (xAI) Platform                              #
@@ -1087,6 +980,111 @@ class GeminiPlatform(LLMPlatform):
                 
         except Exception as e:
             raise Exception(f"Gemini image inference failed: {str(e)}")
+
+
+# Cerebras Platform Implementation
+class CerebrasPlatform(LLMPlatform):
+    def __init__(self, api_key=None):
+        if api_key:
+            self.client = Cerebras(api_key=api_key)
+
+        self.model_token_limits = {
+            'gpt-oss-120b': 64000,
+            'qwen-3-coder-480b': 64000,
+            'default': 'gpt-oss-120b'
+        }
+        self.front_model_token_limits = {
+            'gpt-oss-120b': 64000,
+            'qwen-3-coder-480b': 64000,
+            'default': 'gpt-oss-120b'
+        }
+        self.default_model = self.model_token_limits['default']
+
+    def make_call(self, messages, model, temperature=None, timeout=None):
+        def call_api(response_queue):
+            try:
+                params = {
+                    "model": model,
+                    "messages": messages
+                }
+                if temperature is not None:
+                    params["temperature"] = temperature
+                
+                response = self.client.chat.completions.create(**params)
+                response_queue.put(response.choices[0].message.content)
+            except Exception as e:
+                response_queue.put(e)
+
+        response_queue = queue.Queue()
+        api_thread = threading.Thread(target=call_api, args=(response_queue,))
+        api_thread.start()
+        try:
+            return response_queue.get(timeout=timeout)
+        except queue.Empty:
+            print("Request timed out")
+            return None
+
+    def stream_call(self, messages, model, temperature=None, timeout=None):
+        def call_api():
+            try:
+                params = {
+                    "model": model,
+                    "messages": messages,
+                    "stream": True
+                }
+                if temperature is not None:
+                    params["temperature"] = temperature
+                
+                response = self.client.chat.completions.create(**params)
+                for chunk in response:
+                    message = chunk.choices[0].delta.content
+                    if message:
+                        yield message
+            except Exception as e:
+                yield str(e)
+
+        return call_api()
+
+    def get_tokens(self, string: str, encoding_name: str = None) -> int:
+        # Cerebras doesn't provide a direct token counting API
+        # Use estimation: approximately 1 token per 4 characters
+        return round(len(string) / 4)
+
+    def text_to_speech(self, text, model="default", voice="default"):
+        # Cerebras doesn't currently support TTS
+        raise NotImplementedError("Cerebras platform does not currently support text-to-speech.")
+
+    def transcribe_audio(self, file, model="default"):
+        # Cerebras doesn't currently support audio transcription
+        raise NotImplementedError("Cerebras platform does not currently support audio transcription.")
+
+    def model_check(self, token_count, model):
+        if model not in self.model_token_limits.keys():
+            return model
+        else:
+            # Filter out the 'default' key and create suitable_models dictionary
+            suitable_models = {
+                model_name: tokens 
+                for model_name, tokens in self.model_token_limits.items() 
+                if isinstance(tokens, int) and tokens >= token_count
+            }
+            
+            if model in suitable_models:
+                return model
+            else:
+                if suitable_models:  # Check if we found any suitable models
+                    new_model = min(suitable_models, key=suitable_models.get)
+                    print('model switch from model:', model, 'to model:', new_model)
+                    return new_model
+                else:
+                    # If no suitable models found, return the default model
+                    return self.model_token_limits['default']
+
+    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, timeout=None):
+        """
+        Cerebras doesn't currently support image inference.
+        """
+        raise NotImplementedError("Cerebras platform does not currently support image inference.")
 
 
 # LLM Client that uses the platform-agnostic interface

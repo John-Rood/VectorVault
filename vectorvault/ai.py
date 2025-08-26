@@ -312,6 +312,10 @@ class OpenAIPlatform(LLMPlatform):
             return None
 
     def model_check(self, token_count, model):
+        # Handle 'default' model - return the actual default model name
+        if model == 'default':
+            return self.model_token_limits['default']
+            
         if model not in self.model_token_limits.keys():
             return model
         else:

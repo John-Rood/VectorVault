@@ -301,6 +301,10 @@ class Vault:
             "personality_message": self.personality_message
         }
 
+        # Handle 'default' as a special case - always use OpenAI's default
+        if model == 'default':
+            return LLMClient(self.openai, **client_kwargs)
+
         if model in self.anthropic.model_token_limits:
             return LLMClient(self.anthropic, **client_kwargs)
         elif model in self.cerebras.model_token_limits:
@@ -331,15 +335,10 @@ class Vault:
         if not self.ai_loaded or model:
             self.ai_loaded = True
 
-            if model == 'default' or model is None:
-                # Explicitly use OpenAI default
-                self._ai = LLMClient(self.openai, 
-                                   fine_tuned_context_window=self.fine_tuned_context_window,
-                                   main_prompt=self.main_prompt,
-                                   main_prompt_with_context=self.main_prompt_with_context,
-                                   personality_message=self.personality_message)
-            else:
+            if model:
                 self._ai = self.get_client_from_model(model=model)
+            else:
+                self._ai = self.get_client_from_model(model=self.all_models['default'])
 
             try: 
                 cstm_mn = self.main_prompt != self._ai.main_prompt

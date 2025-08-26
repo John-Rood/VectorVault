@@ -331,10 +331,15 @@ class Vault:
         if not self.ai_loaded or model:
             self.ai_loaded = True
 
-            if model:
-                self._ai = self.get_client_from_model(model=model)
+            if model == 'default' or model is None:
+                # Explicitly use OpenAI default
+                self._ai = LLMClient(self.openai, 
+                                   fine_tuned_context_window=self.fine_tuned_context_window,
+                                   main_prompt=self.main_prompt,
+                                   main_prompt_with_context=self.main_prompt_with_context,
+                                   personality_message=self.personality_message)
             else:
-                self._ai = self.get_client_from_model(model=self.all_models['default'])
+                self._ai = self.get_client_from_model(model=model)
 
             try: 
                 cstm_mn = self.main_prompt != self._ai.main_prompt

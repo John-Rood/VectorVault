@@ -1719,7 +1719,7 @@ class Vault:
     
 
     def run_flow(self, flow_name, message, history: str = '', invoke_method = None, 
-                 internal_vars: dict = None, **kwargs):
+                 internal_vars: dict = None, image_url: str = None, **kwargs):
         """
         Returns response from a flow execution.
         
@@ -1742,11 +1742,12 @@ class Vault:
             conversation_user_id = self.cuid,
             invoke_method = invoke_method,
             internal_vars = internal_vars,
+            image_url=image_url,
             **kwargs
             )
         
     def stream_flow(self, flow_name, message, history: str = '', invoke_method = None, 
-                    internal_vars: dict = None, **kwargs):
+                    internal_vars: dict = None, image_url: str = None, **kwargs):
         """
         Streams response from a flow execution.
         
@@ -1770,6 +1771,7 @@ class Vault:
             conversation_user_id = self.cuid,
             invoke_method = invoke_method,
             internal_vars = internal_vars,
+            image_url=image_url,
             **kwargs
         )
         

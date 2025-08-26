@@ -211,8 +211,9 @@ class OpenAIPlatform(LLMPlatform):
             'default': 'gpt-5-chat-latest'
         }
         self.img_capable = [
-            'o1', 'gpt-4o', 'gpt-4o-mini',
-            'gpt-4.5-preview', 'gpt-4.5-preview-2025-02-27'
+            'o1', 'gpt-4o', 'gpt-4o-mini', 'gpt-4o-audio-preview',
+            'chatgpt-4o-latest',
+            'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5-chat-latest'
         ]
         self.no_stream_list = [
             'o1-2024-12-17', 'o1-preview-2024-09-12', 'o1-mini-2024-09-12'
@@ -1178,6 +1179,34 @@ class LLMClient:
 
         raise Exception("Failed to receive response within the timeout period.")
 
+    def smart_llm(self, user_input: str = '', history: str = '', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5, image_path=None, image_url=None):
+        """
+        Smart LLM method that automatically switches between text-only LLM and image inference
+        based on whether image parameters are provided.
+        """
+        # If image parameters are provided, use image inference
+        if image_path or image_url:
+            return self.image_inference(
+                image_path=image_path,
+                image_url=image_url,
+                user_text=user_input,
+                model=model,
+                stream=False,
+                temperature=temperature,
+                timeout=timeout
+            )
+        else:
+            # Otherwise use regular text LLM
+            return self.llm(
+                user_input=user_input,
+                history=history,
+                model=model,
+                custom_prompt=custom_prompt,
+                temperature=temperature,
+                timeout=timeout,
+                max_retries=max_retries
+            )
+
     def llm_sys(self, content=None, system_message="You are an AI assistant that excels at following instructions exactly.", model=None, temperature=0):
         tokens = self.platform.get_tokens(f"{content} {system_message}")
         model = model if model else self.default_model
@@ -1262,6 +1291,31 @@ Instructions: {instructions}"""}
         for message in self.platform.stream_call(messages, model, temperature):
             if message:
                 yield message
+
+    def smart_llm_stream(self, user_input='', history='', model=None, custom_prompt=False, temperature=0, image_path=None, image_url=None):
+        """
+        Smart LLM streaming method that automatically switches between text-only streaming and image inference streaming
+        based on whether image parameters are provided.
+        """
+        # If image parameters are provided, use image inference streaming
+        if image_path or image_url:
+            yield from self.image_inference(
+                image_path=image_path,
+                image_url=image_url,
+                user_text=user_input,
+                model=model,
+                stream=True,
+                temperature=temperature
+            )
+        else:
+            # Otherwise use regular text LLM streaming
+            yield from self.llm_stream(
+                user_input=user_input,
+                history=history,
+                model=model,
+                custom_prompt=custom_prompt,
+                temperature=temperature
+            )
 
     def llm_w_context_stream(self, user_input='', context='', history='', model=None, custom_prompt=False, temperature=0):
         prompt_template = custom_prompt if custom_prompt else self.context_prompt

@@ -199,7 +199,7 @@ def call_cloud_save(user, api_key, vault, embeddings_model, text, meta=None, nam
         return None
 
 def run_flow(user, api_key, flow_name, message, history='', conversation_user_id=None, 
-             invoke_method=None, internal_vars=None, max_retries=2, **kwargs):
+             invoke_method=None, internal_vars=None, image_url=None, max_retries=2, **kwargs):
     
     for attempt in range(max_retries + 1):  # +1 for initial attempt
         # Get a fresh token for each retry
@@ -216,6 +216,7 @@ def run_flow(user, api_key, flow_name, message, history='', conversation_user_id
             "conversation_user_id": conversation_user_id,
             'invoke_method': invoke_method, 
             'internal_vars': internal_vars, 
+            'image_url': image_url
         }
         # Add all kwargs to payload dynamically
         payload.update(kwargs)
@@ -261,7 +262,7 @@ def run_flow(user, api_key, flow_name, message, history='', conversation_user_id
             return None
 
 def run_flow_stream(user, api_key, flow_name, message, history='', conversation_user_id=None, 
-                   invoke_method=None, internal_vars=None, max_retries=2, **kwargs):
+                   invoke_method=None, internal_vars=None, image_url=None, max_retries=2, **kwargs):
     
     for attempt in range(max_retries + 1):  # +1 for initial attempt
         try:
@@ -279,6 +280,7 @@ def run_flow_stream(user, api_key, flow_name, message, history='', conversation_
                 "conversation_user_id": conversation_user_id,
                 'invoke_method': invoke_method, 
                 'internal_vars': internal_vars, 
+                'image_url': image_url
             }
             # Add all kwargs to payload dynamically
             payload.update(kwargs)

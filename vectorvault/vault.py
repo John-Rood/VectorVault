@@ -852,7 +852,7 @@ class Vault:
     def load_vectors(self, vault = None):
         start_time = time.time()
         vault = vault if vault else self.vault 
-        t = T(target=self.load_mapping())
+        t = T(target=self.load_mapping, args=(vault,))
         t.start()
         temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(vault, self.user, self.api))
         self._vectors = get_vectors(self.dims)
@@ -1003,7 +1003,7 @@ class Vault:
             Internal function that returns vector similar items. Requires input vector, returns similar items
         '''
         try:
-            self.load_vectors()
+            self.load_vectors(vault)
             start_time = time.time()
             if not include_distances:
                 vecs = self.vectors.get_nns_by_vector(vector, n)
@@ -1101,7 +1101,7 @@ class Vault:
         
         return json.dumps(results)
     
-
+    
     def upload_database_from_json(self, json_data: Union[str, dict]):
         """
         Replace your entire vault from a JSON string or dictionary.
@@ -1115,7 +1115,37 @@ class Vault:
         vault.upload_database_from_json(json_string_or_dict)
 
         """
-        items_dict = load_json(json_data)
+        def parse_json(string):
+            try:
+                return json.loads(string)
+            except json.JSONDecodeError:
+                print("Warning: JSON decoding failed. Attempting to clean and retry...") if self.verbose else 0
+                # Attempt to clean: strip outer quotes if present
+                cleaned = string.strip().strip('"')
+                try:
+                    return json.loads(cleaned)
+                except json.JSONDecodeError:
+                    print("Error: Failed to parse JSON after cleaning attempt. Skipping upload.") if self.verbose else 0
+                    return {}  # Return empty dict to adapt and continue without raising
+
+        # Load the JSON data with robust parsing
+        if not isinstance(json_data, str):
+            items_dict = json_data  # Already a dict, use as is
+        else:
+            # Initial parse for string input
+            result = parse_json(json_data)
+            
+            # If the result is still a string (double-wrapped), parse again
+            if isinstance(result, str):
+                result = parse_json(result)
+            
+            # After parsing, ensure it's a dict
+            if not isinstance(result, dict):
+                print("Warning: Parsed result is not a dictionary. Using empty dict to continue.") if self.verbose else 0
+                items_dict = {}
+            else:
+                items_dict = result
+
         print('Loaded json items') if self.verbose else 0
         print('Deleting cloud items') if self.verbose else 0
 
@@ -1124,7 +1154,7 @@ class Vault:
         items_added = 0
         for item_number, item_data in sorted(items_dict.items()):
             if 'data' not in item_data:
-                print(f"Skipping item {item_number}: Invalid format")
+                print(f"Skipping item {item_number}: Invalid format") if self.verbose else 0
                 continue
 
             self.add_item(text=item_data['data'], meta=item_data.get('metadata', None))
@@ -1149,6 +1179,38 @@ class Vault:
         T(target=self.cloud_manager.build_update, args=(n,)).start()
         vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
         return self.get_items_by_vector(vector, n, include_distances = include_distances, vault = vault if vault else self.vault)
+
+
+    def get_similar_from_vaults(self, text: str, n: int = 4, vaults: List[str] = None):
+        '''
+            Searches for the n most similar items in each of the provided vaults, combines the results,
+            sorts by distance, and returns the closest n items overall (with distances).
+
+            Args:
+                text: The query text to embed and search with
+                n: The number of nearest items to retrieve per vault, and the number of items to return overall
+                vaults: A non-empty list of vault names to search
+
+            Returns:
+                A list of up to n items, each including a 'distance' field
+        '''
+        if not vaults or not isinstance(vaults, list):
+            raise ValueError("A non-empty list of vaults must be provided.")
+
+        T(target=self.cloud_manager.build_update, args=(n,)).start()
+        vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
+
+        combined_results = []
+        for v in vaults:
+            try:
+                results = self.get_items_by_vector(vector, n, include_distances=True, vault=v)
+                combined_results.extend(results)
+            except Exception:
+                # Skip vaults that cannot be loaded or queried
+                continue
+
+        combined_sorted = sorted(combined_results, key=lambda x: x.get('distance', float('inf')))
+        return combined_sorted[:n]
 
 
     def add_item(self, text: str, meta: dict = None, name: str = None):
@@ -1287,6 +1349,7 @@ class Vault:
             timeout: int = 300,
             image_path: str = None,
             image_url: str = None,
+            vaults: List[str] = None,
             ):
         '''
             Chat get response from OpenAI's ChatGPT. 
@@ -1374,7 +1437,10 @@ class Vault:
                             else:
                                 search_input = segment + history if history_search else segment
                                 
-                            context = self.get_similar(search_input, n=n_context)
+                            if vaults and isinstance(vaults, list) and all(isinstance(v, str) for v in vaults):
+                                context = self.get_similar_from_vaults(search_input, n=n_context, vaults=vaults)
+                            else:
+                                context = self.get_similar(search_input, n=n_context)
                             input_ = str(context) if include_context_meta else ''
                             for text in context:
                                 input_ += text['data']
@@ -1424,6 +1490,7 @@ class Vault:
             timeout: int = 300,
             image_path: str = None,
             image_url: str = None,
+            vaults: List[str] = None,
             ):
         '''
             Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream()
@@ -1517,7 +1584,10 @@ class Vault:
                             else:
                                 search_input = segment + history if history_search else segment
                             
-                            context = self.get_similar(search_input, n=n_context)
+                            if vaults and isinstance(vaults, list) and all(isinstance(v, str) for v in vaults):
+                                context = self.get_similar_from_vaults(search_input, n=n_context, vaults=vaults)
+                            else:
+                                context = self.get_similar(search_input, n=n_context)
                             input_ = str(context) if include_context_meta else ''
                             for text in context:
                                 input_ += text['data']

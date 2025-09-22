@@ -395,20 +395,24 @@ class GrokPlatform(LLMPlatform):
 
         # Example model token limits for xAI Grok (adjust as needed)
         self.model_token_limits = {
+            "grok-code-fast": 256000,
             "grok-4": 256000,
-            "grok-3": 128000,
-            "grok-3-fast-latest": 128000,
-            "grok-3-mini": 128000,
-            "grok-3-mini-fast": 128000,
-            "grok-2-vision-latest": 32000,
-            "default": "grok-3-latest",
+            "grok-4-fast-reasoning": 2000000,
+            "grok-4-fast-non-reasoning": 2000000,
+            "grok-3": 131072,
+            "grok-3-mini": 131072,
+            "grok-2-vision-latest": 32768,
+            "default": "grok-4-fast-non-reasoning",
         }
         self.front_model_token_limits = {
-            "grok-4": 128000,
-            "grok-3": 128000,
-            "grok-3-mini": 128000,
-            "grok-2-vision-latest": 16000,
-            "default": "grok-3-latest",
+            "grok-code-fast": 256000,
+            "grok-4": 256000,
+            "grok-4-fast-reasoning": 2000000,
+            "grok-4-fast-non-reasoning": 2000000,
+            "grok-3": 131072,
+            "grok-3-mini": 131072,
+            "grok-2-vision-latest": 32768,
+            "default": "grok-4-fast-non-reasoning",
         }
 
         self.default_model = self.model_token_limits["default"]
@@ -520,7 +524,7 @@ class GrokPlatform(LLMPlatform):
             }
         ]
         """
-        model = model if model else self.default_model
+        model = model if model else "grok-2-vision-latest"
         if not image_path and not image_url:
             raise ValueError("Must specify either image_path or image_url.")
 

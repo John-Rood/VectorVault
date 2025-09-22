@@ -119,10 +119,25 @@ def get_time_statement(now, message_time):
     return human_readable_time
 
 def load_json(json_object):
-    def load_json_from_string(string):
+    """
+    Loads a JSON object from either a string (potentially double-wrapped) or a direct object.
+    Handles cases where the JSON might be escaped inside a string by attempting multiple parses.
+    """
+    def parse_json(string):
         try:
             return json.loads(string)
         except json.JSONDecodeError:
             raise ValueError("Invalid JSON string provided.")
-        
-    return load_json_from_string(json_object) if isinstance(json_object, str) else json_object
+
+    # If it's not a string, return as is
+    if not isinstance(json_object, str):
+        return json_object
+
+    # Initial parse
+    result = parse_json(json_object)
+
+    # If the result is still a string (double-wrapped), parse again
+    if isinstance(result, str):
+        result = parse_json(result)
+
+    return result

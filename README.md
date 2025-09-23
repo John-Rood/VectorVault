@@ -141,6 +141,37 @@ def agent_chat():
     )
 ```
 
+### Cross-Vault Retrieval
+Search multiple vaults at once and get the absolute most similar results overall. Results are merged across all listed vaults and globally sorted by distance.
+
+```python
+# Chat with cross-vault context
+response = vault.get_chat(
+    "Where is the refund policy and API rate limits documented?",
+    get_context=True,
+    n_context=6,
+    vaults=["docs", "customer_support", "developer_portal"]
+)
+
+# Or use the low-level API directly
+results = vault.get_similar_from_vaults(
+    "refund policy",
+    n=8,
+    vaults=["docs", "customer_support", "legal"]
+)
+
+# Enforce per-vault minimums (remaining slots fill from best overall)
+results = vault.get_similar_from_vaults(
+    "refund policy",
+    n=5,
+    vaults={"legal": 2, "docs": 1}
+)
+```
+
+Notes:
+- You can pass a single vault as a string to target only that vault
+- You can enforce per-vault minimums with a dict: `vaults={"legal": 2, "docs": 1}`; if sum(minima) > n, n automatically expands to the sum of minima; otherwise the remainder fills from best overall
+
 ## 🌟 Why Vector Vault for Autonomous Agents?
 
 ### Build True Agents, Not Just Chatbots

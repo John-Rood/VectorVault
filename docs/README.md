@@ -274,6 +274,8 @@ vault = Vault(
 <br>
 `vault.get_similar("text string", n, include_distances, vault)` : Vector similarity search. Returns similar texts from the Vault for any given input text. `include_distances=True` adds distance field to results. `vault` parameter allows searching a different vault.
 <br>
+`vault.get_similar_from_vaults("text string", n, vaults)` : Cross-vault similarity search. Searches all listed vaults, merges results, and returns the top `n` most similar items overall (globally sorted by distance).
+<br>
 `vault.get_total_items()` : Returns the total number of items in the Vault
 <br>
 `vault.get_items([id1, id2, id3, ...])` : returns a list containing your item(s) data. Input a list of ids, one or more, no limit
@@ -477,8 +479,14 @@ def get_chat(
     timeout: int = 300,           # API timeout in seconds
     image_path: str = None,       # Path to local image file
     image_url: str = None,        # URL to image for processing
+    vaults: Union[str, List[str], Dict[str, int]] = None,  # str | list[str] | dict[str, int]
 )
 ```
+
+- vaults behavior:
+  - string: query only that vault (top-n from that vault)
+  - list[str]: merge results across listed vaults and return global top-n
+  - dict[str, int]: enforce per-vault minimums; if sum(minima) > n, n automatically expands to that sum; otherwise remaining slots are filled with best overall across all listed vaults
 
 ```python
 # Basic usage to get a response
@@ -732,11 +740,61 @@ lab_notes_vault = Vault(user='YOUR_EMAIL',
 Each vault is a seperate and isolated vector database.
 <br>
 <br>
+
+## Search Across Multiple Vaults
+Search multiple vaults at once and get the absolute most similar results overall. When you pass multiple vault names, Vector Vault performs similarity search in each vault, merges the candidates, equalizes them, and returns the top `n` most similar items globally (sorted by distance).
+
+```python
+# Low-level API: search across multiple vaults
+results = vault.get_similar_from_vaults(
+    "refund policy",
+    n=8,
+    vaults=["docs", "customer_support", "legal"]
+)
+
+# Enforce per-vault minimums (remaining slots fill from best overall)
+results = vault.get_similar_from_vaults(
+    "refund policy",
+    n=5,
+    vaults={"legal": 2, "docs": 1}
+)
+
+# Each item has 'data', 'metadata', and 'distance'
+for item in results:
+    print(item["distance"], item["metadata"].get("title"))
+```
+
+You can also use cross-vault retrieval directly from chat by providing `vaults` when `get_context=True`:
+
+```python
+# Chat with cross-vault context (returns the absolute most similar across all listed vaults)
+answer = vault.get_chat(
+    "Where is the refund policy and API rate limits documented?",
+    get_context=True,
+    n_context=6,
+    vaults=["docs", "customer_support", "developer_portal"]
+)
+```
+
+Streaming works the same way:
+
+```python
+streamed = vault.print_stream(
+    vault.get_chat_stream(
+        "Summarize our refund policy and API limits",
+        get_context=True,
+        n_context=5,
+        vaults=["docs", "customer_support", "legal"]
+    )
+)
+```
+
+Notes:
+- Passing a single vault as a string targets only that vault
+- Dict usage enforces per-vault minimums; if sum(minima) > n, n automatically expands to that sum; otherwise the remainder fills from best overall
+
 <br>
 <br>
-
-
-
 
 ## Getting Started:
 Open the [examples folder](https://github.com/John-Rood/VectorVault/tree/main/examples) and try out the Google Colab tutorials we have! They will show you a lot about how to use the `vectorvault` package. Also try out our no-code dashboard that hosts almost all the same interactions with an interactive visual interface at [app.vectorvault.io](https://app.vectorvault.io)

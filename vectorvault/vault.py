@@ -1181,36 +1181,103 @@ class Vault:
         return self.get_items_by_vector(vector, n, include_distances = include_distances, vault = vault if vault else self.vault)
 
 
-    def get_similar_from_vaults(self, text: str, n: int = 4, vaults: List[str] = None):
+    def get_similar_from_vaults(self, text: str, n: int = 4, vaults = None):
         '''
-            Searches for the n most similar items in each of the provided vaults, combines the results,
-            sorts by distance, and returns the closest n items overall (with distances).
+            Cross-vault similarity search with flexible selection behavior.
+
+            Behavior by type of `vaults`:
+            - str: Treat as a single target vault and return top-n from that vault (with distances)
+            - list[str]: Search each vault, merge, globally sort by distance, return top-n overall
+            - dict[str, int]: Enforce a minimum number from each vault; fill any remaining slots with
+              the best overall matches across all vaults.
 
             Args:
                 text: The query text to embed and search with
-                n: The number of nearest items to retrieve per vault, and the number of items to return overall
-                vaults: A non-empty list of vault names to search
+                n: Total number of items to return overall
+                vaults: A string, list of vault names, or a dict mapping vault name -> minimum count
 
             Returns:
                 A list of up to n items, each including a 'distance' field
         '''
-        if not vaults or not isinstance(vaults, list):
-            raise ValueError("A non-empty list of vaults must be provided.")
+        if not vaults:
+            raise ValueError("`vaults` must be provided as a str, list[str], or dict[str, int].")
 
         T(target=self.cloud_manager.build_update, args=(n,)).start()
         vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
 
-        combined_results = []
-        for v in vaults:
+        # Single vault (string): normal single-vault search with distances
+        if isinstance(vaults, str):
             try:
-                results = self.get_items_by_vector(vector, n, include_distances=True, vault=v)
-                combined_results.extend(results)
+                return self.get_items_by_vector(vector, n, include_distances=True, vault=vaults)
             except Exception:
-                # Skip vaults that cannot be loaded or queried
-                continue
+                return []
 
-        combined_sorted = sorted(combined_results, key=lambda x: x.get('distance', float('inf')))
-        return combined_sorted[:n]
+        # List of vaults: merge and take global top-n
+        if isinstance(vaults, list) and all(isinstance(v, str) for v in vaults):
+            combined_results = []
+            for v in vaults:
+                try:
+                    results = self.get_items_by_vector(vector, n, include_distances=True, vault=v)
+                    combined_results.extend(results)
+                except Exception:
+                    continue
+            combined_sorted = sorted(combined_results, key=lambda x: x.get('distance', float('inf')))
+            return combined_sorted[:n]
+
+        # Dict of vault -> minimum count
+        if isinstance(vaults, dict):
+            minima = {k: int(v) for k, v in vaults.items() if isinstance(k, str)}
+            total_min = sum(minima.values())
+
+            # 1. If total_min > n, override n to match total_min
+            if total_min > n:
+                n = total_min
+
+            # 2. If total_min == n, use the minimum for retrieval number, not n
+            # 3. If n > total_min, fetch n from each vault for leftovers
+            selected = []
+            leftovers = []
+
+            # Determine how many to fetch from each vault
+            # If n > total_min, fetch n from each vault for leftovers
+            # If n <= total_min, fetch min_k from each vault (enough to satisfy minimums)
+            fetch_per_vault = {}
+            if n > total_min:
+                for v, min_k in minima.items():
+                    fetch_per_vault[v] = n
+            else:
+                for v, min_k in minima.items():
+                    fetch_per_vault[v] = min_k
+
+            # Retrieve results from each vault
+            vault_results = {}
+            for v, min_k in minima.items():
+                try:
+                    results = self.get_items_by_vector(vector, fetch_per_vault[v], include_distances=True, vault=v)
+                except Exception:
+                    results = []
+                vault_results[v] = results
+
+                # Take the top min_k from this vault (or fewer if unavailable)
+                take_k = min(min_k, len(results))
+                selected.extend(results[:take_k])
+
+                # Keep the rest as leftovers for global fill
+                if len(results) > take_k:
+                    leftovers.extend(results[take_k:])
+
+            # Fill remaining with best overall from leftovers
+            remaining_needed = max(0, n - len(selected))
+            if remaining_needed > 0:
+                leftovers_sorted = sorted(leftovers, key=lambda x: x.get('distance', float('inf')))
+                selected.extend(leftovers_sorted[:remaining_needed])
+
+            # Final global sort for presentation consistency
+            selected_sorted = sorted(selected, key=lambda x: x.get('distance', float('inf')))
+            return selected_sorted[:n]
+
+        # Unsupported type
+        raise ValueError("`vaults` must be a str, list[str], or dict[str, int].")
 
 
     def add_item(self, text: str, meta: dict = None, name: str = None):
@@ -1437,7 +1504,7 @@ class Vault:
                             else:
                                 search_input = segment + history if history_search else segment
                                 
-                            if vaults and isinstance(vaults, list) and all(isinstance(v, str) for v in vaults):
+                            if vaults:
                                 context = self.get_similar_from_vaults(search_input, n=n_context, vaults=vaults)
                             else:
                                 context = self.get_similar(search_input, n=n_context)
@@ -1584,7 +1651,7 @@ class Vault:
                             else:
                                 search_input = segment + history if history_search else segment
                             
-                            if vaults and isinstance(vaults, list) and all(isinstance(v, str) for v in vaults):
+                            if vaults:
                                 context = self.get_similar_from_vaults(search_input, n=n_context, vaults=vaults)
                             else:
                                 context = self.get_similar(search_input, n=n_context)

@@ -141,6 +141,26 @@ def agent_chat():
     )
 ```
 
+- **Context payload behavior**:
+  - **get_chat**: if you pass `return_context=True`, it returns a dict: `{'response': str, 'context': list}`.
+  - **get_chat_stream**: if you pass `return_context=True`, after token streaming finishes, a single JSON string is yielded just before `!END` with the same shape: `{"response": "<full_response>", "context": [...]}`.
+  - **Inline context streaming** happens only when you also provide metatag parameters.
+
+- **How to catch the final context payload (server-side streaming to frontend)**:
+```python
+# Capture JSON context payload (do not append or emit)
+if isinstance(word, str) and word.startswith('{"response":') and word.endswith('}'):
+    try:
+        context_data = json.loads(word)
+        collected_context = context_data.get('context')
+        continue
+    except Exception:
+        pass
+else:
+    # handle normal token output
+    ...
+```
+
 ### Cross-Vault Retrieval
 Search multiple vaults at once and get the absolute most similar results overall. Results are merged across all listed vaults and globally sorted by distance.
 

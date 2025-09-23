@@ -581,6 +581,26 @@ def chat_stream():
     )
 ```
 
+Context return behavior:
+- get_chat: if `return_context=True`, returns a dict with keys `response` and `context`.
+- get_chat_stream: if `return_context=True`, after the token stream completes a single JSON string is yielded just before `!END` with the same shape: `{"response": "<full_response>", "context": [...]}`.
+- Context items are only streamed inline when metatag parameters are provided. Otherwise, only the final JSON payload is emitted.
+
+How to capture the final context payload in a streaming consumer:
+```python
+# Capture JSON context payload (do not append or emit)
+if isinstance(word, str) and word.startswith('{"response":') and word.endswith('}'):
+    try:
+        context_data = json.loads(word)
+        collected_context = context_data.get('context')
+        continue
+    except Exception:
+        pass
+else:
+    # handle normal token output
+    ...
+```
+
 Here's an [app](https://philbrosophy.web.app) we built to showcase what you can do with Vector Vault:
 <br>
 

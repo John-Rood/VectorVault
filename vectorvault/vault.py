@@ -1445,6 +1445,10 @@ class Vault:
             response = vault.get_chat(text, chat_history, get_context=True, custom_prompt=my_prompt)
             ```
 
+            Return values:
+            - If return_context=False (default): returns the response string
+            - If return_context=True: returns a dict with keys 'response' and 'context'
+
         '''
         start_time = time.time()
         model = self.all_models['default'] if not model else model
@@ -1579,6 +1583,26 @@ class Vault:
             my_prompt = """Answer this question as if you were a financial advisor: "{content}". """
             response = vault.print_stream(vault.get_chat_stream(text, chat_history, get_context = True, custom_prompt=my_prompt))
             ```
+
+            Streaming return payload:
+            - If return_context=True, after the token stream finishes, a single JSON string is yielded BEFORE '!END':
+              {"response": "<full_response>", "context": [ ... ]}
+            - Context items are only streamed inline if metatag parameters are provided.
+
+            How to capture the final context payload in a stream consumer:
+            ```python
+            # Capture JSON context payload (do not append or emit)
+            if isinstance(word, str) and word.startswith('{"response":') and word.endswith('}'):
+                try:
+                    context_data = json.loads(word)
+                    collected_context = context_data.get('context')
+                    continue
+                except Exception:
+                    pass
+            else:
+                # handle normal token output
+                pass
+            ```
         '''
         start_time = time.time()
         model = self.all_models['default'] if not model else model
@@ -1668,11 +1692,9 @@ class Vault:
                                 raise e
 
                             if return_context:
-                                for item in context:
-                                    if not metatag:
-                                        for tag in item['metadata']:
-                                            yield str(item['metadata'][f'{tag}'])
-                                    else:
+                                # Only stream context items if metatag parameters are specified
+                                if metatag:
+                                    for item in context:
                                         if metatag_prefixes:
                                             if metatag_suffixes:
                                                 for i in range(len(metatag)):
@@ -1680,8 +1702,11 @@ class Vault:
                                             else:
                                                 for i in range(len(metatag)):
                                                     yield str(metatag_prefixes[i]) + str(item['metadata'][f'{metatag[i]}'])
-                                    yield item['data']
+                                        yield item['data']
+                                
                                 self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
+                                # Yield the context in the same format as get_chat
+                                yield json.dumps({'response': full_response, 'context': context})
                                 yield '!END'
                                 self.rate_limiter.on_success()
                             else:

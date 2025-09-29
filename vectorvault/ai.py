@@ -571,6 +571,7 @@ class AnthropicPlatform(LLMPlatform):
             'claude-opus-4-1': 200000,
             'claude-opus-4-0': 200000,
             'claude-sonnet-4-0': 200000,
+            'claude-sonnet-4-5': 1000000,
             'claude-3-7-sonnet-latest': 200000,
             'claude-3-5-sonnet-latest': 200000,
             'claude-3-5-haiku-latest': 200000,
@@ -580,8 +581,9 @@ class AnthropicPlatform(LLMPlatform):
             'claude-opus-4-1': 200000,
             'claude-opus-4-0': 200000,
             'claude-sonnet-4-0': 200000,
+            'claude-sonnet-4-5': 1000000,
             'claude-3-7-sonnet-latest': 200000,
-            'default': 'claude-sonnet-4-0'
+            'default': 'claude-sonnet-4-5'
         }
         self.default_model = self.model_token_limits['default']
 

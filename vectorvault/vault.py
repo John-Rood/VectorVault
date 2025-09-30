@@ -124,64 +124,6 @@ class Vault:
     Question: {content}
     """    
         self.personality_message = personality_message if personality_message else ""
-        
-        # Async prefetch for custom prompts and personality message
-        self._prefetch_executor = ThreadPoolExecutor(max_workers=3)
-        self._personality_future = None
-        self._custom_prompt_future = None
-        self._custom_prompt_no_context_future = None
-        
-        # Start async prefetch if user and api_key are provided
-        if user and api_key:
-            self._start_prefetch()
-
-    def _start_prefetch(self):
-        """Start async prefetch of personality message and custom prompts"""
-        try:
-            # Submit async tasks to prefetch data
-            self._personality_future = self._prefetch_executor.submit(self._fetch_personality_from_cloud)
-            self._custom_prompt_future = self._prefetch_executor.submit(self._fetch_custom_prompt_from_cloud, True)
-            self._custom_prompt_no_context_future = self._prefetch_executor.submit(self._fetch_custom_prompt_from_cloud, False)
-        except Exception as e:
-            if self.verbose:
-                print(f"Could not start prefetch: {e}")
-
-    def prefetch_prompts(self):
-        """
-        Manually trigger prefetch of personality message and custom prompts.
-        Useful if you want to explicitly control when the async fetch begins.
-        """
-        if not self._personality_future or not self._custom_prompt_future:
-            self._start_prefetch()
-            if self.verbose:
-                print("Prefetch started for personality and custom prompts")
-        elif self.verbose:
-            print("Prefetch already in progress")
-
-    def __del__(self):
-        """Cleanup executor on deletion"""
-        try:
-            if hasattr(self, '_prefetch_executor'):
-                self._prefetch_executor.shutdown(wait=False)
-        except:
-            pass
-
-    def _fetch_personality_from_cloud(self):
-        """Internal method to fetch personality message from cloud"""
-        try:
-            return self.cloud_manager.download_text_from_cloud(f'{self.vault}/personality_message')
-        except:
-            return None
-
-    def _fetch_custom_prompt_from_cloud(self, context=True):
-        """Internal method to fetch custom prompt from cloud"""
-        try:
-            if context:
-                return self.cloud_manager.download_text_from_cloud(f'{self.vault}/prompt')
-            else:
-                return self.cloud_manager.download_text_from_cloud(f'{self.vault}/no_context_prompt')
-        except:
-            return None
 
     @property
     def cloud_manager(self):
@@ -422,20 +364,8 @@ class Vault:
 
     def fetch_personality_message(self):
         '''
-            Retrieves personality_message from the vault if it is there or else use the defualt.
-            Uses prefetched result if available for faster access.
+            Retrieves personality_message from the vault if it is there or else use the defualt
         '''
-        # Check if we have a prefetch future and get the result
-        if self._personality_future is not None:
-            try:
-                personality_message = self._personality_future.result(timeout=10)
-                if personality_message is not None:
-                    return personality_message
-            except Exception as e:
-                if self.verbose:
-                    print(f"Could not retrieve prefetched personality: {e}")
-        
-        # Fallback to synchronous fetch
         try:
             personality_message = self.cloud_manager.download_text_from_cloud(f'{self.vault}/personality_message')
         except:
@@ -460,21 +390,8 @@ class Vault:
     def fetch_custom_prompt(self, context=True):
         '''
             Retrieves custom_prompt from the vault if there or eles use defualt - (used for get_context = True responses)
-            context == False will return custom prompt for not context situations.
-            Uses prefetched result if available for faster access.
+            context == False will return custom prompt for not context situations
         '''
-        # Check if we have a prefetch future and get the result
-        future = self._custom_prompt_future if context else self._custom_prompt_no_context_future
-        if future is not None:
-            try:
-                prompt = future.result(timeout=10)
-                if prompt is not None:
-                    return prompt
-            except Exception as e:
-                if self.verbose:
-                    print(f"Could not retrieve prefetched custom prompt: {e}")
-        
-        # Fallback to synchronous fetch
         try:
             prompt = self.cloud_manager.download_text_from_cloud(f'{self.vault}/prompt') if context else self.cloud_manager.download_text_from_cloud(f'{self.vault}/no_context_prompt')
         except:

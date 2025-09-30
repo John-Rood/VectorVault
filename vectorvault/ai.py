@@ -216,12 +216,10 @@ class OpenAIPlatform(LLMPlatform):
             'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5-chat-latest'
         ]
         self.no_stream_list = [
-            'o1-2024-12-17', 'o1-preview-2024-09-12', 'o1-mini-2024-09-12'
+            'o1', 'o1-mini',  
         ]
         self.no_temperature_list = [
-            'o1', 'o1-mini', 'o1-2024-12-17',
-            'o1-preview-2024-09-12', 'o1-mini-2024-09-12',
-            'o3', 'o3-mini', 'o3-mini-2025-01-31'
+            'o1', 'o1-mini', 'o3', 'o3-mini', 
         ]
         self.default_model = self.model_token_limits['default']
 
@@ -235,7 +233,7 @@ class OpenAIPlatform(LLMPlatform):
                     "messages": messages
                 }
                 # Include temperature only if the model actually supports it
-                if temperature is not None and temperature != 0 and model not in self.different_inference_list:
+                if temperature is not None and temperature != 0 and model not in self.no_temperature_list:
                     params["temperature"] = temperature
                 response = openai.chat.completions.create(**params)
                 response_queue.put(response.choices[0].message.content)

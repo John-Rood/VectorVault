@@ -25,7 +25,7 @@ import traceback
 import random
 from threading import Thread as T
 from datetime import datetime, timedelta
-from typing import List, Union
+from typing import List, Union, Dict
 from .ai import openai, OpenAIPlatform, AnthropicPlatform, GrokPlatform, GeminiPlatform, CerebrasPlatform, LLMClient, get_all_models
 from .cloud_api import call_cloud_save, run_flow, run_flow_stream
 from .cloudmanager import CloudManager, VaultStorageManager, as_completed, ThreadPoolExecutor
@@ -174,35 +174,35 @@ class Vault:
     def openai(self):
         """Lazy initialization of OpenAI platform"""
         if self._openai is None:
-            self._initialize_platforms()
+            self._openai = OpenAIPlatform()
         return self._openai
 
     @property
     def grok(self):
         """Lazy initialization of Grok platform"""
         if self._grok is None:
-            self._initialize_platforms()
+            self._grok = GrokPlatform(self.grok_key)
         return self._grok
 
     @property
     def anthropic(self):
         """Lazy initialization of Anthropic platform"""
         if self._anthropic is None:
-            self._initialize_platforms()
+            self._anthropic = AnthropicPlatform(self.anthropic_key)
         return self._anthropic
 
     @property
     def gemini(self):
         """Lazy initialization of Gemini platform"""
         if self._gemini is None:
-            self._initialize_platforms()
+            self._gemini = GeminiPlatform(self.gemini_key)
         return self._gemini
 
     @property
     def cerebras(self):
         """Lazy initialization of Cerebras platform"""
         if self._cerebras is None:
-            self._initialize_platforms()
+            self._cerebras = CerebrasPlatform(self.cerebras_key)
         return self._cerebras
 
     def get_total_items(self, vault: str = None):
@@ -305,16 +305,17 @@ class Vault:
         if model == 'default':
             return LLMClient(self.openai, **client_kwargs)
 
-        if model in self.anthropic.model_token_limits:
-            return LLMClient(self.anthropic, **client_kwargs)
-        elif model in self.cerebras.model_token_limits:
-            return LLMClient(self.cerebras, **client_kwargs)
+        # Prefer checking OpenAI first to avoid initializing other SDKs unnecessarily
+        if model in self.openai.model_token_limits:
+            return LLMClient(self.openai, **client_kwargs)
         elif model in self.grok.model_token_limits:
             return LLMClient(self.grok, **client_kwargs)
+        elif model in self.cerebras.model_token_limits:
+            return LLMClient(self.cerebras, **client_kwargs)
         elif model in self.gemini.model_token_limits:
             return LLMClient(self.gemini, **client_kwargs)
-        elif model in self.openai.model_token_limits:
-            return LLMClient(self.openai, **client_kwargs)
+        elif model in self.anthropic.model_token_limits:
+            return LLMClient(self.anthropic, **client_kwargs)
         else:
             print(f"Model '{model}' not found in any platform -> adding as a fine-tuned OpenAI model...")
             self.add_fine_tuned_model_to_platform(model)
@@ -1401,22 +1402,22 @@ class Vault:
             
 
     def get_chat(self, 
-            text: str = None, 
-            history: str = '', 
-            summary: bool = False, 
-            get_context: bool = False, 
-            n_context: int = 4, 
-            return_context: bool = False, 
-            history_search: bool = False, 
-            smart_history_search: bool = False, 
-            model: str = None, 
-            include_context_meta: bool = False, 
-            custom_prompt: bool = False, 
-            temperature: int = 0, 
-            timeout: int = 300,
-            image_path: str = None,
-            image_url: str = None,
-            vaults: List[str] = None,
+            text: str = None, # The text to send to the LLM
+            history: str = '', # The chat history to send to the LLM
+            summary: bool = False, # Whether or not the LLM should return a summary of the text
+            get_context: bool = False, # Whether or not the LLM should get context from the vault before responding
+            n_context: int = 4, # How many items to return from the vault
+            return_context: bool = False, # Whether or not the LLM should return the context in the response
+            history_search: bool = False, # Whether or not the LLM should search the vector database with chat history as well as the text input
+            smart_history_search: bool = False, # Whether or not the LLM should search the chat history for context using a custom prompt
+            model: str = None, # The model to use for the LLM
+            include_context_meta: bool = False, # Whether or not the LLM should see the context meta data in the context
+            custom_prompt: bool = False, # Optionally inject your own custom prompt here
+            temperature: int = 0, # The temperature to use for the LLM
+            timeout: int = 300, # How long to wait for the LLM to respond
+            image_path: str = None, # The path to an image to send to the LLM
+            image_url: str = None, # The url of an image to send to the LLM
+            vaults: Union[None, str, List[str], Dict] = None, # A vault name, list of vaults, or dict of vaults to search for context in
             ):
         '''
             Chat get response from OpenAI's ChatGPT. 
@@ -1539,29 +1540,29 @@ class Vault:
         self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {response}') if self.cuid else None
         print("get chat time --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
             
-        return {'response': response, 'context': context} if return_context else response
+        return {'response': response, 'context': context, 'search_input': search_input} if return_context else response
         
 
     def get_chat_stream(self, 
-            text: str = None, 
-            history: str = '', 
-            summary: bool = False, 
-            get_context: bool = False,
-            n_context: int = 4, 
-            return_context: bool = False, 
-            history_search: bool = False, 
-            smart_history_search: bool = False,
-            model: str = None, 
-            include_context_meta: bool = False, 
-            metatag: bool = False,
-            metatag_prefixes: bool = False, 
-            metatag_suffixes: bool = False, 
-            custom_prompt: bool = False, 
-            temperature: int = 0, 
-            timeout: int = 300,
-            image_path: str = None,
-            image_url: str = None,
-            vaults: List[str] = None,
+            text: str = None, # The text to send to the LLM
+            history: str = '', # The chat history to send to the LLM
+            summary: bool = False, # Whether or not the LLM should return a summary of the text
+            get_context: bool = False, # Whether or not the LLM should get context from the vault before responding
+            n_context: int = 4, # How many items to return from the vault
+            return_context: bool = False, # Whether or not the LLM should return the context in the response
+            history_search: bool = False, # Whether or not the LLM should search the vector database with chat history as well as the text input
+            smart_history_search: bool = False, # Whether or not the LLM should search the chat history for context using a custom prompt
+            model: str = None, # The model to use for the LLM
+            include_context_meta: bool = False, # Whether or not the LLM should see the context meta data in the context
+            metatag: bool = False, # Legacy parameter, do not use
+            metatag_prefixes: bool = False, # Legacy parameter, do not use
+            metatag_suffixes: bool = False, # Legacy parameter, do not use
+            custom_prompt: bool = False, # Optionally inject your own custom prompt here
+            temperature: int = 0, # The temperature to use for the LLM
+            timeout: int = 300, # How long to wait for the LLM to respond
+            image_path: str = None, # The path to an image to send to the LLM
+            image_url: str = None, # The url of an image to send to the LLM
+            vaults: Union[None, str, List[str], Dict] = None, # A vault name, list of vaults, or dict of vaults to search for context in
             ):
         '''
             Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream()

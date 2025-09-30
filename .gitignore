@@ -11,3 +11,4 @@ examples/.DS_Store
 package-lock.json
 package.json
 /my stuff
+/unit tests

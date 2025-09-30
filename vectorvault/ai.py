@@ -1158,7 +1158,7 @@ class LLMClient:
 
         return {'text': text, 'history': history, 'context': context}
 
-    def llm(self, user_input: str = '', history: str = '', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5):
+    def text_llm(self, user_input: str = '', history: str = '', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5):
         timeout = self.timeout if not timeout else timeout
         prompt_template = custom_prompt if custom_prompt else self.prompt
 
@@ -1205,7 +1205,35 @@ class LLMClient:
             )
         else:
             # Otherwise use regular text LLM
-            return self.llm(
+            return self.text_llm(
+                user_input=user_input,
+                history=history,
+                model=model,
+                custom_prompt=custom_prompt,
+                temperature=temperature,
+                timeout=timeout,
+                max_retries=max_retries
+            )
+        
+    def llm(self, user_input: str = '', history: str = '', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5, image_path=None, image_url=None):
+        """
+        Smart LLM method that automatically switches between text-only LLM and image inference
+        based on whether image parameters are provided.
+        """
+        # If image parameters are provided, use image inference
+        if image_path or image_url:
+            return self.image_inference(
+                image_path=image_path,
+                image_url=image_url,
+                user_text=user_input,
+                model=model,
+                stream=False,
+                temperature=temperature,
+                timeout=timeout
+            )
+        else:
+            # Otherwise use regular text LLM
+            return self.text_llm(
                 user_input=user_input,
                 history=history,
                 model=model,

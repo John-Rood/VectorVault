@@ -345,9 +345,20 @@ class Vault:
                 cstm_mn = self.main_prompt != self._ai.main_prompt
                 cstm_mnwc = self.main_prompt_with_context != self._ai.main_prompt_with_context
                 cstm_pm = self.personality_message != self._ai.personality_message
-                self._ai.main_prompt_with_context = self.main_prompt_with_context if cstm_mnwc else self.fetch_custom_prompt()
-                self._ai.main_prompt = self.main_prompt if cstm_mn else self.fetch_custom_prompt(context=False)
-                self._ai.personality_message = self.personality_message if cstm_pm else self.fetch_personality_message()
+
+                # Fetch any needed values in parallel
+                with ThreadPoolExecutor(max_workers=3) as executor:
+                    futures = {}
+                    if not cstm_mnwc:
+                        futures['mnwc'] = executor.submit(self.fetch_custom_prompt)
+                    if not cstm_mn:
+                        futures['mn'] = executor.submit(self.fetch_custom_prompt, False)
+                    if not cstm_pm:
+                        futures['pm'] = executor.submit(self.fetch_personality_message)
+
+                self._ai.main_prompt_with_context = self.main_prompt_with_context if cstm_mnwc else futures['mnwc'].result()
+                self._ai.main_prompt = self.main_prompt if cstm_mn else futures['mn'].result()
+                self._ai.personality_message = self.personality_message if cstm_pm else futures['pm'].result()
                 self._ai.set_prompts()
             except:
                 pass

@@ -385,11 +385,19 @@ class OpenAIPlatform(LLMPlatform):
 class GrokPlatform(LLMPlatform):
     def __init__(self, api_key=None):
         # The real client object from the OpenAI library, pointing to xAI's base URL:
-        if api_key is not None:
-            self.client = openai.OpenAI(
-                api_key=api_key,
-                base_url="https://api.x.ai/v1",
-            )
+        try:
+            if api_key is not None:
+                self.client = openai.OpenAI(
+                    api_key=api_key,
+                    base_url="https://api.x.ai/v1",
+                )
+            else:
+                # Set client to None if no API key provided
+                self.client = None
+        except Exception as e:
+            self.client = None
+            if api_key:  # Only warn if an API key was explicitly provided
+                print(f"Warning: Failed to initialize Grok client: {e}")
 
         # Example model token limits for xAI Grok (adjust as needed)
         self.model_token_limits = {
@@ -420,6 +428,9 @@ class GrokPlatform(LLMPlatform):
         Non-streaming call to xAI /v1/chat/completions 
         using the `OpenAI` client set to base_url="https://api.x.ai/v1".
         """
+        if self.client is None:
+            raise ValueError("Grok client not initialized. Please provide a valid API key.")
+            
         def call_api(response_queue):
             try:
                 params = {
@@ -451,6 +462,9 @@ class GrokPlatform(LLMPlatform):
         Streaming call to xAI /v1/chat/completions 
         with "stream": True.
         """
+        if self.client is None:
+            raise ValueError("Grok client not initialized. Please provide a valid API key.")
+            
         def call_api():
             try:
                 params = {
@@ -503,7 +517,7 @@ class GrokPlatform(LLMPlatform):
             else:
                 return self.model_token_limits['default']
 
-    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, timeout=None):
+    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None):
         """
         For vision-capable models like "grok-2-vision-latest", we can send:
         messages = [
@@ -556,14 +570,31 @@ class GrokPlatform(LLMPlatform):
         ]
 
         messages = [{"role": "user", "content": content}]
-        return self.make_call(messages, model=model, temperature=0, timeout=timeout)
+        
+        # Use provided temperature or default to 0
+        temp = temperature if temperature is not None else 0
+        
+        if stream:
+            return self.stream_call(messages, model=model, temperature=temp, timeout=timeout)
+        else:
+            return self.make_call(messages, model=model, temperature=temp, timeout=timeout)
 
 
 # Anthropic (Claude) Platform Implementation
 class AnthropicPlatform(LLMPlatform):
     def __init__(self, api_key=None):
-        if api_key:
-            self.client = anthropic.Anthropic(api_key=api_key)
+        # Initialize client - will use environment variable ANTHROPIC_API_KEY if api_key is None
+        try:
+            if api_key:
+                self.client = anthropic.Anthropic(api_key=api_key)
+            else:
+                # Try to initialize from environment variable
+                self.client = anthropic.Anthropic()
+        except Exception as e:
+            # If initialization fails, set client to None and handle in methods
+            self.client = None
+            if api_key:  # Only warn if an API key was explicitly provided
+                print(f"Warning: Failed to initialize Anthropic client: {e}")
 
         self.model_token_limits = {
             'claude-opus-4-1': 200000,
@@ -586,6 +617,9 @@ class AnthropicPlatform(LLMPlatform):
         self.default_model = self.model_token_limits['default']
 
     def make_call(self, messages, model, temperature, timeout=None):
+        if self.client is None:
+            raise ValueError("Anthropic client not initialized. Please provide a valid API key or set ANTHROPIC_API_KEY environment variable.")
+            
         def call_api(response_queue):
             try:
                 response = self.client.messages.create(
@@ -608,6 +642,9 @@ class AnthropicPlatform(LLMPlatform):
             return None
 
     def stream_call(self, messages, model, temperature, timeout=None):
+        if self.client is None:
+            raise ValueError("Anthropic client not initialized. Please provide a valid API key or set ANTHROPIC_API_KEY environment variable.")
+            
         def call_api():
             try:
                 response = self.client.messages.create(
@@ -724,8 +761,18 @@ class AnthropicPlatform(LLMPlatform):
 # Google Gemini Platform Implementation
 class GeminiPlatform(LLMPlatform):
     def __init__(self, api_key=None):
-        if api_key:
-            self.client = genai.Client(api_key=api_key)
+        # Initialize client - will use environment variable GOOGLE_API_KEY if api_key is None
+        try:
+            if api_key:
+                self.client = genai.Client(api_key=api_key)
+            else:
+                # Try to initialize from environment variable
+                self.client = genai.Client()
+        except Exception as e:
+            # If initialization fails, set client to None and handle in methods
+            self.client = None
+            if api_key:  # Only warn if an API key was explicitly provided
+                print(f"Warning: Failed to initialize Gemini client: {e}")
 
         self.model_token_limits = {
             'gemini-2.5-pro': 1000000,
@@ -994,8 +1041,18 @@ class GeminiPlatform(LLMPlatform):
 # Cerebras Platform Implementation
 class CerebrasPlatform(LLMPlatform):
     def __init__(self, api_key=None):
-        if api_key:
-            self.client = Cerebras(api_key=api_key)
+        # Initialize client - will use environment variable CEREBRAS_API_KEY if api_key is None
+        try:
+            if api_key:
+                self.client = Cerebras(api_key=api_key)
+            else:
+                # Try to initialize from environment variable
+                self.client = Cerebras()
+        except Exception as e:
+            # If initialization fails, set client to None and handle in methods
+            self.client = None
+            if api_key:  # Only warn if an API key was explicitly provided
+                print(f"Warning: Failed to initialize Cerebras client: {e}")
 
         self.model_token_limits = {
             'gpt-oss-120b': 64000,
@@ -1010,6 +1067,9 @@ class CerebrasPlatform(LLMPlatform):
         self.default_model = self.model_token_limits['default']
 
     def make_call(self, messages, model, temperature=None, timeout=None):
+        if self.client is None:
+            raise ValueError("Cerebras client not initialized. Please provide a valid API key or set CEREBRAS_API_KEY environment variable.")
+            
         def call_api(response_queue):
             try:
                 params = {
@@ -1034,6 +1094,9 @@ class CerebrasPlatform(LLMPlatform):
             return None
 
     def stream_call(self, messages, model, temperature=None, timeout=None):
+        if self.client is None:
+            raise ValueError("Cerebras client not initialized. Please provide a valid API key or set CEREBRAS_API_KEY environment variable.")
+            
         def call_api():
             try:
                 params = {
@@ -1089,7 +1152,7 @@ class CerebrasPlatform(LLMPlatform):
                     # If no suitable models found, return the default model
                     return self.model_token_limits['default']
 
-    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, timeout=None):
+    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None):
         """
         Cerebras doesn't currently support image inference.
         """

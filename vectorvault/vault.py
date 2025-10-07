@@ -358,7 +358,6 @@ class Vault:
             Saves personality_message to the vault and use it by default from now on
         '''
         self.cloud_manager.upload_personality_message(text)
-
         print(f"Personality message saved") if self.verbose else 0
             
 
@@ -382,8 +381,7 @@ class Vault:
             Saves custom_prompt to the vault and use it by default from now on
             Param: "context" True = context prompt ; False = main prompt
         '''
-        self.cloud_manager.upload_custom_prompt(text) if context else self.cloud_manager.upload_no_context_prompt(text)
-
+        self.cloud_manager.upload_custom_prompt(text, context)
         print(f"Custom prompt saved") if self.verbose else 0
             
 

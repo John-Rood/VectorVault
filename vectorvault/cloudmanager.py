@@ -28,14 +28,40 @@ class CloudManager:
         self.user = user
         self.api = api_key
         self.vault = vault
-        # Create credentials
-        self.credentials = CredentialsManager(user, self.api)
-        # Instantiate the client 
-        self.storage_client = storage.Client(project=call_proj(), credentials=self.credentials)
-        self.username = self.username(self.user)
-        self.cloud = self.storage_client.bucket(self.username)
+        # Lazy initialization - these will be created when first accessed
+        self._storage_client = None
+        self._cloud = None
+        self._username = None
         self.cloud_name = cloud_name
-        self.req_count = 0 
+        self.req_count = 0
+    
+    @property
+    def credentials(self):
+        """Lazy initialization of credentials"""
+        if not hasattr(self, '_credentials'):
+            self._credentials = CredentialsManager(self.user, self.api)
+        return self._credentials
+    
+    @property
+    def storage_client(self):
+        """Lazy initialization of storage client"""
+        if self._storage_client is None:
+            self._storage_client = storage.Client(project=call_proj(), credentials=self.credentials)
+        return self._storage_client
+    
+    @property
+    def username(self):
+        """Lazy initialization of username"""
+        if self._username is None:
+            self._username = self.user.replace("@", "_at_").replace(".", "_dot_") + '_vvclient'
+        return self._username
+    
+    @property
+    def cloud(self):
+        """Lazy initialization of cloud bucket"""
+        if self._cloud is None:
+            self._cloud = self.storage_client.bucket(self.username)
+        return self._cloud 
 
     def vault_exists(self, vault_name):
         return storage.Blob(bucket=self.cloud, name=vault_name).exists(self.storage_client)
@@ -105,9 +131,6 @@ class CloudManager:
     
     def upload_custom_prompt(self, prompt, context=False):
         self.upload_to_cloud(f'{self.vault}/prompt' if context else f'{self.vault}/no_context_prompt', prompt)
-     
-    def username(self, input_string):
-        return input_string.replace("@", "_at_").replace(".", "_dot_") + '_vvclient'
 
     def get_mapping(self):
         temp_file_path = self.download_to_temp_file(f'{self.username}.json')

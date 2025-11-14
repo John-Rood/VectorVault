@@ -9,13 +9,11 @@ import base64
 import httpx
 from google import genai
 from google.genai import types
-from cerebras.cloud.sdk import Cerebras
 
 
 def get_all_models(namespaced=False):
     platforms = [
         ('openai', OpenAIPlatform()),
-        ('cerebras', CerebrasPlatform()),
         ('grok', GrokPlatform()),
         ('anthropic', AnthropicPlatform()),
         ('gemini', GeminiPlatform()),
@@ -33,7 +31,6 @@ def get_all_models(namespaced=False):
 def get_front_models(namespaced=False):
     platforms = [
         ('openai', OpenAIPlatform()),
-        ('cerebras', CerebrasPlatform()),
         ('grok', GrokPlatform()),
         ('anthropic', AnthropicPlatform()),
         ('gemini', GeminiPlatform()),
@@ -1038,125 +1035,6 @@ class GeminiPlatform(LLMPlatform):
             raise Exception(f"Gemini image inference failed: {str(e)}")
 
 
-# Cerebras Platform Implementation
-class CerebrasPlatform(LLMPlatform):
-    def __init__(self, api_key=None):
-        # Initialize client - will use environment variable CEREBRAS_API_KEY if api_key is None
-        try:
-            if api_key:
-                self.client = Cerebras(api_key=api_key)
-            else:
-                # Try to initialize from environment variable
-                self.client = Cerebras()
-        except Exception as e:
-            # If initialization fails, set client to None and handle in methods
-            self.client = None
-            if api_key:  # Only warn if an API key was explicitly provided
-                print(f"Warning: Failed to initialize Cerebras client: {e}")
-
-        self.model_token_limits = {
-            'gpt-oss-120b': 64000,
-            'qwen-3-coder-480b': 64000,
-            'default': 'gpt-oss-120b'
-        }
-        self.front_model_token_limits = {
-            'gpt-oss-120b': 64000,
-            'qwen-3-coder-480b': 64000,
-            'default': 'gpt-oss-120b'
-        }
-        self.default_model = self.model_token_limits['default']
-
-    def make_call(self, messages, model, temperature=None, timeout=None):
-        if self.client is None:
-            raise ValueError("Cerebras client not initialized. Please provide a valid API key or set CEREBRAS_API_KEY environment variable.")
-            
-        def call_api(response_queue):
-            try:
-                params = {
-                    "model": model,
-                    "messages": messages
-                }
-                if temperature is not None:
-                    params["temperature"] = temperature
-                
-                response = self.client.chat.completions.create(**params)
-                response_queue.put(response.choices[0].message.content)
-            except Exception as e:
-                response_queue.put(e)
-
-        response_queue = queue.Queue()
-        api_thread = threading.Thread(target=call_api, args=(response_queue,))
-        api_thread.start()
-        try:
-            return response_queue.get(timeout=timeout)
-        except queue.Empty:
-            print("Request timed out")
-            return None
-
-    def stream_call(self, messages, model, temperature=None, timeout=None):
-        if self.client is None:
-            raise ValueError("Cerebras client not initialized. Please provide a valid API key or set CEREBRAS_API_KEY environment variable.")
-            
-        def call_api():
-            try:
-                params = {
-                    "model": model,
-                    "messages": messages,
-                    "stream": True
-                }
-                if temperature is not None:
-                    params["temperature"] = temperature
-                
-                response = self.client.chat.completions.create(**params)
-                for chunk in response:
-                    message = chunk.choices[0].delta.content
-                    if message:
-                        yield message
-            except Exception as e:
-                yield str(e)
-
-        return call_api()
-
-    def get_tokens(self, string: str, encoding_name: str = None) -> int:
-        # Cerebras doesn't provide a direct token counting API
-        # Use estimation: approximately 1 token per 4 characters
-        return round(len(string) / 4)
-
-    def text_to_speech(self, text, model="default", voice="default"):
-        # Cerebras doesn't currently support TTS
-        raise NotImplementedError("Cerebras platform does not currently support text-to-speech.")
-
-    def transcribe_audio(self, file, model="default"):
-        # Cerebras doesn't currently support audio transcription
-        raise NotImplementedError("Cerebras platform does not currently support audio transcription.")
-
-    def model_check(self, token_count, model):
-        if model not in self.model_token_limits.keys():
-            return model
-        else:
-            # Filter out the 'default' key and create suitable_models dictionary
-            suitable_models = {
-                model_name: tokens 
-                for model_name, tokens in self.model_token_limits.items() 
-                if isinstance(tokens, int) and tokens >= token_count
-            }
-            
-            if model in suitable_models:
-                return model
-            else:
-                if suitable_models:  # Check if we found any suitable models
-                    new_model = min(suitable_models, key=suitable_models.get)
-                    print('model switch from model:', model, 'to model:', new_model)
-                    return new_model
-                else:
-                    # If no suitable models found, return the default model
-                    return self.model_token_limits['default']
-
-    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None):
-        """
-        Cerebras doesn't currently support image inference.
-        """
-        raise NotImplementedError("Cerebras platform does not currently support image inference.")
 
 
 # LLM Client that uses the platform-agnostic interface
@@ -1179,6 +1057,16 @@ class LLMClient:
         self.personality_message = personality_message if personality_message else ""
         self.context_prompt = self.main_prompt_with_context + '\n' + f'{self.personality_message}' + '\n'
         self.prompt = self.main_prompt + '\n\n' + f'({self.personality_message})' + '\n'
+
+    @staticmethod
+    def _format_prompt(template, **values):
+        class _SafeDict(dict):
+            def __missing__(self, key):
+                return ''
+        try:
+            return template.format_map(_SafeDict(**values))
+        except Exception:
+            return template
 
     def set_prompts(self):
         self.context_prompt = self.main_prompt_with_context + '\n' + f'{self.personality_message}' + '\n'
@@ -1233,7 +1121,7 @@ class LLMClient:
         if user_input:
             new_texts = self.truncate_text(user_input, str(history), str(prompt_template), max_tokens=max_tokens)
             user_input, history = new_texts['text'], new_texts['history']
-            prompt = prompt_template.format(content=user_input)
+            prompt = self._format_prompt(prompt_template, content=user_input)
         elif custom_prompt:
             prompt = custom_prompt
         else:
@@ -1352,7 +1240,7 @@ Instructions: {instructions}"""}
             new_texts = self.truncate_text(user_input, str(history), str(prompt_template), str(context), max_tokens=max_tokens)
             user_input, history, context = new_texts['text'], new_texts['history'], new_texts['context']
 
-        prompt = prompt_template.format(context=context, content=user_input)
+        prompt = self._format_prompt(prompt_template, context=context, content=user_input)
         if self.verbose:
             print('Full input prompt:', prompt)
 
@@ -1378,7 +1266,7 @@ Instructions: {instructions}"""}
         if user_input:
             new_texts = self.truncate_text(user_input, str(history), str(prompt_template), max_tokens=max_tokens)
             user_input, history = new_texts['text'], new_texts['history']
-            prompt = prompt_template.format(content=user_input)
+            prompt = self._format_prompt(prompt_template, content=user_input)
         elif custom_prompt:
             prompt = custom_prompt
         else:
@@ -1427,7 +1315,7 @@ Instructions: {instructions}"""}
             new_texts = self.truncate_text(user_input, str(history), str(prompt_template), str(context), max_tokens=max_tokens)
             user_input, history, context = new_texts['text'], new_texts['history'], new_texts['context']
 
-        prompt = prompt_template.format(context=context, content=user_input)
+        prompt = self._format_prompt(prompt_template, context=context, content=user_input)
         if self.verbose:
             print(prompt)
 
@@ -1440,7 +1328,7 @@ Instructions: {instructions}"""}
 
     def summarize(self, user_input, model=None, custom_prompt=False, temperature=0):
         prompt_template = custom_prompt if custom_prompt else """Summarize the following: {content}"""
-        prompt = prompt_template.format(content=user_input)
+        prompt = self._format_prompt(prompt_template, content=user_input)
         model = model if model else self.default_model
         messages = [{"role": "user", "content": f"{prompt}"}]
         response = self.platform.make_call(messages, model, temperature)
@@ -1448,7 +1336,7 @@ Instructions: {instructions}"""}
 
     def summarize_stream(self, user_input, model=None, custom_prompt=False, temperature=0):
         prompt_template = custom_prompt if custom_prompt else """Summarize the following: {content}"""
-        prompt = prompt_template.format(content=user_input)
+        prompt = self._format_prompt(prompt_template, content=user_input)
         model = model if model else self.default_model
         messages = [{"role": "user", "content": f"{prompt}"}]
         for message in self.platform.stream_call(messages, model, temperature):
@@ -1458,7 +1346,7 @@ Instructions: {instructions}"""}
     def smart_summary(self, text, previous_summary, model=None, custom_prompt=False, temperature=0):
         prompt_template = custom_prompt if custom_prompt else """Given the previous summary: {previous_summary}
 Continue from where it leaves off by summarizing the next segment content: {content}"""
-        prompt = prompt_template.format(previous_summary=previous_summary, content=text)
+        prompt = self._format_prompt(prompt_template, previous_summary=previous_summary, content=text)
         model = model if model else self.default_model
         messages = [{"role": "user", "content": f"{prompt}"}]
         response = self.platform.make_call(messages, model, temperature)

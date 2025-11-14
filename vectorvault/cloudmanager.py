@@ -19,9 +19,19 @@ import json
 import time
 from google.cloud import storage
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from .credentials_manager import CredentialsManager
-from .cloud_api import call_proj, call_req
 from .itemize import cloud_name
+from .credentials_manager import CredentialsManager
+from .cloud_api import (
+    call_proj, call_req,
+    get_init_data,
+    get_vault_metadata, update_vault_metadata, increment_vault_usage,
+    get_vault_mapping, update_vault_mapping,
+    get_vaults_list, update_vaults_list,
+    get_custom_prompt, save_custom_prompt,
+    get_personality_message, save_personality_message,
+    delete_vault_metadata,
+    get_user_vault_data
+)
 
 class CloudManager:
     def __init__(self, user: str, api_key: str, vault: str):
@@ -34,6 +44,16 @@ class CloudManager:
         self._username = None
         self.cloud_name = cloud_name
         self.req_count = 0
+        
+        # Batch initialization - load immediately and store config
+        self._init_data = None
+        self._init_data_loaded = False
+        self.custom_prompt_with_context = None
+        self.custom_prompt_no_context = None
+        self.personality_message = None
+        self.item_mapping = {}
+        self.vault_metadata = {}
+        self.load_init_data()
     
     @property
     def credentials(self):
@@ -61,7 +81,30 @@ class CloudManager:
         """Lazy initialization of cloud bucket"""
         if self._cloud is None:
             self._cloud = self.storage_client.bucket(self.username)
-        return self._cloud 
+        return self._cloud
+    
+    def load_init_data(self):
+        """
+        OPTIMIZED: Load all initialization data in a single API call.
+        Called immediately on CloudManager initialization.
+        """
+        if self._init_data_loaded:
+            return
+        
+        self._init_data_loaded = True
+        result = get_init_data(self.user, self.api, self.vault)
+        
+        if result is not None:
+            self._init_data = result
+            # Store config data in instance variables for easy access
+            self.custom_prompt_with_context = result.get('custom_prompt_with_context')
+            self.custom_prompt_no_context = result.get('custom_prompt_no_context')
+            self.personality_message = result.get('personality_message')
+            self.item_mapping = self._normalize_item_mapping(result.get('item_mapping'))
+            self.vault_metadata = self._extract_metadata_for_vault(result.get('vault_metadata'))
+        else:
+            # If API fails, init_data stays None and methods fall back
+            self._init_data = None 
 
     def vault_exists(self, vault_name):
         return storage.Blob(bucket=self.cloud, name=vault_name).exists(self.storage_client)
@@ -89,8 +132,27 @@ class CloudManager:
         blob.upload_from_string(content)
 
     def download_vaults_list_from_cloud(self):
-        blob = self.cloud.blob('/vaults_list')
-        return json.loads(blob.download_as_text())
+        """Get vaults list - always returns a list"""
+        # Try batch init data first
+        if self._init_data and 'vaults_list' in self._init_data:
+            vaults_list = self._init_data['vaults_list']
+        else:
+            # Fall back to individual API call
+            vaults_list = get_vaults_list(self.user, self.api)
+        
+        # Normalize the format - if it's a dict, extract vault names
+        if isinstance(vaults_list, dict):
+            # Extract vault names from numbered keys (ignore 'vault_metadata' key)
+            result = []
+            for key, value in vaults_list.items():
+                if key.isdigit():
+                    result.append(value)
+            return sorted(result)
+        elif isinstance(vaults_list, list):
+            return vaults_list
+        
+        # Return empty list if all fails
+        return []
 
     def download_text_from_cloud(self, vault_name):
         blob = self.cloud.blob(vault_name)
@@ -123,50 +185,147 @@ class CloudManager:
         self.upload_to_cloud(self.cloud_name(vault, item, self.user, self.api, meta=True), json.dumps(meta))
         
     def upload_vaults_list(self, vaults_list):
-        blob = self.cloud.blob('/vaults_list')
-        blob.upload_from_string(json.dumps(vaults_list))
+        """Update vaults list - ensure it's always sent as a list"""
+        # Ensure vaults_list is a list
+        if isinstance(vaults_list, dict):
+            # Convert dict to list if needed
+            result = []
+            for key, value in vaults_list.items():
+                if key.isdigit():
+                    result.append(value)
+            vaults_list = sorted(result)
         
+        update_vaults_list(self.user, self.api, vaults_list)
+        
+        # Invalidate cache
+        self._init_data_loaded = False
+        self._init_data = None
+
     def upload_personality_message(self, personality_message):
-        self.upload_to_cloud(f'{self.vault}/personality_message', personality_message)
+        """Save personality message and update local cache"""
+        # Update local cache
+        self.personality_message = personality_message
+        
+        save_personality_message(self.user, self.api, self.vault, personality_message)
     
     def upload_custom_prompt(self, prompt, context=False):
-        self.upload_to_cloud(f'{self.vault}/prompt' if context else f'{self.vault}/no_context_prompt', prompt)
+        """Save custom prompt and update local cache"""
+        # Update local cache
+        if context:
+            self.custom_prompt_with_context = prompt
+        else:
+            self.custom_prompt_no_context = prompt
+        
+        save_custom_prompt(self.user, self.api, self.vault, prompt, context)
+    
+    def download_custom_prompt(self, context=True):
+        """Get custom prompt"""
+        # Try batch init data first (already loaded)
+        if context and self.custom_prompt_with_context:
+            return self.custom_prompt_with_context
+        elif not context and self.custom_prompt_no_context:
+            return self.custom_prompt_no_context
+    
+    def download_personality_message(self):
+        """Get personality message"""
+        # Try batch init data first (already loaded)
+        if self.personality_message:
+            return self.personality_message
 
     def get_mapping(self):
-        temp_file_path = self.download_to_temp_file(f'{self.username}.json')
-        with open(temp_file_path, 'r') as json_file:
-            _map = json.load(json_file)
-        os.remove(temp_file_path)
-        return _map
+        """Get item mapping for current vault"""
+        # Try batch init data first (already loaded)
+        if self.item_mapping:
+            return self.item_mapping
+        
+        # Fall back to individual API call
+        self.item_mapping = self._normalize_item_mapping(get_vault_mapping(self.user, self.api, self.vault))
+        return self.item_mapping
+
+    def _normalize_item_mapping(self, mapping):
+        if isinstance(mapping, dict):
+            return mapping
+        if isinstance(mapping, list):
+            return {str(index): value for index, value in enumerate(mapping)}
+        return {}
+
+    def _extract_metadata_for_vault(self, source):
+        """Normalize metadata source to a per-vault dict."""
+        if not source:
+            return {}
+        
+        # If already dict with expected keys, use it directly
+        if isinstance(source, dict):
+            if any(key in source for key in ('last_update', 'last_use', 'total_items', 'total_use')):
+                return source
+            # Some backends include the vault key alongside metadata
+            if source.get('vault') == self.vault:
+                return {
+                    k: v for k, v in source.items()
+                    if k in ('last_update', 'last_use', 'total_items', 'total_use')
+                }
+        
+        # If list, find entry for this vault
+        if isinstance(source, list):
+            for entry in source:
+                if isinstance(entry, dict) and entry.get('vault') == self.vault:
+                    return {
+                        k: v for k, v in entry.items()
+                        if k in ('last_update', 'last_use', 'total_items', 'total_use')
+                    }
+        
+        return {}
+
+    def get_metadata(self):
+        """Get metadata dict for the current vault."""
+        # Try cached value first
+        if self.vault_metadata:
+            return self.vault_metadata
+        
+        # Try init data payload
+        if self._init_data and 'vault_metadata' in self._init_data:
+            metadata = self._extract_metadata_for_vault(self._init_data['vault_metadata'])
+            if metadata:
+                self.vault_metadata = metadata
+                return self.vault_metadata
+        
+        # Fall back to user_vault_data API (which has the same structure)
+        metadata = self._extract_metadata_for_vault(get_user_vault_data(self.user, self.api))
+        if metadata:
+            self.vault_metadata = metadata
+            return self.vault_metadata
+        
+        # Final fallback to dedicated metadata endpoint (may return list)
+        metadata = self._extract_metadata_for_vault(get_vault_metadata(self.user, self.api))
+        if metadata:
+            self.vault_metadata = metadata
+            return self.vault_metadata
+        
+        self.vault_metadata = {}
+        return self.vault_metadata
     
     def build_update(self, n):
-        _map = self.get_mapping()
-        for i in range(len(_map)):
-            if _map[i]['vault'] == self.vault:
-                _map[i]['last_use'] = time.time()
-                try:
-                    _map[i]['total_use'] += 1
-                except:
-                    _map[i]['total_use'] = 1
+        """Increment vault usage via backend API"""
+        # Get current metadata to increment total_use
+        metadata = self.get_metadata()
+        current_total_use = metadata.get('total_use', 0) + 1
+        
+        # Update via API
+        update_vault_metadata(
+            self.user, 
+            self.api, 
+            self.vault, 
+            last_use=time.time(),
+            total_use=current_total_use
+        )
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
-            _path = temp_file.name
-            json.dump(_map, temp_file, indent=2)
-            call_req(self.user, self.api, n)
-            
-        self.upload_temp_file(_path, f'{self.username}.json')
-    
     def build_data_update(self):
-        _map = self.get_mapping()
-        for i in range(len(_map)):
-            if _map[i]['vault'] == self.vault:
-                _map[i]['last_update'] = time.time()
-
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
-            _path = temp_file.name
-            json.dump(_map, temp_file, indent=2)
-            
-        self.upload_temp_file(_path, f'{self.username}.json')
+        """Update vault last_update timestamp"""
+        now = time.time()
+        update_vault_metadata(self.user, self.api, self.vault, last_update=now)
+        if not self.vault_metadata:
+            self.vault_metadata = {}
+        self.vault_metadata['last_update'] = now
     
     def delete_blob(self, blob):
         blob.delete()
@@ -208,7 +367,6 @@ class CloudManager:
         blobs = self.cloud.list_blobs(prefix=prefix)
         return [blob.name for blob in blobs]
 
-    
 
 class VaultStorageManager:
     """

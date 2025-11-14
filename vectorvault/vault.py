@@ -23,20 +23,20 @@ import re
 import json
 import traceback
 import random
-from threading import Thread as T
+from threading import Thread as T, Event
 from datetime import datetime, timedelta
 from typing import List, Union, Dict
-from .ai import openai, OpenAIPlatform, AnthropicPlatform, GrokPlatform, GeminiPlatform, CerebrasPlatform, LLMClient, get_all_models
-from .cloud_api import call_cloud_save, run_flow, run_flow_stream
+from .ai import openai, OpenAIPlatform, AnthropicPlatform, GrokPlatform, GeminiPlatform, LLMClient, get_all_models
+from .cloud_api import call_cloud_save, run_flow, run_flow_stream, update_vault_metadata, delete_vault_metadata, update_vault_mapping, update_vaults_list, get_vault_mapping, get_user_vault_data, update_user_vault_data
 from .cloudmanager import CloudManager, VaultStorageManager, as_completed, ThreadPoolExecutor
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, name_map, get_time_statement, load_json
 
 
 class Vault:
     def __init__(self, user: str = None, api_key: str = None, openai_key: str = None, vault: str = None, 
-                 embeddings_model: str = None, verbose: bool = False, conversation_user_id: str = None, 
+                 embeddings_model: str = None, verbose: bool = False, 
                  model = None, grok_key: str = None, anthropic_key: str = None,
-                 gemini_key: str = None, cerebras_key: str = None, main_prompt = None, main_prompt_with_context = None, personality_message = None):
+                 gemini_key: str = None, main_prompt = None, main_prompt_with_context = None, personality_message = None):
         ''' 
         >>> Create a vector database instance:
         ```
@@ -71,8 +71,27 @@ class Vault:
         self.embeddings_model = embeddings_model if embeddings_model else 'text-embedding-3-small'
         self.dims = 1536 if embeddings_model != 'text-embedding-3-large' else 3072
         
-        # Lazy initialization - these will be created when first accessed
         self._cloud_manager = None
+        self._cloud_manager_thread = None
+        self._cloud_manager_ready = Event()
+
+        def _init_cloud_manager():
+            cm = CloudManager(self.user, self.api, self.vault)
+            self._cloud_manager = cm
+            if cm.item_mapping and not self.map:
+                self.map = dict(cm.item_mapping)
+            self._cached_prompt_with_context = cm.custom_prompt_with_context
+            self._cached_prompt_no_context = cm.custom_prompt_no_context
+            self._cached_personality = cm.personality_message
+            self._cloud_manager_ready.set()
+
+        if user and api_key:
+            self._cloud_manager_thread = T(target=_init_cloud_manager, daemon=True)
+            self._cloud_manager_thread.start()
+        else:
+            self._cloud_manager_ready.set()
+        
+        # Lazy initialization for other components
         self._storage = None
         self._vectors = None
         self._all_models = None
@@ -84,14 +103,16 @@ class Vault:
         self.x_loaded_checked = False
         self.vecs_loaded = False
         self.load_json = load_json
-        self.map = {}
+        if self._cloud_manager and self._cloud_manager.item_mapping:
+            self.map = self._cloud_manager.item_mapping
+        else:
+            self.map = {}
         self.items = []
         self.last_time = None
         self.saved_already = False
         self._ai = None
         self.ai_loaded = False
         self.rate_limiter = RateLimiter(max_attempts=30)
-        self.cuid = conversation_user_id
         self.model = model # your chosen defualt model
         
         # Store API keys for lazy initialization
@@ -99,7 +120,6 @@ class Vault:
         self.grok_key = grok_key
         self.anthropic_key = anthropic_key
         self.gemini_key = gemini_key
-        self.cerebras_key = cerebras_key
         
         # Set OpenAI API key if provided
         if openai_key:
@@ -110,7 +130,6 @@ class Vault:
         self._grok = None
         self._anthropic = None
         self._gemini = None
-        self._cerebras = None
         
         # Configuration settings
         self.fine_tuned_context_window = 128000
@@ -124,15 +143,29 @@ class Vault:
     Question: {content}
     """    
         self.personality_message = personality_message if personality_message else ""
+        
+        # Initialize current vault mapping from CloudManager if available
+        self.map = {}
+        self._cached_prompt_with_context = None
+        self._cached_prompt_no_context = None
+        self._cached_personality = None
 
     @property
     def cloud_manager(self):
-        """Lazy initialization of cloud manager"""
+        """Get cloud manager (initialized eagerly in __init__)"""
+        self._finalize_cloud_manager_initialization()
         if self._cloud_manager is None:
-            if self.user is None or self.api is None:
-                raise ValueError("User and API key are required for cloud operations")
-            self._cloud_manager = CloudManager(self.user, self.api, self.vault)
+            raise ValueError("User and API key are required for cloud operations")
         return self._cloud_manager
+
+    def _finalize_cloud_manager_initialization(self):
+        if hasattr(self, "_cloud_manager_thread") and self._cloud_manager_thread:
+            self._cloud_manager_thread.join()
+            self._cloud_manager_thread = None
+            if self._cloud_manager and self._cloud_manager.item_mapping and not self.map:
+                self.map = dict(self._cloud_manager.item_mapping)
+            if not self._cloud_manager_ready.is_set():
+                self._cloud_manager_ready.set()
 
     @property
     def storage(self):
@@ -167,7 +200,6 @@ class Vault:
             self._grok = GrokPlatform(self.grok_key)
             self._anthropic = AnthropicPlatform(self.anthropic_key)
             self._gemini = GeminiPlatform(self.gemini_key)
-            self._cerebras = CerebrasPlatform(self.cerebras_key)
             self._platforms_initialized = True
 
     @property
@@ -198,29 +230,15 @@ class Vault:
             self._gemini = GeminiPlatform(self.gemini_key)
         return self._gemini
 
-    @property
-    def cerebras(self):
-        """Lazy initialization of Cerebras platform"""
-        if self._cerebras is None:
-            self._cerebras = CerebrasPlatform(self.cerebras_key)
-        return self._cerebras
-
     def get_total_items(self, vault: str = None):
         '''
             Returns the total number of vectored items in the Vault
         '''
-        if not vault:
-            self.load_mapping()
-            return len(self.map)
-        else:
-            try:
-                temp_file_path = self.cloud_manager.download_to_temp_file(name_map(vault, self.user, self.api))
-                with open(temp_file_path, 'r') as json_file:
-                    _map = json.load(json_file)
-                self.delete_temp_file(temp_file_path)
-                return len(_map)
-            except: # it doesn't exist
-                return 0
+        target_vault = vault if vault else self.vault
+        mapping = self.load_mapping(target_vault)
+        if mapping:
+            return len(mapping)
+        return 0
 
     def get_total_vectors(self):
         '''
@@ -260,13 +278,11 @@ class Vault:
 
         Args:
             model_name (str): The name of the fine-tuned model.
-            platform (str): The target platform ('openai', 'cerebras', 'grok', 'anthropic', 'gemini').
+            platform (str): The target platform ('openai', 'grok', 'anthropic', 'gemini').
             token_limit (int): The token limit for the fine-tuned model.
         """
         if platform == 'openai':
             platform_instance = self.openai
-        elif platform == 'cerebras':
-            platform_instance = self.cerebras
         elif platform == 'grok':
             platform_instance = self.grok
         elif platform == 'anthropic':
@@ -310,8 +326,6 @@ class Vault:
             return LLMClient(self.openai, **client_kwargs)
         elif model in self.grok.model_token_limits:
             return LLMClient(self.grok, **client_kwargs)
-        elif model in self.cerebras.model_token_limits:
-            return LLMClient(self.cerebras, **client_kwargs)
         elif model in self.gemini.model_token_limits:
             return LLMClient(self.gemini, **client_kwargs)
         elif model in self.anthropic.model_token_limits:
@@ -357,6 +371,7 @@ class Vault:
         '''
             Saves personality_message to the vault and use it by default from now on
         '''
+        self._cached_personality = text
         self.cloud_manager.upload_personality_message(text)
         print(f"Personality message saved") if self.verbose else 0
             
@@ -365,13 +380,22 @@ class Vault:
         '''
             Retrieves personality_message from the vault if it is there or else use the defualt
         '''
+        if self._cached_personality is not None:
+            return self._cached_personality
+        if not self._cloud_manager_ready.is_set():
+            return self.personality_message
         try:
-            personality_message = self.cloud_manager.download_text_from_cloud(f'{self.vault}/personality_message')
+            personality_message = self.cloud_manager.download_personality_message()
+            if personality_message is not None:
+                self._cached_personality = personality_message
+                return personality_message
         except:
-            if self.ai_loaded:
-                personality_message = self._ai.personality_message
-            else: # only when called externally in some situations
-                personality_message = self.personality_message
+            pass
+        
+        if self.ai_loaded:
+            personality_message = self._ai.personality_message
+        else: # only when called externally in some situations
+            personality_message = self.personality_message
                 
         return personality_message
     
@@ -381,6 +405,10 @@ class Vault:
             Saves custom_prompt to the vault and use it by default from now on
             Param: "context" True = context prompt ; False = main prompt
         '''
+        if context:
+            self._cached_prompt_with_context = text
+        else:
+            self._cached_prompt_no_context = text
         self.cloud_manager.upload_custom_prompt(text, context)
         print(f"Custom prompt saved") if self.verbose else 0
             
@@ -390,14 +418,27 @@ class Vault:
             Retrieves custom_prompt from the vault if there or eles use defualt - (used for get_context = True responses)
             context == False will return custom prompt for not context situations
         '''
+        cache = self._cached_prompt_with_context if context else self._cached_prompt_no_context
+        if cache is not None:
+            return cache
+        if not self._cloud_manager_ready.is_set():
+            return self.main_prompt_with_context if context else self.main_prompt
         try:
-            prompt = self.cloud_manager.download_text_from_cloud(f'{self.vault}/prompt') if context else self.cloud_manager.download_text_from_cloud(f'{self.vault}/no_context_prompt')
+            prompt = self.cloud_manager.download_custom_prompt(context)
+            if prompt is not None:
+                if context:
+                    self._cached_prompt_with_context = prompt
+                else:
+                    self._cached_prompt_no_context = prompt
+                return prompt
         except:
-            if self.ai_loaded:
-                prompt = self._ai.main_prompt_with_context if context else self._ai.prompt
-            else: # only when called externally in some situations
-                self.load_ai()
-                prompt = self.main_prompt_with_context if context else self.main_prompt
+            pass
+        
+        if self.ai_loaded:
+            prompt = self._ai.main_prompt_with_context if context else self._ai.prompt
+        else: # only when called externally in some situations
+            self.load_ai()
+            prompt = self.main_prompt_with_context if context else self.main_prompt
             
         return prompt
 
@@ -437,40 +478,27 @@ class Vault:
 
     def create_vault(self, vault_name: str = None):
         '''
-            Creates and registers a new vault without requiring data to be added first.
-            The vault will be properly listed in vault mappings and vault lists.
-            
-            Args:
-                vault_name (str, optional): Name of the vault to create. 
-                                          If None, uses the current vault name.
+        Creates and registers a new vault without requiring data to be added first.
+        The vault will be properly listed in vault mappings and vault lists.
+        
+        Args:
+            vault_name (str, optional): Name of the vault to create. 
+                                      If None, uses the current vault name.
         '''
         vault_name = vault_name if vault_name else self.vault
         start_time = time.time()
         
-        # Initialize empty structures
-        empty_map = {}
-        empty_vectors = get_vectors(self.dims)
-        
         # Check if vault already exists
-        try:
-            existing_vaults = self.cloud_manager.download_vaults_list_from_cloud()
-            if vault_name in existing_vaults:
-                print(f"Vault '{vault_name}' already exists") if self.verbose else 0
-                return
-        except:
-            existing_vaults = []
-
-        # Create empty mapping file
-        map_temp_file_path = None
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
-            map_temp_file_path = temp_file.name
-            json.dump(empty_map, temp_file, indent=2)
+        existing_vaults = self.cloud_manager.download_vaults_list_from_cloud()
+        if vault_name in existing_vaults:
+            print(f"Vault '{vault_name}' already exists") if self.verbose else 0
+            return
         
-        self.cloud_manager.upload_temp_file(map_temp_file_path, name_map(vault_name, self.user, self.api))
-        if os.path.exists(map_temp_file_path):
-            self.delete_temp_file(map_temp_file_path)
-
-        # Create empty vectors file
+        # Create empty mapping via API
+        update_vault_mapping(self.user, self.api, vault_name, {})
+        
+        # Create empty vectors file in GCS
+        empty_vectors = get_vectors(self.dims)
         empty_vectors.build(10)  # Build the index before saving (even if empty)
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             vector_temp_file_path = temp_file.name
@@ -479,40 +507,29 @@ class Vault:
             self.cloud_manager.upload_temp_file(vector_temp_file_path, name_vecs(vault_name, self.user, self.api, byte))
         
         self.delete_temp_file(vector_temp_file_path)
-
-        # Add vault to vault list
-        all_vaults = existing_vaults
-        if vault_name not in all_vaults:
-            all_vaults.append(vault_name)
-            self.cloud_manager.upload_vaults_list(all_vaults)
-
-        # Update vault data with initial metadata
-        try:
-            vault_data = self.cloud_manager.get_mapping()
-        except:
-            vault_data = []
         
-        # Check if vault already exists in data
-        existing_vault_names = [v['vault'] for v in vault_data]
-        if vault_name not in existing_vault_names:
-            vault_data.append({
-                'vault': vault_name,
-                'total_items': 0,
-                'last_update': time.time(),
-                'last_use': time.time(),
-                'total_use': 1
-            })
-
-            # Save updated vault data
-            with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
-                data_temp_file_path = temp_file.name
-                json.dump(vault_data, temp_file, indent=2)
-
-            self.cloud_manager.upload_temp_file(data_temp_file_path, f'{self.cloud_manager.username}.json')
-            self.delete_temp_file(data_temp_file_path)
-
+        # Add vault to vaults_list via API
+        existing_vaults.append(vault_name)
+        update_vaults_list(self.user, self.api, existing_vaults)
+        
+        # Create initial vault metadata via API
+        now = time.time()
+        update_vault_metadata(
+            self.user,
+            self.api,
+            vault_name,
+            total_items=0,
+            last_update=now,
+            last_use=now,
+            total_use=1
+        )
+        
         # Trigger cloud data update
         self.cloud_manager.build_data_update()
+        
+        # Invalidate cache
+        self.cloud_manager._init_data_loaded = False
+        self.cloud_manager._init_data = None
         
         print(f"Vault '{vault_name}' created successfully --- {(time.time() - start_time):.2f} seconds") if self.verbose else 0
 
@@ -606,14 +623,18 @@ class Vault:
 
     def save_mapping(self, vault = None):
         vault = self.vault if not vault else vault
-        map_temp_file_path = None
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
-            map_temp_file_path = temp_file.name
-            json.dump(self.map, temp_file, indent=2)
         
-        self.cloud_manager.upload_temp_file(map_temp_file_path, name_map(vault, self.user, self.api))
-        if os.path.exists(map_temp_file_path):
-            self.delete_temp_file(map_temp_file_path)
+        # Update CloudManager cache if saving current vault
+        if vault == self.vault:
+            self.cloud_manager.item_mapping = self.map.copy()
+        
+        # Save to backend API
+        update_vault_mapping(self.user, self.api, vault, self.map)
+        
+        # Invalidate cache so it gets reloaded with latest data
+        if vault == self.vault:
+            self.cloud_manager._init_data_loaded = False
+            self.cloud_manager._init_data = None
         
 
     def remap(self, item_id):
@@ -645,72 +666,133 @@ class Vault:
 
         
     def update_vault_data(self, this_vault_only=False, remove_vault=False):
+        """Update the master vault data file that tracks all vaults"""
         nary = []
-        try: # try because new users do not have this file on first call
-            vault_data = self.cloud_manager.get_mapping()
+        try:
+            # Get current vault data from API
+            vault_data = get_user_vault_data(self.user, self.api)
+            if not vault_data:
+                vault_data = []
+            
             all_vaults = [i['vault'] for i in vault_data]
-            if self.vault not in all_vaults:
-                nary.append({ 'vault': f'{self.vault}', 'total_items': self.get_total_items(), 'last_update': time.time(), 'last_use': time.time(), 'total_use': 1 })
-
+            
+            # Add current vault if it doesn't exist
+            if self.vault not in all_vaults and not remove_vault:
+                nary.append({
+                    'vault': self.vault,
+                    'total_items': self.get_total_items(),
+                    'last_update': time.time(),
+                    'last_use': time.time(),
+                    'total_use': 1
+                })
+            
+            # Process existing vaults
             for i in vault_data:
-                if not this_vault_only and not remove_vault: 
-                    total_items = self.get_total_items(i['vault']) 
+                if not this_vault_only and not remove_vault:
+                    total_items = self.get_total_items(i['vault'])
                 else:
                     total_items = i['total_items']
-
+                
                 if this_vault_only and i['vault'] == self.vault:
                     total_items = self.get_total_items()
                 
-                vault_dict = { 'vault': i['vault'], 'total_items': total_items, 'last_update': i['last_update'] }
-
+                vault_dict = {
+                    'vault': i['vault'],
+                    'total_items': total_items,
+                    'last_update': i.get('last_update', time.time())
+                }
+                
                 if 'last_use' in i:
                     vault_dict['last_use'] = i['last_use']
                 if 'total_use' in i:
                     vault_dict['total_use'] = i['total_use']
-
+                
+                # Update timestamps for current vault
+                if i['vault'] == self.vault and not remove_vault:
+                    vault_dict['last_update'] = time.time()
+                
                 if remove_vault and self.vault == i['vault']:
-                    pass
+                    pass  # Skip this vault
                 else:
-                    nary.append(vault_dict) 
-
-        except Exception as e: # so we make the file 
+                    nary.append(vault_dict)
+                    
+        except Exception as e:
             print(f"An error occurred: {e}")
-            nary.append({ 'vault': 'demo', 'total_items': 0, 'last_update': time.time(), 'last_use': time.time(), 'total_use': 1 })
-
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
-            nary_temp_file_path = temp_file.name
-            json.dump(nary, temp_file, indent=2)
-
-        self.cloud_manager.upload_temp_file(nary_temp_file_path, f'{self.cloud_manager.username}.json')
-        self.delete_temp_file(nary_temp_file_path)
+            # Create default entry if all fails
+            nary.append({
+                'vault': 'demo',
+                'total_items': 0,
+                'last_update': time.time(),
+                'last_use': time.time(),
+                'total_use': 1
+            })
+        
+        # Save to API
+        update_user_vault_data(self.user, self.api, nary)
+        
+        # Also update individual vault metadata in backend if needed
+        if not remove_vault:
+            update_vault_metadata(
+                self.user,
+                self.api,
+                self.vault,
+                last_update=time.time()
+            )
+        else:
+            delete_vault_metadata(self.user, self.api, self.vault)
+        
+        # Update cached metadata on CloudManager
+        if remove_vault:
+            self.cloud_manager.vault_metadata = {}
+        else:
+            for entry in nary:
+                if entry['vault'] == self.vault:
+                    self.cloud_manager.vault_metadata = {
+                        k: v for k, v in entry.items()
+                        if k in ('last_update', 'last_use', 'total_items', 'total_use')
+                    }
+                    break
+        
+        # Invalidate cache
+        self.cloud_manager._init_data_loaded = False
+        self.cloud_manager._init_data = None
 
 
     def hard_remap_vault_data(self):
-        nary = []
-        for i in self.get_vaults(''):
-            total_items = self.get_total_items(i)
-            time.sleep(.01)
-            item = self.get_items([ total_items - 1 ], i)[0]['metadata']
-            try: 
-                time_for_last_item = item['updated']
-            except:
-                time_for_last_item = item['updated_at']
+        """Rebuild user vault metadata using backend APIs (no GCS)."""
+        try:
+            existing = get_user_vault_data(self.user, self.api) or []
+        except Exception:
+            existing = []
+        existing_map = {}
+        for entry in existing:
+            if isinstance(entry, dict) and 'vault' in entry:
+                existing_map[entry['vault']] = entry
 
-            vault_dict = { 'vault': f'{i}', 'total_items': total_items, 'last_update': time_for_last_item }
+        rebuilt_entries = []
+        for vault_name in self.get_vaults(''):
+            mapping = get_vault_mapping(self.user, self.api, vault_name) or {}
+            if isinstance(mapping, list):
+                mapping = {str(index): value for index, value in enumerate(mapping)}
+            total_items = len(mapping)
 
-            if 'last_use' in i:
-                vault_dict['last_use'] = i['last_use']
-            if 'total_use' in i:
-                vault_dict['total_use'] = i['total_use']
+            prior = existing_map.get(vault_name, {})
+            vault_dict = {
+                'vault': vault_name,
+                'total_items': total_items,
+                'last_update': prior.get('last_update', time.time()),
+                'last_use': prior.get('last_use', time.time()),
+                'total_use': prior.get('total_use', 0)
+            }
+            rebuilt_entries.append(vault_dict)
 
-            nary.append(vault_dict)
+        update_user_vault_data(self.user, self.api, rebuilt_entries)
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
-            nary_temp_file_path = temp_file.name
-            json.dump(nary, temp_file, indent=2)
-
-        self.cloud_manager.upload_temp_file(nary_temp_file_path, f'{self.cloud_manager.username}.json')
-        self.delete_temp_file(nary_temp_file_path)
+        # Refresh CloudManager cached metadata for current vault
+        current_meta = next((entry for entry in rebuilt_entries if entry['vault'] == self.vault), {})
+        self.cloud_manager.vault_metadata = current_meta
+        self.cloud_manager._init_data_loaded = False
+        self.cloud_manager._init_data = None
 
 
     def delete_items(self, item_ids: List[int], trees: int = 10) -> None:
@@ -818,29 +900,36 @@ class Vault:
                 if not self.vecs_loaded:
                     self.load_vectors()
                 self.reload_vectors()
-
             self.x_checked = True
             print("initialize index --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
-                
 
     def load_mapping(self, vault = None):
-        '''Internal function only'''
-        vault = vault if vault else self.vault 
-        try: # try to get the map
-            temp_file_path = self.cloud_manager.download_to_temp_file(name_map(vault, self.user, self.api))
-            with open(temp_file_path, 'r') as json_file:
-                self.map = json.load(json_file)
-            self.delete_temp_file(temp_file_path)
-        except: # it doesn't exist
-            if self.cloud_manager.vault_exists(name_vecs(vault, self.user, self.api)): # but if the vault does
-                self.map = {str(i): str(i) for i in range(self.vectors.get_n_items())}
+        self._finalize_cloud_manager_initialization()
+        target_vault = vault if vault else self.vault 
+        return self._get_mapping_for_vault(target_vault)
+
+    def _get_mapping_for_vault(self, vault):
+        if vault == self.vault:
+            if not self.map:
+                if not self._cloud_manager:
+                    raise ValueError("Cloud manager not initialized")
+                self.map = self._cloud_manager.item_mapping
+            return self.map
+        return get_vault_mapping(self.user, self.api, vault)
+
+    def _download_vectors_for_vault(self, vault):
+        temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(vault, self.user, self.api))
+        vectors = get_vectors(self.dims)
+        vectors.load(temp_file_path)
+        self.delete_temp_file(temp_file_path)
+        return vectors
 
     def add_to_map(self):
         self.map[str(self.x)] = str(uuid.uuid4())
+        self.cloud_manager.item_mapping = self.map
         self.x +=1
     
     def delete_temp_file(self, temp_file_path, attempts = 5):
-        '''Internal function only'''
         for i in range(attempts):
             try:
                 os.delete(temp_file_path)
@@ -850,10 +939,14 @@ class Vault:
 
     def load_vectors(self, vault = None):
         start_time = time.time()
-        vault = vault if vault else self.vault 
-        t = T(target=self.load_mapping, args=(vault,))
+        target_vault = vault if vault else self.vault 
+
+        if target_vault != self.vault:
+            return self._download_vectors_for_vault(target_vault)
+
+        t = T(target=self.load_mapping, args=(self.vault,))
         t.start()
-        temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(vault, self.user, self.api))
+        temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(self.vault, self.user, self.api))
         self._vectors = get_vectors(self.dims)
         self._vectors.load(temp_file_path)
         self.delete_temp_file(temp_file_path)
@@ -861,7 +954,7 @@ class Vault:
         self.vecs_loaded = True
         self.x_checked = False
         print("get load vectors --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
-
+        return self._vectors
 
     def reload_vectors(self):
         num_existing_items = self.vectors.get_n_items()
@@ -968,26 +1061,18 @@ class Vault:
         '''
         results = [None] * len(ids)  # Pre-fill the results list with placeholders
         start_time = time.time()
+        target_vault = vault if vault else self.vault
+        _map = self.load_mapping(target_vault)
         
-        def fetch_item(index, i, _map):
+        def fetch_item(index, i, _map, vault):
             # Function to fetch a single item, to be run in parallel
             item_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault, _map[str(i)], self.user, self.api, item=True))
             meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault, _map[str(i)], self.user, self.api, meta=True))
             meta = json.loads(meta_data) 
             return index, build_return(item_data, meta)
 
-        if vault: # if custom vault, get custom mapping
-            temp_file_path = self.cloud_manager.download_to_temp_file(name_map(vault, self.user, self.api))
-            with open(temp_file_path, 'r') as json_file:
-                _map = json.load(json_file)
-            self.delete_temp_file(temp_file_path)
-        else:
-            self.load_mapping()
-            vault = self.vault
-            _map = self.map
-
         with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(fetch_item, i, id, _map) for i, id in enumerate(ids)]
+            futures = [executor.submit(fetch_item, i, id, _map, target_vault) for i, id in enumerate(ids)]
             for future in as_completed(futures):
                 index, result = future.result()
                 results[index] = result  # Insert each result at its corresponding index
@@ -1002,16 +1087,21 @@ class Vault:
             Internal function that returns vector similar items. Requires input vector, returns similar items
         '''
         try:
-            self.load_vectors(vault)
+            target_vault = vault if vault else self.vault
+            mapping = self.load_mapping(target_vault)
+            vectors = self.load_vectors(target_vault)
             start_time = time.time()
             if not include_distances:
-                vecs = self.vectors.get_nns_by_vector(vector, n)
+                vecs = vectors.get_nns_by_vector(vector, n)
                 results = [None] * len(vecs)  # Pre-fill the results list with placeholders
 
                 def fetch_item(index, vec):
                     # Function to fetch a single item, to be run in parallel
-                    item_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault if vault else self.vault, self.map[str(vec)], self.user, self.api, item=True))
-                    meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault if vault else self.vault, self.map[str(vec)], self.user, self.api, meta=True))
+                    item_uuid = mapping.get(str(vec))
+                    if item_uuid is None:
+                        return index, None
+                    item_data = self.cloud_manager.download_text_from_cloud(cloud_name(target_vault, item_uuid, self.user, self.api, item=True))
+                    meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(target_vault, item_uuid, self.user, self.api, meta=True))
                     meta = json.loads(meta_data)
                     return index, build_return(item_data, meta)
                 
@@ -1025,13 +1115,16 @@ class Vault:
                     print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
                 return results
             else:
-                vecs, distances = self.vectors.get_nns_by_vector(vector, n, include_distances=include_distances)
+                vecs, distances = vectors.get_nns_by_vector(vector, n, include_distances=include_distances)
                 results = [None] * len(vecs)  # Pre-fill the results list with placeholders
 
                 def fetch_item(index, vec, distance):
                     # Function to fetch a single item, to be run in parallel
-                    item_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault if vault else self.vault, self.map[str(vec)], self.user, self.api, item=True))
-                    meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(vault if vault else self.vault, self.map[str(vec)], self.user, self.api, meta=True))
+                    item_uuid = mapping.get(str(vec))
+                    if item_uuid is None:
+                        return index, None
+                    item_data = self.cloud_manager.download_text_from_cloud(cloud_name(target_vault, item_uuid, self.user, self.api, item=True))
+                    meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(target_vault, item_uuid, self.user, self.api, meta=True))
                     meta = json.loads(meta_data)
                     return index, build_return(item_data, meta, distance)
 
@@ -1217,6 +1310,7 @@ class Vault:
             for v in vaults:
                 try:
                     results = self.get_items_by_vector(vector, n, include_distances=True, vault=v)
+                    print(f"results: {results}")
                     combined_results.extend(results)
                 except Exception:
                     continue
@@ -1416,6 +1510,7 @@ class Vault:
             image_path: str = None, # The path to an image to send to the LLM
             image_url: str = None, # The url of an image to send to the LLM
             vaults: Union[None, str, List[str], Dict] = None, # A vault name, list of vaults, or dict of vaults to search for context in
+            conversation_user_id: str = None, # DEPRECATED: No longer used
             ):
         '''
             Chat get response from OpenAI's ChatGPT. 
@@ -1452,8 +1547,6 @@ class Vault:
         start_time = time.time()
         model = self.all_models['default'] if not model else model
         self.load_ai(model=model)
-    
-        history = self.get_conversation_history(self.cuid, text) if self.cuid else history
         
         if text: 
             inputs = [text]
@@ -1535,7 +1628,6 @@ class Vault:
                             print(f"API Failed too many times, exiting loop: {e}.")
                             break
 
-        self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {response}') if self.cuid else None
         print("get chat time --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
             
         return {'response': response, 'context': context, 'search_input': search_input} if return_context else response
@@ -1561,6 +1653,7 @@ class Vault:
             image_path: str = None, # The path to an image to send to the LLM
             image_url: str = None, # The url of an image to send to the LLM
             vaults: Union[None, str, List[str], Dict] = None, # A vault name, list of vaults, or dict of vaults to search for context in
+            conversation_user_id: str = None, # DEPRECATED: No longer used
             ):
         '''
             Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream()
@@ -1606,8 +1699,6 @@ class Vault:
         start_time = time.time()
         model = self.all_models['default'] if not model else model
         self.load_ai(model=model)
-    
-        history = self.get_conversation_history(self.cuid, text) if self.cuid else history
 
         if text:
             inputs = [text]
@@ -1663,7 +1754,6 @@ class Vault:
                             except Exception as e:
                                 raise e
                             if counter == len(inputs):
-                                self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
                                 yield '!END'
                                 self.rate_limiter.on_success()
                         
@@ -1703,13 +1793,11 @@ class Vault:
                                                     yield str(metatag_prefixes[i]) + str(item['metadata'][f'{metatag[i]}'])
                                         yield item['data']
                                 
-                                self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
                                 # Yield the context in the same format as get_chat
                                 yield json.dumps({'response': full_response, 'context': context})
                                 yield '!END'
                                 self.rate_limiter.on_success()
                             else:
-                                self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
                                 yield '!END'
                                 self.rate_limiter.on_success()
 
@@ -1721,7 +1809,6 @@ class Vault:
                                 self.rate_limiter.on_success()
                             except Exception as e:
                                 raise e
-                            self.update_conversation_history(self.cuid, f'User: {text} \n\nAI: {full_response}') if self.cuid else None
                             yield '!END'
 
                         self.rate_limiter.on_success()
@@ -1804,83 +1891,6 @@ class Vault:
             if word == '!END':
                 yield f"event: done\n\n"
 
-    def update_conversation_history(self, conversation_id, message, metadata_list = None):
-        self.reload_vectors()
-        try:
-            metadata_list = metadata_list if metadata_list else json.loads(self.cloud_manager.download_text_from_cloud(f'{self.vault}/user_history/{conversation_id}/metadata'))
-        except:
-            metadata_list = []
-        message_id = f"{time.time():.0f}"  # Current time
-        metadata_list.append({ 'M': message_id, 'L': len(message) })
-        t1 = T(target=self.cloud_manager.upload_to_cloud, args=(f'{self.vault}/user_history/{conversation_id}/{message_id}', message))
-        t2 = T(target=self.cloud_manager.upload_to_cloud, args=(f'{self.vault}/user_history/{conversation_id}/metadata', json.dumps(metadata_list)))
-        t1.start()
-        t2.start()
-        T(target=call_cloud_save, args=(
-            self.user, self.api,
-            f'{self.vault}/user_history/{conversation_id}/vectors', self.embeddings_model, 
-            message, None, 
-            message_id, None, None)).start()
-        t1.join()
-        t2.join()
-
-    def get_conversation_history(self, conversation_id, message):
-        history_time = time.time()
-        history = ''
-        def download_conversation_metadata():
-            try:
-                return json.loads(self.cloud_manager.download_text_from_cloud(f'{self.vault}/user_history/{conversation_id}/metadata'))
-            except:
-                return []
-
-        def download_conversation_message(msg_id):
-            try:
-                return self.cloud_manager.download_text_from_cloud(f'{self.vault}/user_history/{conversation_id}/{msg_id}')
-            except:
-                return []
-
-        def golden_retriever(metadata_list): 
-            one_hour_ago = datetime.now() - timedelta(hours=1)
-            return [metadata['M'] for metadata in reversed(metadata_list) if datetime.fromtimestamp(float(metadata['M'])) >= one_hour_ago]
-
-        def vector_search_conversation_history(message):
-            return self.get_similar(message, vault=f'{self.vault}/user_history/{conversation_id}/vectors')
-
-        try:
-            meta = download_conversation_metadata()
-        except:
-            meta = None
-
-        message_ids = golden_retriever(meta) if meta != None else []
-
-        print('message_ids:', message_ids) if self.verbose else None
-
-        if message_ids != []:
-            history_lines = []
-            with ThreadPoolExecutor(max_workers=10) as executor:
-                future_to_message_id = {executor.submit(download_conversation_message, message_id): message_id for message_id in message_ids}
-
-                # Iterate over the futures as they complete (preserves order)
-                for future in as_completed(future_to_message_id):
-                    message_content = future.result()
-                    history_lines.append(message_content)
-
-            history = '\n'.join(history_lines)
-            history = "Recent conversation history:" + history
-
-            vector_similar_results = vector_search_conversation_history(message)
-            if vector_similar_results:
-                vector_history = []
-                now = datetime.now()
-                for i in vector_similar_results:
-                    message_time = datetime.fromtimestamp(float(i['metadata']['name']))
-                    data = i['data']
-                    vector_history.append(f'{get_time_statement(now, message_time)} {data}')                
-
-                history = history + "Vector search conversation history:" + '\n'.join(vector_history)
-
-        print('history retrieval took:', time.time() - history_time) if self.verbose else None
-        return history
     
 
     def run_flow(self, flow_name, message, history: str = '', invoke_method = None, 
@@ -1904,7 +1914,7 @@ class Vault:
             flow_name=flow_name,
             message=message,
             history=history,
-            conversation_user_id = self.cuid,
+            conversation_user_id = None,
             invoke_method = invoke_method,
             internal_vars = internal_vars,
             image_url=image_url,
@@ -1933,7 +1943,7 @@ class Vault:
             flow_name = flow_name,
             message = message,
             history = history,
-            conversation_user_id = self.cuid,
+            conversation_user_id = None,
             invoke_method = invoke_method,
             internal_vars = internal_vars,
             image_url=image_url,

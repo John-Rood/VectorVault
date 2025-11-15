@@ -759,15 +759,20 @@ class AnthropicPlatform(LLMPlatform):
 class GeminiPlatform(LLMPlatform):
     def __init__(self, api_key=None):
         # Initialize client - will use environment variable GOOGLE_API_KEY if api_key is None
+        self.client = None
+        self._client_initialized = False
+        
         try:
             if api_key:
                 self.client = genai.Client(api_key=api_key)
             else:
                 # Try to initialize from environment variable
                 self.client = genai.Client()
+            self._client_initialized = True
         except Exception as e:
             # If initialization fails, set client to None and handle in methods
             self.client = None
+            self._client_initialized = False
             if api_key:  # Only warn if an API key was explicitly provided
                 print(f"Warning: Failed to initialize Gemini client: {e}")
 
@@ -793,6 +798,29 @@ class GeminiPlatform(LLMPlatform):
         
         # Models with thinking capabilities
         self.thinking_models = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']
+    
+    def close(self):
+        """
+        Explicitly close the Gemini client to clean up resources.
+        This can be called manually to ensure proper cleanup.
+        """
+        if self._client_initialized and self.client is not None:
+            try:
+                # Check if the client has the close method and _api_client attribute
+                if hasattr(self.client, 'close') and hasattr(self.client, '_api_client'):
+                    self.client.close()
+                    self._client_initialized = False
+            except (AttributeError, Exception):
+                # Silently handle any cleanup errors
+                pass
+    
+    def __del__(self):
+        """
+        Cleanup method to safely close the Gemini client.
+        This prevents AttributeError when the Google GenAI Client.__del__ 
+        tries to access _api_client that may not exist.
+        """
+        self.close()
 
     def make_call(self, messages, model, temperature=None, timeout=None):
         def call_api(response_queue):

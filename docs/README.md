@@ -545,7 +545,7 @@ summary = vault.get_chat(text, summary=True)
 
 # Production Streaming
 
-Vector Vault provides battle-tested streaming for real-time applications. The streaming pipeline handles backpressure, reconnection, and error recovery automatically.
+Vector Vault provides production-ready streaming for real-time applications. The streaming pipeline handles backpressure, reconnection, and error recovery automatically.
 
 ```python
 # High-performance streaming with proper error handling

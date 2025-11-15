@@ -2,7 +2,7 @@
 
 ![Vector Vault Header](https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/297fde6c-f5b4-4076-83bc-81dcfdbffebe/Vector+Vault+Header+5000.jpg)
 
-Vector Vault is a next-generation hosted runtime for persistent AI agents. You design sophisticated agentic flows in the Vector Flow browser app, and we operate them on infrastructure purpose-built for conversational AI—delivering sub-second streaming latency and scaling to thousands of parallel operations without the complexity of managing LangChain or LlamaIndex deployments yourself.
+Vector Vault is a hosted platform for building and running AI agents with persistent memory. You design agent workflows visually in the Vector Flow browser app, and we handle the infrastructure - delivering sub-second response times and scaling to thousands of concurrent operations without you managing servers or databases.
 
 The platform centers on PAR (Persistent Agentic Runtime), which separates ephemeral compute from durable state. This architecture enables agents that pause for days waiting on approvals, branch into hundreds of parallel tasks, or maintain conversational context across months—all while keeping your operational overhead minimal.
 
@@ -58,7 +58,7 @@ from vectorvault import Vault
 # Connect to Vector Vault
 vault = Vault(
     user='YOUR_EMAIL',
-    api_key='YOUR_VECTOR_VAULT_API_KEY',
+    api_key='YOUR_VECTOR_VAULT_API_KEY', 
     openai_key='YOUR_OPENAI_KEY',
     anthropic_key='YOUR_ANTHROPIC_KEY',  # optional - for Claude models
     vault='customer_support'
@@ -135,7 +135,7 @@ def chat_stream():
     def generate():
         for token in vault.get_chat_stream(request.json['message'], 
                                           get_context=True,
-                                          model='claude-3-sonnet'):
+                                          model='claude-4-5-sonnet'):
             yield f"data: {json.dumps({'token': token})}\n\n"
     
     return Response(generate(), mimetype='text/event-stream')
@@ -197,5 +197,3 @@ Most teams find they spend 40-70% less than running equivalent infrastructure th
 - **JavaScript SDK**: [Browser & Node.js](https://github.com/John-Rood/VectorVault-js)
 
 ---
-
-*Vector Vault is built by a team that previously scaled AI systems at Google, Anthropic, and Scale AI. We're backed by investors who understand infrastructure, and we're hiring engineers who want to build the future of autonomous AI.*

@@ -2,7 +2,7 @@
 
 Vector Flow is a visual development environment where you build sophisticated AI agents through drag-and-drop composition. Design complex reasoning patterns, multi-step workflows, and intelligent decision trees that deploy instantly to production-grade infrastructure.
 
-Every flow you create runs on Vector Vault's Persistent Agentic Runtime (PAR), delivering enterprise-scale performance: sub-second response times, thousands of concurrent conversations, and state that persists across days or weeks of execution. What you design visually becomes a high-performance agent without any additional engineering work.
+Every flow you create runs on Vector Vault's Persistent Agentic Runtime (PAR), delivering production-ready performance: sub-second response times, thousands of concurrent conversations, and state that persists across days or weeks of execution. What you design visually becomes a high-performance agent without any additional engineering work.
 
 ## Table of Contents
 
@@ -51,7 +51,7 @@ Every flow you create runs on Vector Vault's Persistent Agentic Runtime (PAR), d
 
 Visual development accelerates agent creation by making complex behaviors immediately understandable and testable. When you can see your agent's decision tree, trace execution paths in real-time, and modify logic without redeploying code, iteration speed increases dramatically.
 
-Vector Flow provides this visual layer on top of enterprise-grade infrastructure, giving you the best of both worlds:
+Vector Flow provides this visual layer on top of production infrastructure, giving you the best of both worlds:
 
 ### Execution Layer (What You Don't Build)
 - **State persistence**: Automatic checkpointing between nodes

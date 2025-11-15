@@ -4,7 +4,7 @@
 <br>
 
 ### Data Encryption: 
-We ensure your data is secured both in transit and at rest with industry-leading encryption standards. This means that your data is encrypted while it is being transferred to the cloud and also when it is stored in the cloud, providing end-to-end security.
+We ensure your data is secured both in transit and at rest with strong encryption standards. This means that your data is encrypted while it is being transferred to the cloud and also when it is stored in the cloud, providing end-to-end security.
 
 ### Access Control: 
 We employ robust access control mechanisms to ensure your data is accessible only by authorized users. User authentication is facilitated through a secure API that adheres to the principle of minimum required permissions, meaning that a user is granted only the access that is necessary to perform their task.

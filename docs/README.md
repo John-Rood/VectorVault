@@ -1,7 +1,7 @@
 ![alt text](https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/297fde6c-f5b4-4076-83bc-81dcfdbffebe/Vector+Vault+Header+5000.jpg)
 # Vector Vault
 
-Vector Vault is a cutting-edge, cloud-native and RAG-native vector database solution that revolutionizes the way developers integrate AI into their applications. Our platform seamlessly combines vector databases, similarity search, and AI model interactions into a single, easy-to-use service.
+Vector Vault is an AI development platform that combines a managed vector database with retrieval, chat, and flow orchestration. This guide focuses on the Python SDK and explains how to provision vaults, run RAG workloads, and integrate with multiple model providers.
 
 ## Table of Contents
 
@@ -52,87 +52,37 @@ Vector Vault is a cutting-edge, cloud-native and RAG-native vector database solu
 
 ## Key Features
 
-- **RAG-Native Architecture**: Perform Retrieval-Augmented Generation in one line of code.
-- **Unparalleled Simplicity**: Implement sophisticated AI features with just a few lines of code.
-- **Full-Stack Integration**: Use our Python package for backend operations and our JavaScript package for seamless front-end integration.
-- **Vector Vault Cloud**: Our cloud service handles vector search, retrieval, and AI model interactions, simplifying your architecture.
-- **One-Line Operations**: Save to the cloud vector database and generate RAG responses in one line of code. Easily customize responses and vector searches by adjusting parameters.
-- **Developer-Centric Approach**: Focus on your application logic rather than complex AI and database integrations.
-- **Unlimited Isolated Databases**: Create and access an infinite number of vector databases, ideal for multi-tenant applications.
+- Integrated RAG toolchain: add data, embed, and query via one SDK.
+- Python and JavaScript clients for backend and frontend workloads.
+- Managed vault storage with isolation for each tenant or application.
+- Smart history search, streaming, and cross-vault retrieval built into `get_chat`.
+- Visual agent builder (Vector Flow) backed by the same APIs used in code.
 
 ## Advantages
 
-- **Unmatched Ease of Use**: Integrate advanced AI features faster and more easily than with any other solution.
-- **Front-End Integration**: Make vector calls directly from the front-end, a unique feature in the market.
-- **Simplified Architecture**: Eliminate the need for complex backend setups for AI integration.
-- **RAG Optimization**: Purpose-built to support and simplify Retrieval-Augmented Generation workflows.
-- **Customization**: Tailor AI responses to your needs with minimal code.
-- **Scalability**: Fully serverless platform offering unparalleled scalability.
-- **Time and Resource Saving**: Dramatically reduce development time and resource allocation for AI feature integration.
-- **Risk-Free Trial**: Start with a 30-day free trial to experience the full power of Vector Vault.
+- Reduce glue code between embeddings, storage, and LLM providers.
+- Call the same APIs from the browser (VectorVault-js) or Python backend.
+- Keep per-customer data isolated with dedicated vaults.
+- Scale elastically: the hosted service manages vector search and inference orchestration.
+- Built-in rate limiting, retries, and logging for production scenarios.
 
 ## Getting Started
 
-1. Sign up for a 30-day free trial at [VectorVault.io](https://vectorvault.io) to get your API key.
-2. Install the `vectorvault` package for JavaScript (frontend) or Python (backend).
-3. Start building powerful AI-driven experiences with just a few lines of code.
+1. Sign up for a 30-day free trial at [VectorVault.io](https://vectorvault.io) to generate an API key.
+2. Install the `vectorvault` package (Python) or `vectorvault-js` when targeting the browser.
+3. Add content to a vault, embed it, and call `get_chat` with `get_context=True` to run RAG.
 
 ## Use Cases
 
-Vector Vault is particularly well-suited for:
-- Rapid prototyping and development of AI-powered applications
-- Projects requiring vector search and AI capabilities on the frontend
-- Multi-tenant systems needing isolated vector databases for each user
-- Applications demanding customized AI interactions with minimal backend complexity
+Vector Vault fits well when you need to:
+- Prototype AI-powered applications without managing your own vector infra.
+- Add retrieval and chat to browser-based products.
+- Support multi-tenant deployments with isolated vaults per customer.
+- Combine RAG with stateful flows that run over long periods.
 
 ## Learn More
 
-Explore our documentation and examples to see how Vector Vault can revolutionize your development process. Start building with Vector Vault today and experience the future of simplified, RAG-native, cloud-native vector databases!
-## Key Features
-
-- **RAG-Native Architecture**: Perform Retrieval-Augmented Generation with minimal code, streamlining your AI-powered applications.
-- **Cloud-Native Design**: Built on a serverless, distributed cloud infrastructure powered by Google, ensuring scalability for projects of any size.
-- **Simplified AI Integration**: Easily interact with OpenAI's latest GPT, with the ability to customize responses in just a few lines of code.
-- **Effortless Vectorization**: Convert any text data into vectors and add them to your cloud database with minimal effort.
-- **Developer-Centric Approach**: Focus on building your application logic rather than wrestling with complex AI and database integrations.
-- **Unlimited Isolated Databases**: Create and access an infinite number of vector databases, ideal for multi-tenant applications.
-- **One Line**: Save to the cloud vector database in one line of code and generate RAG responses in one line of code. Edit the parameters of the call to change anything about the response or vector search. You have full control, and you get to exercise that control in just one line of code.
-- **Multi-Platform AI Support**: Seamlessly switch between OpenAI, Claude, Grok, Groq, and Gemini models mid-conversation with automatic platform detection.
-- **Advanced Streaming**: Real-time streaming responses with built-in utilities for console and web applications.
-- **Smart History Search**: AI-powered contextual search query generation for multi-turn conversations.
-- **Vector Vault Flows**: Execute complex AI workflows with `run_flow()` and `stream_flow()` functions.
-- **Storage Management**: Built-in cloud storage system for managing files and directories.
-- **Image Processing**: Support for multimodal AI interactions with image analysis capabilities.
-
-## Getting Started
-
-1. Sign up for a 30-day free trial at [VectorVault.io](https://vectorvault.io) to get your API key.
-2. Install the `vectorvault` package: `pip install vector-vault`
-3. Start building powerful AI-driven experiences with ease.
-
-## Advantages
-
-- **Simplicity**: Easier to use than traditional vector databases and AI integrations.
-- **RAG Optimization**: Built from the ground up to support Retrieval-Augmented Generation workflows.
-- **Customization**: Add specific knowledge to your Vault and tailor AI responses to your needs.
-- **Scalability**: The first fully serverless, RAG-native vector database platform, offering unparalleled scalability.
-- **Premium Service**: Vector Vault offers high-quality, professional-grade capabilities for demanding applications.
-- **Risk-Free Trial**: Start with a 30-day free trial to experience the full power of Vector Vault before committing.
-- **Efficiency**: Perform complex operations with minimal code, saving development time and reducing potential errors.
-
-## Use Cases
-
-Vector Vault is particularly well-suited for:
-- AI-powered applications requiring quick and easy RAG implementation
-- Multi-tenant systems needing isolated vector databases for each user
-- Projects of any scale, from small experiments to large-scale deployments
-- Applications demanding customized AI interactions with minimal complexity
-
-## Learn More
-
-Explore the Examples folder for tutorials and practical applications of Vector Vault.
-
-Start building with Vector Vault today and experience the future of RAG-native, cloud-native vector databases!
+Browse the documentation and examples folder for tutorials, SDK references, and integration guides.
 
 
 <br>
@@ -341,7 +291,7 @@ vault = Vault(
 <br>
 `vault.get_chat_stream()` : All the same params as "get_chat()", but it streams
 <br>
-`vault.get_chat()` : A cutting-edge function designed for Retrieval Augmented Generation (RAG), enabling you to effortlessly manage conversational history and seamlessly integrate knowledge from the Vault for context-based responses 
+`vault.get_chat()` : Retrieval Augmented Generation (RAG) helper that manages conversational history and injects relevant vault context into the model request.
 <br>
 <br>
 <br>

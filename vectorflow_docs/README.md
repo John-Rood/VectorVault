@@ -2,11 +2,11 @@
 
 
 
-Vector Flow is your **Agent Operating System**—a visual, no-code platform for building sophisticated AI agents that can think, reason, and act. Whether you're creating an AI firewall (like Aegis AI), a customer support agent, a sales automation system, or complex backend AI workflows, Vector Flow handles the orchestration so you can focus on building.
+Vector Flow is the visual, no-code interface for building Vector Vault agents. It helps teams orchestrate recognition, reasoning, and action nodes for use cases such as AI firewalls, customer support agents, sales automation, or other back-office workflows—without wiring together bespoke infrastructure.
 
 ## Table of Contents
 
-1. [What Makes Vector Flow Powerful](#what-makes-vector-flow-powerful)
+1. [What Makes Vector Flow Useful](#what-makes-vector-flow-useful)
    - [Key Technical Advantages](#key-technical-advantages)
 2. [Getting Started: Your First Flow](#getting-started-your-first-flow)
    - [Creating a New Flow](#creating-a-new-flow)
@@ -47,36 +47,33 @@ Vector Flow is your **Agent Operating System**—a visual, no-code platform for 
 
 ---
 
-## What Makes Vector Flow Powerful
+## What Makes Vector Flow Useful
 
-Vector Flow is your **Agent Operating System** for building sophisticated AI that thinks, reasons, and acts. Here's what you can do:
+Vector Flow ships with Vector Vault as the graphical builder for agent logic. Here's what you can do:
 
-### High-Level Overview: What You Can Do with Vector Flow
+### High-Level Overview
 
-- **Build Agents**: Create AI agents for conversation handling, data extraction, decision-making, and automation
-- **Orchestrate LLMs**: Combine AI nodes for generation, recognition, and logic without coding
-- **Integrate Data**: Use vaults (vector databases) for semantic search and RAG (Retrieval-Augmented Generation)
-- **Run Flexibly**: Test in the builder, deploy as widgets, or execute via APIs in your apps
-- **Scale with Child Flows**: Nest flows for modularity, sharing state and enabling exponential parallel processing
-
-Whether you're automating customer support or building backend AI for software, Vector Flow is the backend runtime that lets you build without limits.
+- **Build Agents**: Create flows for conversation handling, data extraction, decision-making, or automation tasks.
+- **Orchestrate LLMs**: Combine generation, recognition, and logic nodes without writing glue code.
+- **Integrate Data**: Fetch relevant items from vaults for Retrieval-Augmented Generation (RAG).
+- **Run Flexibly**: Test in the builder, embed widgets, or execute via Python/JavaScript APIs.
+- **Scale with Child Flows**: Nest flows for modularity; child flows share state with parents for fan-out or reuse.
 
 ### Advanced Capabilities
 
-- **Long-Running Agents**: Build agents that literally never stop running—perfect for monitoring, automation, and continuous processing. Use the agent control dashboard at **vectorvault.io/agents** with full observability through runtime logging and control through manual stop capabilities. Active agents appear in the "Active" tab, and their complete runtime logs are available in the "Past" tab after stopping.
+- **Long-Running Agents**: Use the agent control dashboard at **vectorvault.io/agents** to monitor active flows, review logs, and stop or resume work. Agents can wait on external events without losing context.
 
-- **Human-in-the-Loop Workflows**: Create sophisticated flows with nodes that wait for human response before continuing—enabling approval workflows, manual review processes, and collaborative AI-human decision making.
+- **Human-in-the-Loop Workflows**: Configure nodes that pause execution and resume once a human provides an answer, enabling approval steps or manual reviews.
 
-- **Perpetual Runtime**: Flows maintain state across containers, individual runtimes, and wait periods (no matter how long), enabling complex, long-running processes that persist through any interruption.
+- **Persistent Runtime**: Flow state survives container swaps and long idle windows, so processes can span minutes, hours, or days.
 
 ### Key Technical Advantages
-- **Lightning-Fast Routing**: Recognition nodes complete round-trip decisions in ~1/3 second
-- **Parallel Processing**: Child flows share state with parents and can run in parallel for exponential AI processing power
-- **Persistent Runtime**: Flows maintain state across containers, individual runtimes, and wait periods (no 
-matter how long)
-- **Universal Integration**: Run flows programmatically in Python/JS or deploy as embeddable widgets
+- **Fast Recognition Nodes**: Yes/no routing steps typically return in ~300 ms.
+- **Parallel Processing**: Child flows share state with parents and run concurrently to distribute work.
+- **Durable State**: Flow context persists across containers, restarts, and wait periods.
+- **Flexible Integration**: Trigger flows from Python, JavaScript, or embeddable widgets.
 
-**Real-world example**: Aegis AI powers their entire "AI Firewall" security platform using Vector Flow as the core decision engine, processing thousands of real-time threat assessments daily. What started as a no-code prototype became their mission-critical production system—no rewrite required.
+**Real-world example**: Aegis AI runs their "AI Firewall" security platform on Vector Flow as the decision layer, processing thousands of threat assessments per day without rewriting their prototype.
 
 ## Getting Started:
 
@@ -104,11 +101,11 @@ Click "Open Chat" to test your flow as you build:
 - **Right Side**: Live logs showing exactly what each node is doing, thinking, and outputting
 - **Real-Time Debugging**: See what goes wrong and fix it immediately by adjusting prompts and logic
 
-This dual-pane setup is your debugging superpower—you can see the AI's "thought process" and iterate until it's perfect. For detailed information about interpreting and using the logging system, see the [Vector Flow Logging documentation](https://github.com/John-Rood/VectorVault/blob/main/vectorflow_docs/vectorflow_logging.md).
+This dual-pane setup makes it easy to inspect what each node is doing and adjust prompts quickly. For detailed information about the logging system, see the [Vector Flow Logging documentation](https://github.com/John-Rood/VectorVault/blob/main/vectorflow_docs/vectorflow_logging.md).
 
 ## Your First Flow: The Dog Expert
 
-Let's build a simple but powerful example—an AI agent that only talks about dogs. This demonstrates the core concepts of recognition, routing, and responses.
+Let's build a simple example: an AI agent that only talks about dogs. This demonstrates the core concepts of recognition, routing, and responses.
 
 ### Flow Diagram
 ```
@@ -156,7 +153,7 @@ Bot: "I only talk about dogs! Is there anything about dogs I can help you with?"
 - ✅ **Prompting**: When to guide AI responses vs. letting them be automatic
 - ✅ **Testing**: Real-time chat interface for immediate feedback
 
-This simple flow demonstrates the power of Vector Flow—you've created an intelligent agent with conditional logic in just a few minutes, no coding required!
+This simple flow highlights how recognition nodes route users to different RESPOND nodes, giving you conditional logic without writing code.
 
 ## Core Node Types: Your Building Blocks
 
@@ -274,7 +271,7 @@ response = vault.run_flow(
 
 For complete integration examples and API reference, see the [Backend Runtime & Integration documentation](https://github.com/John-Rood/VectorVault/tree/main/vectorflow_docs).
 
-Vector Flow handles the orchestration—you focus on building intelligent agent behavior. Welcome to the Agent Operating System.
+Vector Flow handles orchestration so you can focus on prompts, data sources, and human-in-the-loop steps.
 
 ## Ready to Build?
 

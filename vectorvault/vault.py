@@ -635,7 +635,6 @@ class Vault:
             else:
                 return all_vaults
         
-        time.sleep(.1) if self.cloud_manager is None else 0
         return self.cloud_manager.list_vaults(vault)
     
 
@@ -653,7 +652,6 @@ class Vault:
         '''
             Returns a list of all the cloud vaults 
         '''
-        time.sleep(.3) if self.cloud_manager is None else 0
         return self.cloud_manager.list_vaults('')
     
 

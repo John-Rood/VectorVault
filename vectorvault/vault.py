@@ -27,7 +27,8 @@ from threading import Thread as T, Event
 from datetime import datetime
 from typing import List, Union, Dict
 from .ai import openai, OpenAIPlatform, AnthropicPlatform, GrokPlatform, GeminiPlatform, LLMClient, get_all_models
-from .cloud_api import run_flow, run_flow_stream, update_vault_metadata, delete_vault_metadata, update_vault_mapping, update_vaults_list, get_vault_mapping, get_user_vault_data, update_user_vault_data
+from .cloud_api import (run_flow, run_flow_stream, update_vault_metadata, delete_vault_metadata, update_vault_mapping, 
+                        get_vault_mapping, get_user_vault_data, update_user_vault_data, save_custom_prompt, save_personality_message)
 from .cloudmanager import CloudManager, VaultStorageManager, as_completed, ThreadPoolExecutor
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, load_json
 
@@ -541,9 +542,10 @@ class Vault:
         
         self.delete_temp_file(vector_temp_file_path)
         
-        # Add vault to vaults_list via API
+        # Add vault to vaults_list via API (and invalidate cached init data)
         existing_vaults.append(vault_name)
-        update_vaults_list(self.user, self.api, existing_vaults)
+        # Use CloudManager helper so its cache stays consistent
+        self.cloud_manager.upload_vaults_list(existing_vaults)
         
         # Create initial vault metadata via API
         now = time.time()
@@ -557,12 +559,13 @@ class Vault:
             total_use=1
         )
         
-        # Trigger cloud data update
+        # Trigger cloud data update for this user/vault
         self.cloud_manager.build_data_update()
         
-        # Invalidate cache
-        self.cloud_manager._init_data_loaded = False
-        self.cloud_manager._init_data = None
+        # Copy prompts and personality from the current vault into the new one
+        save_personality_message(self.user, self.api, vault_name, self.fetch_personality_message())
+        save_custom_prompt(self.user, self.api, vault_name, self.fetch_custom_prompt(context=False), context=False)
+        save_custom_prompt(self.user, self.api, vault_name, self.fetch_custom_prompt(context=True), context=True)
         
         print(f"Vault '{vault_name}' created successfully --- {(time.time() - start_time):.2f} seconds") if self.verbose else 0
 

@@ -64,6 +64,14 @@ class LLMPlatform(ABC):
         self.model_token_limits = {}
         self.default_model = None
 
+    def list_models(self):
+        """
+        Best-effort list of available model identifiers for this platform.
+        Subclasses may override this to call their native APIs. By default we
+        just return the keys from model_token_limits (excluding 'default').
+        """
+        return [m for m in self.model_token_limits.keys() if m != "default"]
+
     @abstractmethod
     def make_call(self, messages, model, temperature=None, timeout=None):
         """
@@ -221,6 +229,26 @@ class OpenAIPlatform(LLMPlatform):
             'o1', 'o1-mini', 'o3', 'o3-mini', 
         ]
         self.default_model = self.model_token_limits['default']
+
+    def list_models(self):
+        """
+        Return a list of available OpenAI model IDs.
+        Tries the OpenAI models API first, then falls back to known models.
+        """
+        try:
+            models = openai.models.list()
+            data = getattr(models, "data", models)
+            ids = []
+            for m in data:
+                mid = getattr(m, "id", None) or getattr(m, "name", None)
+                if mid:
+                    ids.append(mid)
+            if ids:
+                return sorted(set(ids))
+        except Exception:
+            # Fall back to static model_token_limits if API call fails
+            pass
+        return super().list_models()
 
     def make_call(self, messages, model, temperature=None, timeout=None):
         timeout = timeout
@@ -422,6 +450,30 @@ class GrokPlatform(LLMPlatform):
 
         self.default_model = self.model_token_limits["default"]
 
+    def list_models(self):
+        """
+        Return a list of available Grok model IDs.
+        Uses the xAI /models endpoint via the OpenAI-compatible client when available.
+        """
+        # If we don't have a client, just fall back to static list
+        if self.client is None:
+            return super().list_models()
+
+        try:
+            models = self.client.models.list()
+            data = getattr(models, "data", models)
+            ids = []
+            for m in data:
+                mid = getattr(m, "id", None) or getattr(m, "name", None)
+                if mid:
+                    ids.append(mid)
+            if ids:
+                return sorted(set(ids))
+        except Exception:
+            pass
+
+        return super().list_models()
+
     def make_call(self, messages, model, temperature=None, timeout=None):
         """
         Non-streaming call to xAI /v1/chat/completions 
@@ -615,6 +667,29 @@ class AnthropicPlatform(LLMPlatform):
         }
         self.default_model = self.model_token_limits['default']
 
+    def list_models(self):
+        """
+        Return a list of available Anthropic model IDs.
+        Uses the Anthropic models API when a client is available.
+        """
+        if self.client is None:
+            return super().list_models()
+
+        try:
+            models = self.client.models.list()
+            data = getattr(models, "data", models)
+            ids = []
+            for m in data:
+                mid = getattr(m, "id", None) or getattr(m, "name", None)
+                if mid:
+                    ids.append(mid)
+            if ids:
+                return sorted(set(ids))
+        except Exception:
+            pass
+
+        return super().list_models()
+
     def make_call(self, messages, model, temperature, timeout=None):
         if self.client is None:
             raise ValueError("Anthropic client not initialized. Please provide a valid API key or set ANTHROPIC_API_KEY environment variable.")
@@ -800,6 +875,29 @@ class GeminiPlatform(LLMPlatform):
         
         # Models with thinking capabilities
         self.thinking_models = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']
+    
+    def list_models(self):
+        """
+        Return a list of available Gemini model IDs.
+        Uses the Google GenAI models API when a client is available.
+        """
+        if self.client is None:
+            return super().list_models()
+
+        try:
+            models = self.client.models.list()
+            # google-genai models typically expose a 'name' attribute
+            ids = []
+            for m in models:
+                mid = getattr(m, "name", None) or getattr(m, "id", None)
+                if mid:
+                    ids.append(mid)
+            if ids:
+                return sorted(set(ids))
+        except Exception:
+            pass
+
+        return super().list_models()
     
     def close(self):
         """

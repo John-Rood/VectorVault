@@ -183,6 +183,7 @@ class OpenAIPlatform(LLMPlatform):
             'o4-mini': 200000,
             'gpt-4': 32000,
             'gpt-5': 400000,
+            'gpt-5.1': 400000,
             'gpt-5-mini': 400000,
             'gpt-5-nano': 400000,
             'gpt-4o-mini': 128000,
@@ -199,6 +200,7 @@ class OpenAIPlatform(LLMPlatform):
             'o3-mini': 128000,
             'o4-mini': 200000,
             'gpt-5': 400000,
+            'gpt-5.1': 400000,
             'gpt-5-mini': 400000,
             'gpt-5-nano': 400000,
             'gpt-4o': 128000,
@@ -210,7 +212,7 @@ class OpenAIPlatform(LLMPlatform):
         self.img_capable = [
             'o1', 'gpt-4o', 'gpt-4o-mini', 'gpt-4o-audio-preview',
             'chatgpt-4o-latest',
-            'gpt-5', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5-chat-latest'
+            'gpt-5', 'gpt-5.1', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5-chat-latest'
         ]
         self.no_stream_list = [
             'o1', 'o1-mini',  

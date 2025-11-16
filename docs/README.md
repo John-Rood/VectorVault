@@ -156,7 +156,7 @@ vault.get_chat("Hello", model="grok-3")
 
 # Claude models (requires anthropic_key)
 vault.get_chat("Hello", model="claude-sonnet-4-0")
-vault.get_chat("Hello", model="claude-3-5-sonnet-20241022")
+vault.get_chat("Hello", model="claude-sonnet-4-5")
 
 # Gemini models (requires gemini_key)
 vault.get_chat("Hello", model="gemini-2.5-pro")
@@ -191,7 +191,7 @@ vault = Vault(
     
     # Conversation Features  
     conversation_user_id='user123',  # Enable conversation history
-    model='claude-sonnet-4-0',       # Set default model
+    model='claude-sonnet-4-5',       # Set default model
     
     # Custom Prompting (overrides saved prompts/personality)
     main_prompt="Answer: {content}",
@@ -557,7 +557,7 @@ async def handle_chat_stream(request):
             history=request.conversation_history,
             get_context=True,
             n_context=8,
-            model='claude-3-sonnet',  # Streaming optimized model
+            model='claude-sonnet-4-5',  # Streaming optimized model
             smart_history_search=True,
             temperature=0.7
         )

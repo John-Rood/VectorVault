@@ -117,7 +117,6 @@ from vectorvault import Vault
 vault = Vault(user='your_email', 
               api_key='your_vectorvault_api_key',
               openai_key='your_openai_api_key',      # For GPT models, embeddings
-              groq_key='your_groq_api_key',          # For Groq's fast inference
               grok_key='your_grok_api_key',          # For xAI's Grok models  
               anthropic_key='your_anthropic_api_key', # For Claude models
               gemini_key='your_gemini_api_key',      # For Google Gemini models
@@ -133,7 +132,6 @@ vault = Vault(user='your_email',
 - **`openai_key`**: Required for embeddings and OpenAI models
 
 ### Optional (for multi-platform support)
-- **`groq_key`**: Get fast inference with Groq's optimized models
 - **`grok_key`**: Access xAI's Grok models for creative tasks
 - **`anthropic_key`**: Use Claude models for reasoning and analysis
 - **`gemini_key`**: Access Google Gemini models for multimodal AI tasks
@@ -145,10 +143,6 @@ vault = Vault(user='your_email',
 vault.get_chat("Hello", model="gpt-4o")
 vault.get_chat("Hello", model="gpt-4o-mini") 
 vault.get_chat("Hello", model="o1")
-
-# Groq models (requires groq_key)
-vault.get_chat("Hello", model="llama3-70b-8192")
-vault.get_chat("Hello", model="mixtral-8x7b-32768")
 
 # Grok models (requires grok_key)  
 vault.get_chat("Hello", model="grok-4")
@@ -167,7 +161,6 @@ vault.get_chat("Hello", model="gemini-2.5-flash")
 
 - **Vector Vault**: Sign up at [vectorvault.io](https://vectorvault.io) for 30-day free trial
 - **OpenAI**: Get your key at [platform.openai.com](https://platform.openai.com)
-- **Groq**: Sign up at [console.groq.com](https://console.groq.com)  
 - **xAI (Grok)**: Get access at [console.x.ai](https://console.x.ai)
 - **Anthropic**: Apply for API access at [console.anthropic.com](https://console.anthropic.com)
 - **Google Gemini**: Get your API key at [aistudio.google.com](https://aistudio.google.com/app/apikey)
@@ -179,7 +172,6 @@ vault = Vault(
     user='your_email',
     api_key='your_vectorvault_api_key',
     openai_key='your_openai_key',
-    groq_key='your_groq_key',        # Optional: For Groq models
     grok_key='your_grok_key',        # Optional: For Grok models
     anthropic_key='your_anthropic_key',  # Optional: For Claude models
     gemini_key='your_gemini_key',    # Optional: For Gemini models

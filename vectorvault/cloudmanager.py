@@ -19,33 +19,22 @@ import json
 import time
 from google.cloud import storage
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from .itemize import cloud_name
+from .itemize import cloud_name, name_map
 from .credentials_manager import CredentialsManager
-from .cloud_api import (
-    call_proj, call_req,
-    get_init_data,
-    get_vault_metadata, update_vault_metadata, increment_vault_usage,
-    get_vault_mapping, update_vault_mapping,
-    get_vaults_list, update_vaults_list,
-    get_custom_prompt, save_custom_prompt,
-    get_personality_message, save_personality_message,
-    delete_vault_metadata,
-    get_user_vault_data
-)
+from .cloud_api import CloudAPI
 
 class CloudManager:
     def __init__(self, user: str, api_key: str, vault: str):
         self.user = user
         self.api = api_key
         self.vault = vault
-        # Lazy initialization - these will be created when first accessed
+        self.cloud_api = CloudAPI(user, api_key)
         self._storage_client = None
         self._cloud = None
         self._username = None
         self.cloud_name = cloud_name
         self.req_count = 0
         
-        # Batch initialization - load immediately and store config
         self._init_data = None
         self._init_data_loaded = False
         self.custom_prompt_with_context = None
@@ -66,7 +55,7 @@ class CloudManager:
     def storage_client(self):
         """Lazy initialization of storage client"""
         if self._storage_client is None:
-            self._storage_client = storage.Client(project=call_proj(), credentials=self.credentials)
+            self._storage_client = storage.Client(project=self.cloud_api.call_proj(), credentials=self.credentials)
         return self._storage_client
     
     @property
@@ -92,18 +81,16 @@ class CloudManager:
             return
         
         self._init_data_loaded = True
-        result = get_init_data(self.user, self.api, self.vault)
+        result = self.cloud_api.get_init_data(self.vault)
         
         if result is not None:
             self._init_data = result
-            # Store config data in instance variables for easy access
             self.custom_prompt_with_context = result.get('custom_prompt_with_context')
             self.custom_prompt_no_context = result.get('custom_prompt_no_context')
             self.personality_message = result.get('personality_message')
             self.item_mapping = self._normalize_item_mapping(result.get('item_mapping'))
             self.vault_metadata = self._extract_metadata_for_vault(result.get('vault_metadata'))
         else:
-            # If API fails, init_data stays None and methods fall back
             self._init_data = None 
 
     def vault_exists(self, vault_name):
@@ -133,16 +120,12 @@ class CloudManager:
 
     def download_vaults_list_from_cloud(self):
         """Get vaults list - always returns a list"""
-        # Try batch init data first
         if self._init_data and 'vaults_list' in self._init_data:
             vaults_list = self._init_data['vaults_list']
         else:
-            # Fall back to individual API call
-            vaults_list = get_vaults_list(self.user, self.api)
+            vaults_list = self.cloud_api.get_vaults_list()
         
-        # Normalize the format - if it's a dict, extract vault names
         if isinstance(vaults_list, dict):
-            # Extract vault names from numbered keys (ignore 'vault_metadata' key)
             result = []
             for key, value in vaults_list.items():
                 if key.isdigit():
@@ -151,7 +134,6 @@ class CloudManager:
         elif isinstance(vaults_list, list):
             return vaults_list
         
-        # Return empty list if all fails
         return []
 
     def download_text_from_cloud(self, vault_name):
@@ -169,15 +151,28 @@ class CloudManager:
             return temp_file.name
     
     def download_json(self, vault_name):
-        # Create a temporary file with the desired extension
         temp_file_descriptor, temp_file_path = tempfile.mkstemp(suffix='.json')
         try:
             blob = self.cloud.blob(vault_name)
             blob.download_to_filename(temp_file_path)
         finally:
-            # Close the file descriptor
             os.close(temp_file_descriptor)
         return temp_file_path
+    
+    def download_old_gcs_mapping(self, vault_name):
+        try:
+            map_filename = name_map(vault_name, self.user, self.api)
+            blob = self.cloud.blob(map_filename)
+            
+            if not blob.exists(self.storage_client):
+                return None
+            
+            map_content = blob.download_as_text()
+            mapping = json.loads(map_content)
+            
+            return mapping
+        except Exception as e:
+            return None
     
     def upload(self, item, text, meta, vault = None):
         vault if vault else self.vault
@@ -186,41 +181,35 @@ class CloudManager:
         
     def upload_vaults_list(self, vaults_list):
         """Update vaults list - ensure it's always sent as a list"""
-        # Ensure vaults_list is a list
         if isinstance(vaults_list, dict):
-            # Convert dict to list if needed
             result = []
             for key, value in vaults_list.items():
                 if key.isdigit():
                     result.append(value)
             vaults_list = sorted(result)
         
-        update_vaults_list(self.user, self.api, vaults_list)
+        self.cloud_api.update_vaults_list(vaults_list)
         
-        # Invalidate cache
         self._init_data_loaded = False
         self._init_data = None
 
     def upload_personality_message(self, personality_message):
         """Save personality message and update local cache"""
-        # Update local cache
         self.personality_message = personality_message
         
-        save_personality_message(self.user, self.api, self.vault, personality_message)
+        self.cloud_api.save_personality_message(self.vault, personality_message)
     
     def upload_custom_prompt(self, prompt, context=False):
         """Save custom prompt and update local cache"""
-        # Update local cache
         if context:
             self.custom_prompt_with_context = prompt
         else:
             self.custom_prompt_no_context = prompt
         
-        save_custom_prompt(self.user, self.api, self.vault, prompt, context)
+        self.cloud_api.save_custom_prompt(self.vault, prompt, context)
     
     def download_custom_prompt(self, context=True):
         """Get custom prompt"""
-        # Try batch init data first (already loaded)
         if context and self.custom_prompt_with_context:
             return self.custom_prompt_with_context
         elif not context and self.custom_prompt_no_context:
@@ -228,18 +217,24 @@ class CloudManager:
     
     def download_personality_message(self):
         """Get personality message"""
-        # Try batch init data first (already loaded)
         if self.personality_message:
             return self.personality_message
 
     def get_mapping(self):
         """Get item mapping for current vault"""
-        # Try batch init data first (already loaded)
         if self.item_mapping:
             return self.item_mapping
         
-        # Fall back to individual API call
-        self.item_mapping = self._normalize_item_mapping(get_vault_mapping(self.user, self.api, self.vault))
+        self.item_mapping = self._normalize_item_mapping(self.cloud_api.get_vault_mapping(self.vault))
+        
+        if not self.item_mapping or len(self.item_mapping) == 0:
+            gcs_mapping = self.download_old_gcs_mapping(self.vault)
+            if gcs_mapping and len(gcs_mapping) > 0:
+                self.cloud_api.update_vault_mapping(self.vault, gcs_mapping)
+                self.item_mapping = gcs_mapping
+                self._init_data_loaded = False
+                self._init_data = None
+        
         return self.item_mapping
 
     def _normalize_item_mapping(self, mapping):
@@ -254,18 +249,15 @@ class CloudManager:
         if not source:
             return {}
         
-        # If already dict with expected keys, use it directly
         if isinstance(source, dict):
             if any(key in source for key in ('last_update', 'last_use', 'total_items', 'total_use')):
                 return source
-            # Some backends include the vault key alongside metadata
             if source.get('vault') == self.vault:
                 return {
                     k: v for k, v in source.items()
                     if k in ('last_update', 'last_use', 'total_items', 'total_use')
                 }
         
-        # If list, find entry for this vault
         if isinstance(source, list):
             for entry in source:
                 if isinstance(entry, dict) and entry.get('vault') == self.vault:
@@ -278,25 +270,21 @@ class CloudManager:
 
     def get_metadata(self):
         """Get metadata dict for the current vault."""
-        # Try cached value first
         if self.vault_metadata:
             return self.vault_metadata
         
-        # Try init data payload
         if self._init_data and 'vault_metadata' in self._init_data:
             metadata = self._extract_metadata_for_vault(self._init_data['vault_metadata'])
             if metadata:
                 self.vault_metadata = metadata
                 return self.vault_metadata
         
-        # Fall back to user_vault_data API (which has the same structure)
-        metadata = self._extract_metadata_for_vault(get_user_vault_data(self.user, self.api))
+        metadata = self._extract_metadata_for_vault(self.cloud_api.get_user_vault_data())
         if metadata:
             self.vault_metadata = metadata
             return self.vault_metadata
         
-        # Final fallback to dedicated metadata endpoint (may return list)
-        metadata = self._extract_metadata_for_vault(get_vault_metadata(self.user, self.api))
+        metadata = self._extract_metadata_for_vault(self.cloud_api.get_vault_metadata())
         if metadata:
             self.vault_metadata = metadata
             return self.vault_metadata
@@ -306,14 +294,10 @@ class CloudManager:
     
     def build_update(self, n):
         """Increment vault usage via backend API"""
-        # Get current metadata to increment total_use
         metadata = self.get_metadata()
         current_total_use = metadata.get('total_use', 0) + 1
         
-        # Update via API
-        update_vault_metadata(
-            self.user, 
-            self.api, 
+        self.cloud_api.update_vault_metadata(
             self.vault, 
             last_use=time.time(),
             total_use=current_total_use
@@ -322,7 +306,7 @@ class CloudManager:
     def build_data_update(self):
         """Update vault last_update timestamp"""
         now = time.time()
-        update_vault_metadata(self.user, self.api, self.vault, last_update=now)
+        self.cloud_api.update_vault_metadata(self.vault, last_update=now)
         if not self.vault_metadata:
             self.vault_metadata = {}
         self.vault_metadata['last_update'] = now
@@ -332,7 +316,6 @@ class CloudManager:
 
     def delete(self):
         blobs = self.cloud.list_blobs(prefix=self.vault)
-        # Delete each object concurrently
         with ThreadPoolExecutor() as executor:
             futures = {executor.submit(self.delete_blob, blob): blob for blob in blobs}
             for future in as_completed(futures):
@@ -385,7 +368,6 @@ class VaultStorageManager:
         indicate that this path is a folder.
         """
         directory_marker_path = f"{self.vault}/{path}/.directory"
-        # Option 1: Just upload an empty file to mark it as a directory
         self.cloud_manager.upload_text_to_cloud(directory_marker_path, "")
     
     def create_item(self, path: str, value: str) -> None:
@@ -405,41 +387,29 @@ class VaultStorageManager:
         if path:
             base_path = f"{base_path}/{path}"
         
-        # Ensure the base path ends with a slash for proper prefix matching
         if not base_path.endswith('/'):
             base_path += '/'
         
-        # Get all objects with this prefix
         all_objects = self.cloud_manager.list_objects(base_path)
-        
-        # Process results to find immediate children
-        result = []  # Use a list instead of a set
-        directories = set()  # Set is fine for strings
+        result = []
+        directories = set()
         
         for obj_path in all_objects:
-            # Skip the base path itself
             if obj_path == base_path:
                 continue
                 
-            # Remove the base path to get the relative path
             rel_path = obj_path[len(base_path):]
             
-            # If it contains a slash, it's in a subdirectory
             if '/' in rel_path:
-                # The first segment is a directory
                 dir_name = rel_path.split('/')[0]
                 directories.add(dir_name)
             else:
-                # It's an immediate item in this directory
                 result.append({"name": rel_path, "type": "item"})
         
-        # Add all identified directories
         for dir_name in directories:
-            # Check if this directory is already in the result
             if not any(item.get("name") == dir_name and item.get("type") == "directory" for item in result):
                 result.append({"name": dir_name, "type": "directory"})
         
-        # Sort the result
         return sorted(result, key=lambda x: x["name"])
 
     def get_item(self, path: str) -> str:
@@ -464,23 +434,18 @@ class VaultStorageManager:
         """
         base_path = f"{self.vault}/{path}"
         
-        # Check if it's an item or directory by listing objects
         objects_to_delete = self.cloud_manager.list_objects(base_path)
 
         if not objects_to_delete:
-            # Possibly no object, means maybe it's a single file
-            # Attempt single-file delete
             blob = self.cloud_manager.cloud.blob(base_path)
             if blob.exists(self.cloud_manager.storage_client):
                 self.cloud_manager.delete_blob(blob)
         else:
-            # If we have multiple objects, it's definitely a directory
             for obj_path in objects_to_delete:
                 blob = self.cloud_manager.cloud.blob(obj_path)
                 if blob.exists(self.cloud_manager.storage_client):
                     self.cloud_manager.delete_blob(blob)
             
-            # Also delete the directory marker
             marker_blob = self.cloud_manager.cloud.blob(base_path + "/.directory")
             if marker_blob.exists(self.cloud_manager.storage_client):
                 self.cloud_manager.delete_blob(marker_blob)

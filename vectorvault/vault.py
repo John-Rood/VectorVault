@@ -26,9 +26,7 @@ import random
 from threading import Thread as T, Event
 from datetime import datetime
 from typing import List, Union, Dict
-from .ai import openai, OpenAIPlatform, AnthropicPlatform, GrokPlatform, GeminiPlatform, LLMClient, get_all_models
-from .cloud_api import (run_flow, run_flow_stream, update_vault_metadata, delete_vault_metadata, update_vault_mapping, 
-                        get_vault_mapping, get_user_vault_data, update_user_vault_data, save_custom_prompt, save_personality_message)
+from .ai import OpenAIPlatform, AnthropicPlatform, GrokPlatform, GeminiPlatform, LLMClient, get_all_models
 from .cloudmanager import CloudManager, VaultStorageManager, as_completed, ThreadPoolExecutor
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, load_json
 
@@ -69,9 +67,24 @@ class Vault:
         self.vault = vault.strip() if vault else 'home'
         self.api = api_key
         self.verbose = verbose
-        self.embeddings_model = embeddings_model if embeddings_model else 'text-embedding-3-small'
-        self.dims = 1536 if embeddings_model != 'text-embedding-3-large' else 3072
         
+        # Initialize embeddings model and dimensions
+        if embeddings_model:
+            self.embeddings_model = embeddings_model
+            # Handle known models
+            if embeddings_model == 'text-embedding-3-large':
+                self.dims = 3072
+            elif embeddings_model.startswith('text-embedding'):
+                self.dims = 1536
+            elif 'gemini' in embeddings_model or 'embedding-004' in embeddings_model:
+                self.dims = 768  # Gemini default
+            else:
+                self.dims = 1536  # Default dimension
+        else:
+            self.embeddings_model = 'text-embedding-3-small'
+            self.dims = 1536
+            
+        self.map = {}
         self._cloud_manager = None
         self._cloud_manager_thread = None
         self._cloud_manager_ready = Event()
@@ -109,7 +122,7 @@ class Vault:
         else:
             self.map = {}
         self.items = []
-        self.item_cache = {}  # Cache for fetched items: {uuid: {'data': text, 'metadata': meta}}
+        self.item_cache = {}
         self.last_time = None
         self.saved_already = False
         self._ai = None
@@ -122,10 +135,6 @@ class Vault:
         self.grok_key = grok_key
         self.anthropic_key = anthropic_key
         self.gemini_key = gemini_key
-        
-        # Set OpenAI API key if provided
-        if openai_key:
-            openai.api_key = openai_key
         
         # Store platform instances for lazy initialization
         self._openai = None
@@ -147,11 +156,10 @@ class Vault:
         self.personality_message = personality_message if personality_message else ""
         
         # Initialize current vault mapping from CloudManager if available
-        self.map = {}
         self._cached_prompt_with_context = self.main_prompt_with_context
         self._cached_prompt_no_context = self.main_prompt
         self._cached_personality = self.personality_message
-
+        
     @property
     def cloud_manager(self):
         """Get cloud manager (initialized eagerly in __init__)"""
@@ -161,29 +169,13 @@ class Vault:
         return self._cloud_manager
 
     def _finalize_cloud_manager_initialization(self):
-        if self._cloud_manager_ready.is_set():
-            return
-
         if hasattr(self, "_cloud_manager_thread") and self._cloud_manager_thread:
             self._cloud_manager_thread.join()
             self._cloud_manager_thread = None
-
-            if self._cloud_manager:
-                if self._cloud_manager.item_mapping and not self.map:
-                    self.map = dict(self._cloud_manager.item_mapping)
-
-                # Hydrate cached prompts/personality from CloudManager init data
-                if self._cloud_manager.custom_prompt_with_context:
-                    self._cached_prompt_with_context = self._cloud_manager.custom_prompt_with_context
-                if self._cloud_manager.custom_prompt_no_context:
-                    self._cached_prompt_no_context = self._cloud_manager.custom_prompt_no_context
-                if self._cloud_manager.personality_message:
-                    self._cached_personality = self._cloud_manager.personality_message
-
-                self._apply_cached_prompts_to_ai()
-
-        if not self._cloud_manager_ready.is_set():
-            self._cloud_manager_ready.set()
+            if self._cloud_manager and self._cloud_manager.item_mapping and not self.map:
+                self.map = dict(self._cloud_manager.item_mapping)
+            if not self._cloud_manager_ready.is_set():
+                self._cloud_manager_ready.set()
 
     @property
     def storage(self):
@@ -206,13 +198,15 @@ class Vault:
 
     @property
     def all_models(self):
-        """Return cached model map"""
+        """Lazy initialization of all models"""
+        if self._all_models is None:
+            self._all_models = get_all_models()
         return self._all_models
 
     def _initialize_platforms(self):
         """Initialize AI platforms only when needed"""
         if not self._platforms_initialized:
-            self._openai = OpenAIPlatform()
+            self._openai = OpenAIPlatform(self.openai_key)
             self._grok = GrokPlatform(self.grok_key)
             self._anthropic = AnthropicPlatform(self.anthropic_key)
             self._gemini = GeminiPlatform(self.gemini_key)
@@ -222,7 +216,7 @@ class Vault:
     def openai(self):
         """Lazy initialization of OpenAI platform"""
         if self._openai is None:
-            self._openai = OpenAIPlatform()
+            self._openai = OpenAIPlatform(self.openai_key)
         return self._openai
 
     @property
@@ -245,6 +239,14 @@ class Vault:
         if self._gemini is None:
             self._gemini = GeminiPlatform(self.gemini_key)
         return self._gemini
+    
+    @property
+    def embeddings_platform(self):
+        """Get the platform to use for embeddings based on the embeddings model"""
+        if 'gemini' in self.embeddings_model or 'embedding-004' in self.embeddings_model:
+            return self.gemini
+        # Default to OpenAI for all other cases
+        return self.openai
 
     def get_total_items(self, vault: str = None):
         '''
@@ -277,6 +279,13 @@ class Vault:
             Returns the distance between two vectors - item ids are needed to compare
         '''
         self.check_index_loaded()
+        
+        # Validate that both IDs are within bounds
+        max_items = self.vectors.get_n_items()
+        if id1 >= max_items or id2 >= max_items:
+            raise ValueError(f"Item IDs must be less than {max_items}. Got id1={id1}, id2={id2}. "
+                           "Note: After deletions, vector indices are renumbered starting from 0.")
+        
         return self.vectors.get_distance(id1, id2)
     
 
@@ -285,6 +294,13 @@ class Vault:
             Returns the vector from an item id
         '''
         self.check_index_loaded()
+        
+        # Validate that ID is within bounds
+        max_items = self.vectors.get_n_items()
+        if item_id >= max_items:
+            raise ValueError(f"Item ID must be less than {max_items}. Got item_id={item_id}. "
+                           "Note: After deletions, vector indices are renumbered starting from 0.")
+        
         return self.vectors.get_item_vector(item_id)
         
 
@@ -352,25 +368,6 @@ class Vault:
             return LLMClient(self.openai, **client_kwargs)
 
 
-    def _get_prompt_from_cache(self, context=True):
-        if context:
-            return self._cached_prompt_with_context or self.main_prompt_with_context
-        return self._cached_prompt_no_context or self.main_prompt
-
-    def _get_personality_from_cache(self):
-        return self._cached_personality or self.personality_message
-
-    def _apply_cached_prompts_to_ai(self):
-        if not self._ai:
-            return
-        self._ai.main_prompt_with_context = self._get_prompt_from_cache(context=True)
-        self._ai.main_prompt = self._get_prompt_from_cache(context=False)
-        self._ai.personality_message = self._get_personality_from_cache()
-        self._ai.set_prompts()
-
-    def _ensure_prompts_ready(self):
-        self._finalize_cloud_manager_initialization()
-
     @property
     def ai(self):
         self.load_ai() 
@@ -382,13 +379,24 @@ class Vault:
             Loads the AI functions - internal function
         '''
 
-        target_model = model or self.all_models.get('default') or 'default'
+        if not self.ai_loaded or model:
+            self.ai_loaded = True
 
-        if self._ai is None or model:
-            self._ai = self.get_client_from_model(model=target_model)
+            if model:
+                self._ai = self.get_client_from_model(model=model)
+            else:
+                self._ai = self.get_client_from_model(model=self.all_models['default'])
 
-        self.ai_loaded = True
-        self._apply_cached_prompts_to_ai()
+            try: 
+                cstm_mn = self.main_prompt != self._ai.main_prompt
+                cstm_mnwc = self.main_prompt_with_context != self._ai.main_prompt_with_context
+                cstm_pm = self.personality_message != self._ai.personality_message
+                self._ai.main_prompt_with_context = self.main_prompt_with_context if cstm_mnwc else self.fetch_custom_prompt()
+                self._ai.main_prompt = self.main_prompt if cstm_mn else self.fetch_custom_prompt(context=False)
+                self._ai.personality_message = self.personality_message if cstm_pm else self.fetch_personality_message()
+                self._ai.set_prompts()
+            except:
+                pass
             
 
     def save_personality_message(self, text: str):
@@ -396,7 +404,6 @@ class Vault:
             Saves personality_message to the vault and use it by default from now on
         '''
         self._cached_personality = text
-        self._apply_cached_prompts_to_ai()
         self.cloud_manager.upload_personality_message(text)
         print(f"Personality message saved") if self.verbose else 0
             
@@ -405,7 +412,9 @@ class Vault:
         '''
             Retrieves personality_message from the vault if it is there or else use the defualt
         '''
-        if self._cached_personality is not None:
+        self._finalize_cloud_manager_initialization()
+        
+        if self._cached_personality is not None and self._cached_personality != "":
             return self._cached_personality
         if not self._cloud_manager_ready.is_set():
             return self.personality_message
@@ -434,7 +443,6 @@ class Vault:
             self._cached_prompt_with_context = text
         else:
             self._cached_prompt_no_context = text
-        self._apply_cached_prompts_to_ai()
         self.cloud_manager.upload_custom_prompt(text, context)
         print(f"Custom prompt saved") if self.verbose else 0
             
@@ -444,6 +452,9 @@ class Vault:
             Retrieves custom_prompt from the vault if there or eles use defualt - (used for get_context = True responses)
             context == False will return custom prompt for not context situations
         '''
+        # Wait for CloudManager to initialize and potentially update the cache
+        self._finalize_cloud_manager_initialization()
+        
         cache = self._cached_prompt_with_context if context else self._cached_prompt_no_context
         if cache is not None:
             return cache
@@ -491,7 +502,7 @@ class Vault:
                 item_uuid = self.map.get(str(item_id))
                 future = executor.submit(self.cloud_manager.upload, item_uuid, item_text, item_meta, vault)
                 futures.append(future)
-                self.item_cache[item_uuid] = build_return(item_text, item_meta)
+                self._cache_item_entry(item_uuid, item_text, item_meta)
                 total_saved_items += 1
             
             # Wait for all uploads to complete
@@ -507,6 +518,8 @@ class Vault:
         self.upload_vectors(vault)
         self.update_vault_data(this_vault_only=True)
         self.cloud_manager.build_data_update()
+        time.sleep(0.1)
+        
         print(f"upload time --- {(time.time() - start_time)} seconds --- {total_saved_items} items saved") if self.verbose else 0
             
 
@@ -522,18 +535,15 @@ class Vault:
         vault_name = vault_name if vault_name else self.vault
         start_time = time.time()
         
-        # Check if vault already exists
         existing_vaults = self.cloud_manager.download_vaults_list_from_cloud()
         if vault_name in existing_vaults:
             print(f"Vault '{vault_name}' already exists") if self.verbose else 0
             return
         
-        # Create empty mapping via API
-        update_vault_mapping(self.user, self.api, vault_name, {})
+        self.cloud_manager.cloud_api.update_vault_mapping(vault_name, {})
         
-        # Create empty vectors file in GCS
         empty_vectors = get_vectors(self.dims)
-        empty_vectors.build(10)  # Build the index before saving (even if empty)
+        empty_vectors.build(10)  
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             vector_temp_file_path = temp_file.name
             empty_vectors.save(vector_temp_file_path)
@@ -542,16 +552,13 @@ class Vault:
         
         self.delete_temp_file(vector_temp_file_path)
         
-        # Add vault to vaults_list via API (and invalidate cached init data)
+        # Add vault to vaults_list
         existing_vaults.append(vault_name)
-        # Use CloudManager helper so its cache stays consistent
         self.cloud_manager.upload_vaults_list(existing_vaults)
         
-        # Create initial vault metadata via API
+        # Create initial vault metadata
         now = time.time()
-        update_vault_metadata(
-            self.user,
-            self.api,
+        self.cloud_manager.cloud_api.update_vault_metadata(
             vault_name,
             total_items=0,
             last_update=now,
@@ -559,13 +566,13 @@ class Vault:
             total_use=1
         )
         
-        # Trigger cloud data update for this user/vault
+        # Save to cloud 
         self.cloud_manager.build_data_update()
         
         # Copy prompts and personality from the current vault into the new one
-        save_personality_message(self.user, self.api, vault_name, self.fetch_personality_message())
-        save_custom_prompt(self.user, self.api, vault_name, self.fetch_custom_prompt(context=False), context=False)
-        save_custom_prompt(self.user, self.api, vault_name, self.fetch_custom_prompt(context=True), context=True)
+        self.cloud_manager.cloud_api.save_personality_message(vault_name, self.fetch_personality_message())
+        self.cloud_manager.cloud_api.save_custom_prompt(vault_name, self.fetch_custom_prompt(context=False), context=False)
+        self.cloud_manager.cloud_api.save_custom_prompt(vault_name, self.fetch_custom_prompt(context=True), context=True)
         
         print(f"Vault '{vault_name}' created successfully --- {(time.time() - start_time):.2f} seconds") if self.verbose else 0
 
@@ -574,7 +581,8 @@ class Vault:
         '''
             Clears the cache for all the loaded items 
         '''
-        self.reload_vectors()
+        self.reload_vectors()        
+        self.item_cache.clear()  
         self.vecs_loaded = True
         self.saved_already = False
 
@@ -605,8 +613,8 @@ class Vault:
             
         # Clear the local vector data
         self._vectors = get_vectors(self.dims)
-        self.items.clear()
-        self.item_cache.clear()  
+        self.items.clear() 
+        self.item_cache.clear() 
         self.cloud_manager.delete()
         self.x = 0
         vaults = self.cloud_manager.download_vaults_list_from_cloud()
@@ -617,24 +625,29 @@ class Vault:
         self.cloud_manager.upload_vaults_list(vaults)
         self.update_vault_data(remove_vault=True)
         self.map = {}
+        self.items = []
         print(f'Vault: "{self.vault}" deleted')
+        time.sleep(0.2)
     
 
     def get_vaults(self, vault: str = None) -> list:
         '''
-            Returns a list of vaults within the current vault directory 
+            Returns a list of vaults within the current vault directory.
+            If vault is None, returns all top-level vaults.
+            If vault is a string, returns vaults within that vault directory.
         '''
-        vault = self.vault if vault is None else vault
-
-        if vault == '':
+        # Ensure cloud manager is initialized
+        self._finalize_cloud_manager_initialization()
+        
+        # If no vault specified, return all top-level vaults
+        if vault is None:
             all_vaults = self.get_all_vaults()
             if all_vaults == []:
-                all_vaults = self.cloud_manager.list_vaults(vault)
+                all_vaults = self.cloud_manager.list_vaults('')
                 self.cloud_manager.upload_vaults_list(all_vaults)
-                return all_vaults
-            else:
-                return all_vaults
+            return all_vaults
         
+        # Otherwise, list vaults within the specified vault directory
         return self.cloud_manager.list_vaults(vault)
     
 
@@ -658,24 +671,25 @@ class Vault:
     def save_mapping(self, vault = None):
         vault = self.vault if not vault else vault
         
-        # Update CloudManager cache if saving current vault
         if vault == self.vault:
             self.cloud_manager.item_mapping = self.map.copy()
         
-        # Save to backend API
-        update_vault_mapping(self.user, self.api, vault, self.map)
+        self.cloud_manager.cloud_api.update_vault_mapping(vault, self.map)
         
-        # Invalidate cache so it gets reloaded with latest data
         if vault == self.vault:
             self.cloud_manager._init_data_loaded = False
             self.cloud_manager._init_data = None
         
 
-    def remap(self, item_id):
+    def remap(self, item_id, item_uuid):
         for i in range(item_id, len(self.map) - 1):
             self.map[str(i)] = self.map[str(i + 1)]
-        self.map.popitem()
 
+        if item_uuid in self.item_cache:
+            del self.item_cache[item_uuid]
+
+        self.map.popitem()
+        
 
     def remap_item_numbers(self):
         new_map = {}
@@ -703,14 +717,12 @@ class Vault:
         """Update the master vault data file that tracks all vaults"""
         nary = []
         try:
-            # Get current vault data from API
-            vault_data = get_user_vault_data(self.user, self.api)
+            vault_data = self.cloud_manager.cloud_api.get_user_vault_data()
             if not vault_data:
                 vault_data = []
             
             all_vaults = [i['vault'] for i in vault_data]
             
-            # Add current vault if it doesn't exist
             if self.vault not in all_vaults and not remove_vault:
                 nary.append({
                     'vault': self.vault,
@@ -720,7 +732,6 @@ class Vault:
                     'total_use': 1
                 })
             
-            # Process existing vaults
             for i in vault_data:
                 if not this_vault_only and not remove_vault:
                     total_items = self.get_total_items(i['vault'])
@@ -741,18 +752,16 @@ class Vault:
                 if 'total_use' in i:
                     vault_dict['total_use'] = i['total_use']
                 
-                # Update timestamps for current vault
                 if i['vault'] == self.vault and not remove_vault:
                     vault_dict['last_update'] = time.time()
                 
                 if remove_vault and self.vault == i['vault']:
-                    pass  # Skip this vault
+                    pass  
                 else:
                     nary.append(vault_dict)
                     
         except Exception as e:
             print(f"An error occurred: {e}")
-            # Create default entry if all fails
             nary.append({
                 'vault': 'demo',
                 'total_items': 0,
@@ -761,21 +770,16 @@ class Vault:
                 'total_use': 1
             })
         
-        # Save to API
-        update_user_vault_data(self.user, self.api, nary)
+        self.cloud_manager.cloud_api.update_user_vault_data(nary)
         
-        # Also update individual vault metadata in backend if needed
         if not remove_vault:
-            update_vault_metadata(
-                self.user,
-                self.api,
+            self.cloud_manager.cloud_api.update_vault_metadata(
                 self.vault,
                 last_update=time.time()
             )
         else:
-            delete_vault_metadata(self.user, self.api, self.vault)
+            self.cloud_manager.cloud_api.delete_vault_metadata(self.vault)
         
-        # Update cached metadata on CloudManager
         if remove_vault:
             self.cloud_manager.vault_metadata = {}
         else:
@@ -787,7 +791,6 @@ class Vault:
                     }
                     break
         
-        # Invalidate cache
         self.cloud_manager._init_data_loaded = False
         self.cloud_manager._init_data = None
 
@@ -795,7 +798,7 @@ class Vault:
     def hard_remap_vault_data(self):
         """Rebuild user vault metadata using backend APIs (no GCS)."""
         try:
-            existing = get_user_vault_data(self.user, self.api) or []
+            existing = self.cloud_manager.cloud_api.get_user_vault_data() or []
         except Exception:
             existing = []
         existing_map = {}
@@ -805,7 +808,7 @@ class Vault:
 
         rebuilt_entries = []
         for vault_name in self.get_vaults(''):
-            mapping = get_vault_mapping(self.user, self.api, vault_name) or {}
+            mapping = self.cloud_manager.cloud_api.get_vault_mapping(vault_name) or {}
             if isinstance(mapping, list):
                 mapping = {str(index): value for index, value in enumerate(mapping)}
             total_items = len(mapping)
@@ -820,9 +823,8 @@ class Vault:
             }
             rebuilt_entries.append(vault_dict)
 
-        update_user_vault_data(self.user, self.api, rebuilt_entries)
+        self.cloud_manager.cloud_api.update_user_vault_data(rebuilt_entries)
 
-        # Refresh CloudManager cached metadata for current vault
         current_meta = next((entry for entry in rebuilt_entries if entry['vault'] == self.vault), {})
         self.cloud_manager.vault_metadata = current_meta
         self.cloud_manager._init_data_loaded = False
@@ -835,16 +837,41 @@ class Vault:
         item_ids is an int or a list of integers
         '''
         def download_and_upload(old_id, new_id):
-            metadata = json.loads(self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.old_map[str(old_id)], self.user, self.api, meta=True)))
-            metadata['item_id'] = new_id
-            self.cloud_manager.upload_to_cloud(cloud_name(self.vault, self.old_map[str(old_id)], self.user, self.api, meta=True), json.dumps(metadata))
-            self.map[str(new_id)] = self.old_map[str(old_id)]
+            item_uuid = self.old_map[str(old_id)]
+            meta_path = cloud_name(self.vault, item_uuid, self.user, self.api, meta=True)
+            meta_data = self.cloud_manager.download_text_from_cloud(meta_path)
+            
+            if not meta_data:
+                metadata = {"item_id": new_id}
+            else:
+                try:
+                    metadata = json.loads(meta_data)
+                    metadata['item_id'] = new_id
+                except (json.JSONDecodeError, TypeError):
+                    metadata = {"item_id": new_id}
+            
+            upload_success = False
+            for attempt in range(3):
+                try:
+                    self.cloud_manager.upload_to_cloud(meta_path, json.dumps(metadata))
+                    upload_success = True
+                    break
+                except Exception as e:
+                    if attempt < 2:
+                        time.sleep(0.03 * (attempt + 1))
+                    else:
+                        raise e
+            
+            if upload_success:
+                self.map[str(new_id)] = item_uuid
+                self._sync_cache_metadata(item_uuid, metadata, self.vault)
 
         def rebuild_vectors(item_ids):
             '''Deletes target vectors and rebuilds the database'''
             num_existing_items = self.vectors.get_n_items()
             new_index = get_vectors(self.dims)
             new_id = 0
+            self.map = {}
 
             with ThreadPoolExecutor() as executor:
                 futures = []
@@ -870,17 +897,18 @@ class Vault:
         self.old_map = self.map.copy()
 
         for item_id in item_ids:
-            # Remove deleted items from cache
             item_uuid = self.old_map.get(str(item_id))
             if item_uuid and item_uuid in self.item_cache:
                 del self.item_cache[item_uuid]
             
             self.cloud_manager.delete_item(item_uuid)
-            self.remap(item_id)
+            self.remap(item_id, item_uuid)
 
         rebuild_vectors(item_ids)
         self.update_vault_data(this_vault_only=True)
         self.cloud_manager.build_data_update()
+        time.sleep(0.2)
+        
         print(f'Items {item_ids} deleted and database rebuilt') if self.verbose else 0
 
 
@@ -908,16 +936,13 @@ class Vault:
         self.load_vectors()
         item_uuid = self.map.get(str(item_id))
         
-        # Get existing metadata to preserve it
         meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, item_uuid, self.user, self.api, meta=True))
         metadata = json.loads(meta_data)
         
-        # Upload new text
         self.cloud_manager.upload_to_cloud(cloud_name(self.vault, item_uuid, self.user, self.api, item=True), new_text)
         
-        # Update cache with new text and existing metadata
         if item_uuid:
-            self.item_cache[item_uuid] = build_return(new_text, metadata)
+            self._cache_item_entry(item_uuid, new_text, metadata)
         
         edit_vector(item_id, self.process_batch([new_text], never_stop=False, loop_timeout=180)[0])
 
@@ -931,26 +956,12 @@ class Vault:
             Edit and save any item's metadata
         '''
         item_uuid = self.map.get(str(item_id))
-        
-        # Update cache with new metadata if item is cached
-        if item_uuid and item_uuid in self.item_cache:
-            # Get existing data from cache and update metadata
-            cached_item = self.item_cache[item_uuid]
-            self.item_cache[item_uuid] = build_return(cached_item['data'], metadata)
-        
+        if not item_uuid:
+            raise ValueError(f"Item id {item_id} does not exist in the vault mapping")
+
         self.cloud_manager.upload_to_cloud(cloud_name(self.vault, item_uuid, self.user, self.api, meta=True), json.dumps(metadata))
+        self._sync_cache_metadata(item_uuid, metadata, self.vault)
         print(f'Item {item_id} metadata saved') if self.verbose else 0
-
-
-    def clear_cache(self):
-        '''
-            Manually clear the item cache. 
-            The cache is automatically updated when saving, deleting, or editing items.
-            Use this if you need to force a full refresh of all cached data.
-        '''
-        cache_size = len(self.item_cache)
-        self.item_cache.clear()
-        print(f'Item cache cleared ({cache_size} items removed)') if self.verbose else 0
 
 
     def check_index_loaded(self):
@@ -985,7 +996,16 @@ class Vault:
                     raise ValueError("Cloud manager not initialized")
                 self.map = self._cloud_manager.item_mapping
             return self.map
-        return get_vault_mapping(self.user, self.api, vault)
+        
+        mapping = self.cloud_manager.cloud_api.get_vault_mapping(vault)
+        
+        if not mapping:
+            gcs_mapping = self.cloud_manager.download_old_gcs_mapping(vault)
+            if gcs_mapping and len(gcs_mapping) > 0:
+                self.cloud_manager.cloud_api.update_vault_mapping(vault, gcs_mapping)
+                mapping = gcs_mapping
+        
+        return mapping
 
     def _download_vectors_for_vault(self, vault):
         temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(vault, self.user, self.api))
@@ -999,10 +1019,10 @@ class Vault:
         self.cloud_manager.item_mapping = self.map
         self.x +=1
     
-    def delete_temp_file(self, temp_file_path, attempts = 5):
+    def delete_temp_file(self, temp_file_path, attempts = 3):
         for i in range(attempts):
             try:
-                os.delete(temp_file_path)
+                os.remove(temp_file_path)
                 break
             except: 
                 time.sleep(.01)
@@ -1050,7 +1070,6 @@ class Vault:
         self.delete_temp_file(vector_temp_file_path)
         self.save_mapping(vault)
         self.items.clear()
-        # Don't clear cache - it's already populated/updated by save(), edit_item(), etc.
         self._vectors = get_vectors(self.dims)
         self.x_checked = False
         self.vecs_loaded = False
@@ -1104,29 +1123,72 @@ class Vault:
         return segments
     
 
-    def _fetch_and_cache_item(self, item_uuid: str, vault_name: str, distance: float = None):
-        '''
-            Internal helper method to fetch an item from cloud and cache it.
-            Returns the item data with optional distance.
-        '''
-        # Download item and metadata from cloud
-        item_data = self.cloud_manager.download_text_from_cloud(
-            cloud_name(vault_name, item_uuid, self.user, self.api, item=True)
-        )
-        meta_data = self.cloud_manager.download_text_from_cloud(
-            cloud_name(vault_name, item_uuid, self.user, self.api, meta=True)
-        )
-        meta = json.loads(meta_data)
-        
-        # Build and cache the result (without distance for reusability)
-        result_no_distance = build_return(item_data, meta)
-        self.item_cache[item_uuid] = result_no_distance
-        
-        # Return with distance if provided
-        if distance is not None:
-            return build_return(item_data, meta, distance)
-        return result_no_distance
+    def _cache_item_entry(self, item_uuid: str, data: str, meta: dict):
+        """Store an item's payload in the in-memory cache."""
+        if not item_uuid or data is None or meta is None:
+            return
+        self.item_cache[item_uuid] = {
+            "data": data,
+            "metadata": meta
+        }
 
+    def _sync_cache_metadata(self, item_uuid: str, metadata: dict, vault_name: str = None):
+        """
+        Ensure the cache holds the latest metadata for an item. If the item isn't cached,
+        fetch its current text from cloud storage so the cache stays authoritative.
+        """
+        if not item_uuid:
+            return
+
+        cached = self.item_cache.get(item_uuid)
+        if cached:
+            cached['metadata'] = metadata
+            return
+
+        target_vault = vault_name if vault_name else self.vault
+        item_path = cloud_name(target_vault, item_uuid, self.user, self.api, item=True)
+        item_data = self.cloud_manager.download_text_from_cloud(item_path)
+        self._cache_item_entry(item_uuid, item_data, metadata)
+
+    def _get_item_from_cache(self, item_uuid: str, vault_name: str = None, distance: float = None):
+        """Fetch an item, preferring cache before downloading from cloud storage."""
+        if not item_uuid:
+            return None
+
+        cached = self.item_cache.get(item_uuid)
+        target_vault = vault_name if vault_name else self.vault
+
+        if cached is None or cached.get("data") is None or cached.get("metadata") is None:
+
+            item_path = cloud_name(target_vault, item_uuid, self.user, self.api, item=True)
+            meta_path = cloud_name(target_vault, item_uuid, self.user, self.api, meta=True)
+            item_data = self.cloud_manager.download_text_from_cloud(item_path)
+            meta_data = self.cloud_manager.download_text_from_cloud(meta_path)
+            
+            if not meta_data:
+                # If metadata is missing, return None
+                return None
+                
+            try:
+                meta = json.loads(meta_data)
+            except (json.JSONDecodeError, TypeError):
+                # If metadata is corrupted, return None
+                return None
+                
+            self._cache_item_entry(item_uuid, item_data, meta)
+            cached = self.item_cache.get(item_uuid)
+
+        if cached is None:
+            return None
+
+        return build_return(cached['data'], cached['metadata'], distance)
+
+    def _fetch_item_worker(self, identifier, item_uuid: str, vault_name: str, distance: float = None):
+        """
+        Shared worker for concurrent fetches. Returns (identifier, payload).
+        Identifier can be an index or an item_id depending on the caller.
+        """
+        return identifier, self._get_item_from_cache(item_uuid, vault_name, distance)
 
     def get_items(self, ids: List[int] = [], vault: str = None) -> list:
         '''
@@ -1158,38 +1220,22 @@ class Vault:
         start_time = time.time()
         target_vault = vault if vault else self.vault
         _map = self.load_mapping(target_vault)
-        
-        # Separate cached and uncached items
-        items_to_fetch = []  # List of (index, item_id, uuid) tuples
-        cache_hits = 0
-        
-        for i, item_id in enumerate(ids):
-            item_uuid = _map.get(str(item_id))
-            if item_uuid is None:
-                results[i] = None
-                continue
-                
-            # Check cache first
-            if item_uuid in self.item_cache:
-                results[i] = self.item_cache[item_uuid]
-                cache_hits += 1
-            else:
-                items_to_fetch.append((i, item_id, item_uuid))
-        
-        # Fetch uncached items from cloud
-        if items_to_fetch:
-            def fetch_item(index, item_id, item_uuid):
-                result = self._fetch_and_cache_item(item_uuid, target_vault)
-                return index, result
 
-            with ThreadPoolExecutor() as executor:
-                futures = [executor.submit(fetch_item, idx, item_id, uuid) for idx, item_id, uuid in items_to_fetch]
-                for future in as_completed(futures):
-                    index, result = future.result()
-                    results[index] = result  # Insert each result at its corresponding index
-        
-        if self.verbose:
-            print(f"Retrieved {len(ids)} items ({cache_hits} from cache, {len(items_to_fetch)} from cloud) --- %s seconds ---" % (time.time() - start_time))
+        with ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(
+                    self._fetch_item_worker,
+                    idx,
+                    _map.get(str(item_id)),
+                    target_vault
+                )
+                for idx, item_id in enumerate(ids)
+            ]
+            for future in as_completed(futures):
+                index, result = future.result()
+                results[index] = result  # Insert each result at its corresponding index
+            
+        print(f"Retrieved {len(ids)} items --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
         
         return results
 
@@ -1206,77 +1252,56 @@ class Vault:
             if not include_distances:
                 vecs = vectors.get_nns_by_vector(vector, n)
                 results = [None] * len(vecs)  # Pre-fill the results list with placeholders
-                items_to_fetch = []  # List of (index, vec, uuid) tuples
-                cache_hits = 0
 
-                # Check cache first
-                for i, vec in enumerate(vecs):
-                    item_uuid = mapping.get(str(vec))
-                    if item_uuid is None:
-                        results[i] = None
-                        continue
-                    
-                    # Check cache
-                    if item_uuid in self.item_cache:
-                        results[i] = self.item_cache[item_uuid]
-                        cache_hits += 1
-                    else:
-                        items_to_fetch.append((i, vec, item_uuid))
+                with ThreadPoolExecutor() as executor:
+                    futures = [
+                        executor.submit(
+                            self._fetch_item_worker,
+                            i,
+                            mapping.get(str(vec)),
+                            target_vault
+                        )
+                        for i, vec in enumerate(vecs)
+                    ]
+                    for future in as_completed(futures):
+                        index, result = future.result()
+                        results[index] = result  # Insert each result at its corresponding index
 
-                # Fetch uncached items
-                if items_to_fetch:
-                    def fetch_item(index, vec, item_uuid):
-                        result = self._fetch_and_cache_item(item_uuid, target_vault)
-                        return index, result
-                    
-                    with ThreadPoolExecutor() as executor:
-                        futures = [executor.submit(fetch_item, idx, vec, uuid) for idx, vec, uuid in items_to_fetch]
-                        for future in as_completed(futures):
-                            index, result = future.result()
-                            results[index] = result  # Insert each result at its corresponding index
-
+                # Filter out None results (items with missing/corrupted metadata)
+                results = [r for r in results if r is not None]
+                
                 if self.verbose:
-                    print(f"get {n} items back ({cache_hits} from cache, {len(items_to_fetch)} from cloud) --- %s seconds ---" % (time.time() - start_time))
+                    print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
                 return results
             else:
                 vecs, distances = vectors.get_nns_by_vector(vector, n, include_distances=include_distances)
                 results = [None] * len(vecs)  # Pre-fill the results list with placeholders
-                items_to_fetch = []  # List of (index, vec, uuid, distance) tuples
-                cache_hits = 0
 
-                # Check cache first
-                for i, (vec, distance) in enumerate(zip(vecs, distances)):
-                    item_uuid = mapping.get(str(vec))
-                    if item_uuid is None:
-                        results[i] = None
-                        continue
-                    
-                    # Check cache - we need to add distance even if cached
-                    if item_uuid in self.item_cache:
-                        cached_item = self.item_cache[item_uuid]
-                        # Build result with distance
-                        result = build_return(cached_item['data'], cached_item['metadata'], distance)
-                        results[i] = result
-                        cache_hits += 1
-                    else:
-                        items_to_fetch.append((i, vec, item_uuid, distance))
+                with ThreadPoolExecutor() as executor:
+                    futures = [
+                        executor.submit(
+                            self._fetch_item_worker,
+                            i,
+                            mapping.get(str(vec)),
+                            target_vault,
+                            distances[i]
+                        )
+                        for i, vec in enumerate(vecs)
+                    ]
+                    for future in as_completed(futures):
+                        index, result = future.result()
+                        results[index] = result  # Insert each result at its corresponding index
 
-                # Fetch uncached items
-                if items_to_fetch:
-                    def fetch_item(index, vec, item_uuid, distance):
-                        result = self._fetch_and_cache_item(item_uuid, target_vault, distance)
-                        return index, result
-
-                    with ThreadPoolExecutor() as executor:
-                        futures = [executor.submit(fetch_item, idx, vec, uuid, dist) for idx, vec, uuid, dist in items_to_fetch]
-                        for future in as_completed(futures):
-                            index, result = future.result()
-                            results[index] = result  # Insert each result at its corresponding index
-
+                # Filter out None results (items with missing/corrupted metadata)
+                results = [r for r in results if r is not None]
+                
                 if self.verbose:
-                    print(f"get {n} items back ({cache_hits} from cache, {len(items_to_fetch)} from cloud) --- %s seconds ---" % (time.time() - start_time))
+                    print(f"get {n} items back --- %s seconds ---" % (time.time() - start_time))
                 return results
-        except:
+        except Exception as e:
+            if self.verbose:
+                print(f"get_items_by_vector failed: {e}")
+            print(traceback.print_exc())
             return [{'data': 'No data has been added', 'metadata': {'no meta': 'No metadata has been added'}}]
     
     
@@ -1302,29 +1327,29 @@ class Vault:
         '''
         start_time = time.time()
         
-        def fetch_item(item_id):
-            # Function to fetch a single item, to be run in parallel
-            item_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, item=True))
-            meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, self.map[str(item_id)], self.user, self.api, meta=True))
-            meta = json.loads(meta_data) 
-            if return_meta:
-                return item_id, {
-                    'data': item_data,
-                    'metadata': meta
-                } 
-            else:
-                return item_id, {
-                    'data': item_data,
-                }
-
         self.load_vectors() # also loads mapping
 
         results = {}
         with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(fetch_item, item_id) for item_id in self.map.keys()]
+            futures = [
+                executor.submit(
+                    self._fetch_item_worker,
+                    item_id,
+                    self.map.get(str(item_id)),
+                    self.vault
+                )
+                for item_id in self.map.keys()
+            ]
             for future in as_completed(futures):
-                item_number, result = future.result()
-                results[item_number] = result
+                item_number, payload = future.result()
+                if payload is None:
+                    continue
+                if return_meta:
+                    results[item_number] = payload
+                else:
+                    results[item_number] = {
+                        'data': payload['data'],
+                    }
 
         results = {k: results[k] for k in sorted(results.keys())}
 
@@ -1574,12 +1599,21 @@ class Vault:
         '''
             Internal function
         '''
+        # Get the appropriate embeddings platform
+        platform = self.embeddings_platform
+        
+        # Validate that we have the necessary API key
+        if platform == self.openai and not self.openai_key:
+            raise ValueError("OpenAI API key is required for OpenAI embeddings")
+        elif platform == self.gemini and not self.gemini_key:
+            raise ValueError("Gemini API key is required for Gemini embeddings")
+            
         loop_start_time = time.time()
         exceptions = 0
         while True:
             try:
-                res = openai.embeddings.create(input=batch_text_chunks, model=self.embeddings_model)
-                break
+                embeddings = platform.create_embeddings(batch_text_chunks, model=self.embeddings_model)
+                return embeddings  # create_embeddings() already returns the list of embeddings
             except Exception as e:
                 last_exception_time = time.time()
                 exceptions = 1 if time.time() - last_exception_time > 180 else + 1
@@ -1588,22 +1622,27 @@ class Vault:
 
                 if not never_stop or (time.time() - loop_start_time) > loop_timeout:
                     try:
-                        res = openai.embeddings.create(input=batch_text_chunks, model=self.embeddings_model)
-                        break
+                        embeddings = platform.create_embeddings(batch_text_chunks, model=self.embeddings_model)
+                        return embeddings  # create_embeddings() already returns the list of embeddings
                     except Exception as e:
                         if exceptions >= 5:
                             print(f"API has failed for too long. Exiting loop with error: {e}.")
                             break
                         raise TimeoutError("Loop timed out")
-        return [record.embedding for record in res.data]
+        
+        raise Exception("Failed to get embeddings")
         
 
     def get_vectors(self, batch_size: int = 32, never_stop: bool = False, loop_timeout: int = 777):
         '''
             Takes text data added to the vault, and gets vectors for them
         '''
-        if not self.openai_key:
-            raise "Cannot get embeddings without an OpenAI API key" 
+        # Check for appropriate API key based on embeddings platform
+        platform = self.embeddings_platform
+        if platform == self.openai and not self.openai_key:
+            raise ValueError("Cannot get embeddings without an OpenAI API key")
+        elif platform == self.gemini and not self.gemini_key:
+            raise ValueError("Cannot get embeddings without a Gemini API key") 
         
         self.check_index()
         start_time = time.time()
@@ -1649,7 +1688,6 @@ class Vault:
             image_path: str = None, # The path to an image to send to the LLM
             image_url: str = None, # The url of an image to send to the LLM
             vaults: Union[None, str, List[str], Dict] = None, # A vault name, list of vaults, or dict of vaults to search for context in
-            conversation_user_id: str = None, # DEPRECATED: No longer used
             ):
         '''
             Chat get response from OpenAI's ChatGPT. 
@@ -1683,7 +1721,6 @@ class Vault:
             - If return_context=True: returns a dict with keys 'response' and 'context'
 
         '''
-        self._ensure_prompts_ready()
         start_time = time.time()
         model = self.all_models['default'] if not model else model
         self.load_ai(model=model)
@@ -1746,7 +1783,8 @@ class Vault:
                                 context = self.get_similar(search_input, n=n_context)
                             input_ = str(context) if include_context_meta else ''
                             for text in context:
-                                input_ += text['data']
+                                if text['data']:
+                                    input_ += text['data']
 
                             response = self._ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
                         else: # Custom prompt only
@@ -1793,7 +1831,6 @@ class Vault:
             image_path: str = None, # The path to an image to send to the LLM
             image_url: str = None, # The url of an image to send to the LLM
             vaults: Union[None, str, List[str], Dict] = None, # A vault name, list of vaults, or dict of vaults to search for context in
-            conversation_user_id: str = None, # DEPRECATED: No longer used
             ):
         '''
             Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream()
@@ -1836,7 +1873,6 @@ class Vault:
                 pass
             ```
         '''
-        self._ensure_prompts_ready()
         start_time = time.time()
         model = self.all_models['default'] if not model else model
         self.load_ai(model=model)
@@ -1911,7 +1947,8 @@ class Vault:
                                 context = self.get_similar(search_input, n=n_context)
                             input_ = str(context) if include_context_meta else ''
                             for text in context:
-                                input_ += text['data']
+                                if text['data']:
+                                    input_ += text['data']
 
                             try:
                                 for word in self._ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature):
@@ -2049,13 +2086,10 @@ class Vault:
         Returns:
             Full response from the flow execution
         """
-        return run_flow(
-            user = self.user,
-            api_key=self.api,
+        return self.cloud_manager.cloud_api.run_flow(
             flow_name=flow_name,
             message=message,
             history=history,
-            conversation_user_id = None,
             invoke_method = invoke_method,
             internal_vars = internal_vars,
             image_url=image_url,
@@ -2078,13 +2112,10 @@ class Vault:
             Stream events from the flow execution
         """
         # Get the generator from run_flow_stream
-        stream_generator = run_flow_stream(
-            user = self.user,
-            api_key = self.api,
+        stream_generator = self.cloud_manager.cloud_api.run_flow_stream(
             flow_name = flow_name,
             message = message,
             history = history,
-            conversation_user_id = None,
             invoke_method = invoke_method,
             internal_vars = internal_vars,
             image_url=image_url,

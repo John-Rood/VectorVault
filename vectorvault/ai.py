@@ -11,38 +11,160 @@ from google import genai
 from google.genai import types
 
 
+# ============================================================================
+# MODEL DEFINITIONS - Single Source of Truth
+# ============================================================================
+
+OPENAI_MODELS = {
+    'o1': 200000,
+    'o1-mini': 128000,
+    'o3': 200000,
+    'o3-pro': 200000,
+    'o3-mini': 128000,
+    'o4-mini': 200000,
+    'gpt-4': 32000,
+    'gpt-5': 400000,
+    'gpt-5.1': 400000,
+    'gpt-5-mini': 400000,
+    'gpt-5-nano': 400000,
+    'gpt-4o-mini': 128000,
+    'gpt-4o': 128000,
+    'gpt-4o-audio-preview': 128000,
+    'chatgpt-4o-latest': 128000,
+    'gpt-5-chat-latest': 400000,
+    'gpt-3.5-turbo': 16000,
+    'default': 'gpt-5-chat-latest'
+}
+
+OPENAI_FRONT_MODELS = {
+    'o3': 200000,
+    'o3-pro': 200000,
+    'o3-mini': 128000,
+    'o4-mini': 200000,
+    'gpt-5': 400000,
+    'gpt-5.1': 400000,
+    'gpt-5-mini': 400000,
+    'gpt-5-nano': 400000,
+    'gpt-4o': 128000,
+    'gpt-3.5-turbo': 16000,
+    'chatgpt-4o-latest': 128000,
+    'gpt-5-chat-latest': 400000,
+    'default': 'gpt-5-chat-latest'
+}
+
+OPENAI_IMG_CAPABLE = [
+    'o1', 'gpt-4o', 'gpt-4o-mini', 'gpt-4o-audio-preview',
+    'chatgpt-4o-latest',
+    'gpt-5', 'gpt-5.1', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5-chat-latest'
+]
+
+OPENAI_NO_STREAM_LIST = ['o1', 'o1-mini']
+OPENAI_NO_TEMPERATURE_LIST = ['o1', 'o1-mini', 'o3', 'o3-mini']
+
+GROK_MODELS = {
+    "grok-code-fast": 256000,
+    "grok-4": 256000,
+    "grok-4-fast-reasoning": 2000000,
+    "grok-4-fast-non-reasoning": 2000000,
+    "grok-3": 131072,
+    "grok-3-mini": 131072,
+    "grok-2-vision-latest": 32768,
+    "default": "grok-4-fast-non-reasoning",
+}
+
+GROK_FRONT_MODELS = {
+    "grok-code-fast": 256000,
+    "grok-4": 256000,
+    "grok-4-fast-reasoning": 2000000,
+    "grok-4-fast-non-reasoning": 2000000,
+    "grok-3": 131072,
+    "grok-3-mini": 131072,
+    "grok-2-vision-latest": 32768,
+    "default": "grok-4-fast-non-reasoning",
+}
+
+ANTHROPIC_MODELS = {
+    'claude-opus-4-1': 200000,
+    'claude-opus-4-0': 200000,
+    'claude-sonnet-4-0': 200000,
+    'claude-sonnet-4-5': 1000000,
+    'claude-3-7-sonnet-latest': 200000,
+    'claude-3-5-sonnet-latest': 200000,
+    'claude-3-5-haiku-latest': 200000,
+    'default': 'claude-sonnet-4-0'
+}
+
+ANTHROPIC_FRONT_MODELS = {
+    'claude-opus-4-1': 200000,
+    'claude-opus-4-0': 200000,
+    'claude-sonnet-4-0': 200000,
+    'claude-sonnet-4-5': 1000000,
+    'claude-3-7-sonnet-latest': 200000,
+    'default': 'claude-sonnet-4-5'
+}
+
+GEMINI_MODELS = {
+    'gemini-2.5-pro': 1000000,
+    'gemini-2.5-flash': 1000000,
+    'gemini-2.5-flash-lite': 1000000,
+    'gemini-2.0-flash': 1000000,
+    'default': 'gemini-2.5-flash'
+}
+
+GEMINI_FRONT_MODELS = {
+    'gemini-2.5-pro': 1000000,
+    'gemini-2.5-flash': 1000000,
+    'gemini-2.0-flash': 1000000,
+    'default': 'gemini-2.5-flash'
+}
+
+GEMINI_MULTIMODAL_MODELS = [
+    'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'
+]
+
+GEMINI_THINKING_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']
+
+
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
 def get_all_models(namespaced=False):
+    """Get all available models from all platforms"""
     platforms = [
-        ('openai', OpenAIPlatform()),
-        ('grok', GrokPlatform()),
-        ('anthropic', AnthropicPlatform()),
-        ('gemini', GeminiPlatform()),
+        ('openai', OPENAI_MODELS),
+        ('grok', GROK_MODELS),
+        ('anthropic', ANTHROPIC_MODELS),
+        ('gemini', GEMINI_MODELS),
     ]
+    
     all_models = {}
-    for platform_name, platform in platforms:
-        models = platform.model_token_limits.copy()
-        if not isinstance(platform, OpenAIPlatform):
-            models.pop('default', None)
+    for platform_name, models in platforms:
+        models_copy = models.copy()
+        if platform_name != 'openai':
+            models_copy.pop('default', None)
         if namespaced:
-            models = {f"{platform_name}_{k}": v for k, v in models.items()}
-        all_models.update(models)
+            models_copy = {f"{platform_name}_{k}": v for k, v in models_copy.items()}
+        all_models.update(models_copy)
     return all_models
 
 def get_front_models(namespaced=False):
+    """Get front-facing models (subset of all models for UI display)"""
     platforms = [
-        ('openai', OpenAIPlatform()),
-        ('grok', GrokPlatform()),
-        ('anthropic', AnthropicPlatform()),
-        ('gemini', GeminiPlatform()),
+        ('openai', OPENAI_FRONT_MODELS),
+        ('grok', GROK_FRONT_MODELS),
+        ('anthropic', ANTHROPIC_FRONT_MODELS),
+        ('gemini', GEMINI_FRONT_MODELS),
     ]
+    
     front_models = {}
-    for platform_name, platform in platforms:
-        models = platform.front_model_token_limits.copy()
-        if not isinstance(platform, OpenAIPlatform):
-            models.pop('default', None)
+    for platform_name, models in platforms:
+        models_copy = models.copy()
+        if platform_name != 'openai':
+            models_copy.pop('default', None)
         if namespaced:
-            models = {f"{platform_name}_{k}": v for k, v in models.items()}
-        front_models.update(models)
+            models_copy = {f"{platform_name}_{k}": v for k, v in models_copy.items()}
+        front_models.update(models_copy)
     return front_models
 
 def encode_image(image_path):
@@ -173,7 +295,28 @@ class LLMPlatform(ABC):
             model (str, optional): The model to call. Default can be platform.default_model.
             timeout (int, optional): How long to wait before timing out.
         Returns:
-            str: The model’s textual description/analysis of the provided image.
+            str: The model's textual description/analysis of the provided image.
+        """
+        pass
+    
+    @abstractmethod
+    def create_embeddings(self, texts, model=None):
+        """
+        Create embeddings for a list of text inputs.
+        Args:
+            texts (list[str]): List of text strings to embed.
+            model (str, optional): The embeddings model to use. If None, use platform default.
+        Returns:
+            list[list[float]]: List of embedding vectors.
+        """
+        pass
+    
+    @abstractmethod
+    def get_embeddings_model_default(self):
+        """
+        Get the default embeddings model for this platform.
+        Returns:
+            str: The default embeddings model name.
         """
         pass
 
@@ -181,53 +324,16 @@ class LLMPlatform(ABC):
 
 # OpenAI Platform Implementation
 class OpenAIPlatform(LLMPlatform):
-    def __init__(self):
-        self.model_token_limits = {
-            'o1': 200000,
-            'o1-mini': 128000,
-            'o3': 200000,
-            'o3-pro': 200000,
-            'o3-mini': 128000,
-            'o4-mini': 200000,
-            'gpt-4': 32000,
-            'gpt-5': 400000,
-            'gpt-5.1': 400000,
-            'gpt-5-mini': 400000,
-            'gpt-5-nano': 400000,
-            'gpt-4o-mini': 128000,
-            'gpt-4o': 128000,
-            'gpt-4o-audio-preview': 128000,
-            'chatgpt-4o-latest': 128000,
-            'gpt-5-chat-latest': 400000,
-            'gpt-3.5-turbo': 16000,
-            'default': 'gpt-5-chat-latest'
-        }
-        self.front_model_token_limits = {
-            'o3': 200000,
-            'o3-pro': 200000,
-            'o3-mini': 128000,
-            'o4-mini': 200000,
-            'gpt-5': 400000,
-            'gpt-5.1': 400000,
-            'gpt-5-mini': 400000,
-            'gpt-5-nano': 400000,
-            'gpt-4o': 128000,
-            'gpt-3.5-turbo': 16000,
-            'chatgpt-4o-latest': 128000,
-            'gpt-5-chat-latest': 400000,
-            'default': 'gpt-5-chat-latest'
-        }
-        self.img_capable = [
-            'o1', 'gpt-4o', 'gpt-4o-mini', 'gpt-4o-audio-preview',
-            'chatgpt-4o-latest',
-            'gpt-5', 'gpt-5.1', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5-chat-latest'
-        ]
-        self.no_stream_list = [
-            'o1', 'o1-mini',  
-        ]
-        self.no_temperature_list = [
-            'o1', 'o1-mini', 'o3', 'o3-mini', 
-        ]
+    def __init__(self, api_key=None):
+        # Create instance-specific OpenAI client
+        self.client = openai.OpenAI(api_key=api_key) if api_key else openai.OpenAI()
+        
+        # Reference module-level constants
+        self.model_token_limits = OPENAI_MODELS
+        self.front_model_token_limits = OPENAI_FRONT_MODELS
+        self.img_capable = OPENAI_IMG_CAPABLE
+        self.no_stream_list = OPENAI_NO_STREAM_LIST
+        self.no_temperature_list = OPENAI_NO_TEMPERATURE_LIST
         self.default_model = self.model_token_limits['default']
 
     def list_models(self):
@@ -236,7 +342,7 @@ class OpenAIPlatform(LLMPlatform):
         Tries the OpenAI models API first, then falls back to known models.
         """
         try:
-            models = openai.models.list()
+            models = self.client.models.list()
             data = getattr(models, "data", models)
             ids = []
             for m in data:
@@ -262,7 +368,7 @@ class OpenAIPlatform(LLMPlatform):
                 # Include temperature only if the model actually supports it
                 if temperature is not None and temperature != 0 and model not in self.no_temperature_list:
                     params["temperature"] = temperature
-                response = openai.chat.completions.create(**params)
+                response = self.client.chat.completions.create(**params)
                 response_queue.put(response.choices[0].message.content)
             except Exception as e:
                 response_queue.put(e)
@@ -294,14 +400,14 @@ class OpenAIPlatform(LLMPlatform):
                 # If streaming is allowed for this model
                 if model not in self.no_stream_list:
                     params["stream"] = True
-                    response = openai.chat.completions.create(**params)
+                    response = self.client.chat.completions.create(**params)
                     for chunk in response:
                         message = chunk.choices[0].delta.content
                         if message:
                             yield message
                 else:
                     # Non-streaming fallback
-                    response = openai.chat.completions.create(**params)
+                    response = self.client.chat.completions.create(**params)
                     yield response.choices[0].message.content
 
             except Exception as e:
@@ -318,7 +424,7 @@ class OpenAIPlatform(LLMPlatform):
             raise Exception(f"An unexpected error occurred: {e}")
 
     def text_to_speech(self, text, model="tts-1", voice="onyx"):
-        response = openai.Audio.create(
+        response = self.client.audio.speech.create(
             model=model,
             voice=voice,
             input=text
@@ -330,7 +436,7 @@ class OpenAIPlatform(LLMPlatform):
 
     def transcribe_audio(self, file, model="whisper-1"):
         try:
-            transcription = openai.Audio.transcribe(model=model, file=file)
+            transcription = self.client.audio.transcriptions.create(model=model, file=file)
             return transcription
         except Exception as e:
             print(f"An error occurred during transcription: {e}")
@@ -404,6 +510,28 @@ class OpenAIPlatform(LLMPlatform):
             }
         ]
         return self.make_call(messages, model, temperature=None, timeout=timeout) if not stream else self.stream_call(messages, model, temperature=None, timeout=timeout)
+    
+    def create_embeddings(self, texts, model=None):
+        """
+        Create embeddings for a list of text inputs using OpenAI's embeddings API.
+        """
+        if model is None:
+            model = self.get_embeddings_model_default()
+        
+        try:
+            response = self.client.embeddings.create(
+                input=texts,
+                model=model
+            )
+            return [record.embedding for record in response.data]
+        except Exception as e:
+            raise Exception(f"OpenAI embeddings creation failed: {str(e)}")
+    
+    def get_embeddings_model_default(self):
+        """
+        Get the default embeddings model for OpenAI.
+        """
+        return 'text-embedding-3-small'
 
 
 ###############################################################################
@@ -426,28 +554,9 @@ class GrokPlatform(LLMPlatform):
             if api_key:  # Only warn if an API key was explicitly provided
                 print(f"Warning: Failed to initialize Grok client: {e}")
 
-        # Example model token limits for xAI Grok (adjust as needed)
-        self.model_token_limits = {
-            "grok-code-fast": 256000,
-            "grok-4": 256000,
-            "grok-4-fast-reasoning": 2000000,
-            "grok-4-fast-non-reasoning": 2000000,
-            "grok-3": 131072,
-            "grok-3-mini": 131072,
-            "grok-2-vision-latest": 32768,
-            "default": "grok-4-fast-non-reasoning",
-        }
-        self.front_model_token_limits = {
-            "grok-code-fast": 256000,
-            "grok-4": 256000,
-            "grok-4-fast-reasoning": 2000000,
-            "grok-4-fast-non-reasoning": 2000000,
-            "grok-3": 131072,
-            "grok-3-mini": 131072,
-            "grok-2-vision-latest": 32768,
-            "default": "grok-4-fast-non-reasoning",
-        }
-
+        # Reference module-level constants
+        self.model_token_limits = GROK_MODELS
+        self.front_model_token_limits = GROK_FRONT_MODELS
         self.default_model = self.model_token_limits["default"]
 
     def list_models(self):
@@ -629,6 +738,23 @@ class GrokPlatform(LLMPlatform):
             return self.stream_call(messages, model=model, temperature=temp, timeout=timeout)
         else:
             return self.make_call(messages, model=model, temperature=temp, timeout=timeout)
+    
+    def create_embeddings(self, texts, model=None):
+        """
+        Create embeddings for text inputs. Grok uses OpenAI-compatible API.
+        """
+        if model is None:
+            model = self.get_embeddings_model_default()
+        
+        # For now, Grok doesn't have embeddings, so raise an error
+        raise NotImplementedError("Grok platform does not yet support embeddings")
+    
+    def get_embeddings_model_default(self):
+        """
+        Get the default embeddings model for Grok.
+        """
+        # Grok doesn't have embeddings models yet
+        return None
 
 
 # Anthropic (Claude) Platform Implementation
@@ -647,24 +773,9 @@ class AnthropicPlatform(LLMPlatform):
             if api_key:  # Only warn if an API key was explicitly provided
                 print(f"Warning: Failed to initialize Anthropic client: {e}")
 
-        self.model_token_limits = {
-            'claude-opus-4-1': 200000,
-            'claude-opus-4-0': 200000,
-            'claude-sonnet-4-0': 200000,
-            'claude-sonnet-4-5': 1000000,
-            'claude-3-7-sonnet-latest': 200000,
-            'claude-3-5-sonnet-latest': 200000,
-            'claude-3-5-haiku-latest': 200000,
-            'default': 'claude-sonnet-4-0'
-        }
-        self.front_model_token_limits = {
-            'claude-opus-4-1': 200000,
-            'claude-opus-4-0': 200000,
-            'claude-sonnet-4-0': 200000,
-            'claude-sonnet-4-5': 1000000,
-            'claude-3-7-sonnet-latest': 200000,
-            'default': 'claude-sonnet-4-5'
-        }
+        # Reference module-level constants
+        self.model_token_limits = ANTHROPIC_MODELS
+        self.front_model_token_limits = ANTHROPIC_FRONT_MODELS
         self.default_model = self.model_token_limits['default']
 
     def list_models(self):
@@ -829,6 +940,20 @@ class AnthropicPlatform(LLMPlatform):
             return self.stream_call(messages, model, temperature, timeout=timeout)
         else:
             return self.make_call(messages, model, temperature, timeout=timeout)
+    
+    def create_embeddings(self, texts, model=None):
+        """
+        Create embeddings for text inputs using Anthropic's API.
+        Note: Anthropic doesn't currently offer embeddings models.
+        """
+        raise NotImplementedError("Anthropic platform does not currently support embeddings")
+    
+    def get_embeddings_model_default(self):
+        """
+        Get the default embeddings model for Anthropic.
+        """
+        # Anthropic doesn't have embeddings models
+        return None
 
 
 
@@ -853,28 +978,12 @@ class GeminiPlatform(LLMPlatform):
             if api_key:  # Only warn if an API key was explicitly provided
                 print(f"Warning: Failed to initialize Gemini client: {e}")
 
-        self.model_token_limits = {
-            'gemini-2.5-pro': 1000000,
-            'gemini-2.5-flash': 1000000,
-            'gemini-2.5-flash-lite': 1000000,
-            'gemini-2.0-flash': 1000000,
-            'default': 'gemini-2.5-flash'
-        }
-        self.front_model_token_limits = {
-            'gemini-2.5-pro': 1000000,
-            'gemini-2.5-flash': 1000000,
-            'gemini-2.0-flash': 1000000,
-            'default': 'gemini-2.5-flash'
-        }
+        # Reference module-level constants
+        self.model_token_limits = GEMINI_MODELS
+        self.front_model_token_limits = GEMINI_FRONT_MODELS
         self.default_model = self.model_token_limits['default']
-        
-        # Models that support multimodal inputs
-        self.multimodal_models = [
-            'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'
-        ]
-        
-        # Models with thinking capabilities
-        self.thinking_models = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']
+        self.multimodal_models = GEMINI_MULTIMODAL_MODELS
+        self.thinking_models = GEMINI_THINKING_MODELS
     
     def list_models(self):
         """
@@ -1161,6 +1270,32 @@ class GeminiPlatform(LLMPlatform):
                 
         except Exception as e:
             raise Exception(f"Gemini image inference failed: {str(e)}")
+    
+    def create_embeddings(self, texts, model=None):
+        """
+        Create embeddings for text inputs using Gemini's text embedding models.
+        """
+        if model is None:
+            model = self.get_embeddings_model_default()
+        
+        try:
+            # Gemini uses a different API for embeddings
+            results = []
+            for text in texts:
+                response = self.client.models.embed_content(
+                    model=model,
+                    content=text
+                )
+                results.append(response['embedding'])
+            return results
+        except Exception as e:
+            raise Exception(f"Gemini embeddings creation failed: {str(e)}")
+    
+    def get_embeddings_model_default(self):
+        """
+        Get the default embeddings model for Gemini.
+        """
+        return 'models/text-embedding-004'
 
 
 

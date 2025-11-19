@@ -15,7 +15,7 @@
 
 from google.auth.credentials import Credentials
 import requests
-import datetime
+from datetime import datetime
 
 class CredentialsManager(Credentials):
     def __init__(self, user, api):
@@ -33,7 +33,7 @@ class CredentialsManager(Credentials):
     def valid(self):
         if self.expiry is None:
             return False
-        return datetime.datetime.utcnow() < self.expiry
+        return datetime.utcnow() < self.expiry
 
     def refresh(self, request):
         if not self.valid:
@@ -45,7 +45,7 @@ class CredentialsManager(Credentials):
             response.raise_for_status()  
             response_data = response.json()
             self.token = response_data['access_token']
-            self.expiry = datetime.datetime.fromisoformat(response_data['expiry'])
+            self.expiry = datetime.fromisoformat(response_data['expiry'])
 
     def before_request(self, request, method, url, headers):
         self.apply(headers)

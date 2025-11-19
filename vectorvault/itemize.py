@@ -13,7 +13,7 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Vector Vault. See license for consent.import datetime 
 
-from .cloud_api import call_name_vecs, call_buildpath
+from .cloud_api import CloudAPI
 from annoy import AnnoyIndex
 from copy import deepcopy
 import datetime
@@ -55,12 +55,12 @@ def append_path_suffix(base_path, is_item, is_meta):
     return f'{base_path}/{suffix}'
 
 def cloud_name(v, x, user_id, api_key, item=False, meta=False):
-    base_path = call_buildpath(v, x, user_id, api_key)
+    base_path = CloudAPI._static_call_buildpath(user_id, api_key, v, x)
     final_path = append_path_suffix(base_path, item, meta)
     return final_path
 
 def name_vecs(vault, user_id, api_key, byte=None):
-    return call_name_vecs(vault, user_id, api_key, byte)
+    return CloudAPI._static_call_name_vecs(user_id, api_key, vault, byte)
 
 def name_map(vault, user_id, api_key, byte=None):
     if user_id != user_id or api_key != api_key:

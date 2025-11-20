@@ -17,21 +17,20 @@ theme:
   navigation_depth: 3
 
 nav:
-  - Home: README.md
+  - Home: index.md
   - Getting Started:
-      - Python SDK: docs/README.md
-      - Get Chat Documentation: docs/get_chat_docs.md
-      - Gemini Setup: docs/gemini_setup.md
+      - Python SDK: getting-started/python-sdk.md
+      - Get Chat Documentation: getting-started/get-chat.md
   - Vector Flow:
-      - Introduction: vectorflow_docs/README.md
-      - Advanced Features: vectorflow_docs/vectorflow_advanced_features.md
-      - Logging & Debugging: vectorflow_docs/vectorflow_logging.md
-      - Python Integration: vectorflow_docs/vectorflow_python.md
+      - Introduction: vectorflow/index.md
+      - Advanced Features: vectorflow/advanced-features.md
+      - Logging & Debugging: vectorflow/logging.md
+      - Python Integration: vectorflow/python-integration.md
       - Nodes:
-          - ACT Node: vectorflow_docs/vectorflow_nodes/vf_act_node.md
-          - ACT Node Security: vectorflow_docs/vectorflow_nodes/vf_act_node_security.md
-          - MCP Node: vectorflow_docs/vectorflow_nodes/vf_mcp_node.md
-  - Security: security/README.md
+          - ACT Node: vectorflow/nodes/act-node.md
+          - ACT Node Security: vectorflow/nodes/act-node-security.md
+          - MCP Node: vectorflow/nodes/mcp-node.md
+  - Security: security.md
 
 markdown_extensions:
   - admonition

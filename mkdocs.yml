@@ -21,6 +21,10 @@ nav:
   - Getting Started:
       - Python SDK: getting-started/python-sdk.md
       - Get Chat Documentation: getting-started/get-chat.md
+  - JavaScript SDK:
+      - Introduction: javascript-sdk/index.md
+      - Quick Reference: javascript-sdk/quick-reference.md
+      - API Reference: javascript-sdk/api-reference.md
   - Vector Flow:
       - Introduction: vectorflow/index.md
       - Advanced Features: vectorflow/advanced-features.md

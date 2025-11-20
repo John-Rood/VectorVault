@@ -2,7 +2,7 @@
 
 ## Introduction: Beyond Chatbots
 
-VectorFlow is the platform for building, deploying, and operating autonomous AI agents. While most tools focus on creating conversational AI, VectorFlow is engineered to solve the far more complex challenge of running these systems reliably in production.
+VectorFlow is the platform for building, deploying, and operating autonomous AI agents. While most tools focus on creating conversational AI, VectorFlow is engineered to solve the more complex challenge of running these systems reliably in production.
 
 It provides the infrastructure to move beyond simple request-response bots and create **persistent, stateful agents** that execute complex tasks over time, with or without human supervision.
 

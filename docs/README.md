@@ -505,8 +505,23 @@ response = vault.get_chat(
 - **Streaming available**: First token in <100ms with `get_chat_stream()`
 
 ## Change the Personality:
+
+### Base Personality
 ```python
-# save a different personality
+# ask a question (no set personality)
+question = "Why should I use Vector Vault for my next generative ai application?"
+
+answer = vault.get_chat(question, get_context=True)  
+
+print(answer)
+```
+>> Because it lets you skip the heavy lifting and go straight to shipping a real, stateful AI product. Instead of wiring together memory stores, schedulers, and vector databases yourself...
+
+<br>
+
+### Snoop Dogg Personality
+```python
+# save a personality (Snoop Dogg)
 vault.save_personality_message('Say everything like Snoop Dogg')
 
 # and ask the same question again
@@ -516,11 +531,8 @@ answer = vault.get_chat(question, get_context=True)
 
 print(answer)
 ```
->> Yo, check it out, Vector Vault be makin' generative AI a piece of cake, ya dig? If you got a project that needs some generative AI action, this is the way to go. But hold up, before you jump in, make sure you think 'bout your specific needs and the tech you already got goin' on. But let me tell ya, Vector Vault fits right into any workflow and can do its thing in the cloud, makin' it perfect for any application. All you gotta do is input your text and boom, you get your generated response. And if you wanna get fancy, you can even access the Vector Vault API straight from a JavaScript front-end, no need to mess with your own backend. So, with all these perks, Vector Vault gonna make your generative AI app development smooth and easy, ya feel me? It's gonna be faster and simpler than ever before.
+>> Aight, let’s roll with it. Look, when you buildin’ your next generative AI joint, you don’t wanna be messin’ with all that backend chaos, nah mean?...
 
-<br>
-<br>
-<br>
 <br>
 
 # Summarize Anything:

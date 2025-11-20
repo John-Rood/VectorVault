@@ -1,0 +1,51 @@
+site_name: Vector Vault Documentation
+site_description: Hosted platform for building and running AI agents with persistent memory
+site_author: Vector Vault Team
+site_url: https://vectorvault.readthedocs.io
+
+repo_name: John-Rood/VectorVault
+repo_url: https://github.com/John-Rood/VectorVault
+edit_uri: edit/main/docs/
+
+theme:
+  name: readthedocs
+  highlightjs: true
+  hljs_languages:
+    - python
+    - javascript
+    - bash
+  navigation_depth: 3
+
+nav:
+  - Home: README.md
+  - Getting Started:
+      - Python SDK: docs/README.md
+      - Get Chat Documentation: docs/get_chat_docs.md
+      - Gemini Setup: docs/gemini_setup.md
+  - Vector Flow:
+      - Introduction: vectorflow_docs/README.md
+      - Advanced Features: vectorflow_docs/vectorflow_advanced_features.md
+      - Logging & Debugging: vectorflow_docs/vectorflow_logging.md
+      - Python Integration: vectorflow_docs/vectorflow_python.md
+      - Nodes:
+          - ACT Node: vectorflow_docs/vectorflow_nodes/vf_act_node.md
+          - ACT Node Security: vectorflow_docs/vectorflow_nodes/vf_act_node_security.md
+          - MCP Node: vectorflow_docs/vectorflow_nodes/vf_mcp_node.md
+  - Security: security/README.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/John-Rood/VectorVault
+    - icon: fontawesome/brands/discord
+      link: https://discord.com/channels/1111817087007084544/1111817087451676835
+
+plugins:
+  - search
+

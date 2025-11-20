@@ -378,6 +378,7 @@ class Vault:
         '''
             Loads the AI functions - internal function
         '''
+        self._finalize_cloud_manager_initialization()
 
         if not self.ai_loaded or model:
             self.ai_loaded = True

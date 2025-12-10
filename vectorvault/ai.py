@@ -108,6 +108,8 @@ GEMINI_MODELS = {
     'gemini-2.5-flash': 1000000,
     'gemini-2.5-flash-lite': 1000000,
     'gemini-2.0-flash': 1000000,
+    'gemini-3-pro-preview': 1000000,
+    'gemini-3-pro-image-preview': 65000,
     'default': 'gemini-2.5-flash'
 }
 
@@ -115,14 +117,18 @@ GEMINI_FRONT_MODELS = {
     'gemini-2.5-pro': 1000000,
     'gemini-2.5-flash': 1000000,
     'gemini-2.0-flash': 1000000,
+    'gemini-3-pro-preview': 1000000,
+    'gemini-3-pro-image-preview': 65000,
     'default': 'gemini-2.5-flash'
 }
 
 GEMINI_MULTIMODAL_MODELS = [
-    'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'
+    'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash',
+    'gemini-3-pro-preview', 'gemini-3-pro-image-preview'
 ]
 
-GEMINI_THINKING_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']
+GEMINI_THINKING_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite',
+                          'gemini-3-pro-preview']
 
 
 # ============================================================================
@@ -984,7 +990,12 @@ class GeminiPlatform(LLMPlatform):
         self.default_model = self.model_token_limits['default']
         self.multimodal_models = GEMINI_MULTIMODAL_MODELS
         self.thinking_models = GEMINI_THINKING_MODELS
-    
+
+    def get_client(self, model=None):
+        if model and 'gemini-3' in model:
+            return genai.Client(http_options={'api_version': 'v1alpha'})
+        return self.client
+
     def list_models(self):
         """
         Return a list of available Gemini model IDs.
@@ -1031,7 +1042,7 @@ class GeminiPlatform(LLMPlatform):
         """
         self.close()
 
-    def make_call(self, messages, model, temperature=None, timeout=None):
+    def make_call(self, messages, model, temperature=None, timeout=None, **kwargs):
         def call_api(response_queue):
             try:
                 # Check if client is properly initialized
@@ -1046,10 +1057,22 @@ class GeminiPlatform(LLMPlatform):
                 if temperature is not None:
                     config_params['temperature'] = temperature
                 
+                # For Gemini 3, set defaults as per guide
+                if model and 'gemini-3' in model:
+                    if temperature is None or temperature == 0:
+                        temperature = 1.0
+                        config_params['temperature'] = 1.0
+                    config_params['thinking_level'] = 'high'
+                
+                # Merge user-provided kwargs
+                config_params.update(kwargs)
+                
                 # Create config object if we have parameters
                 config = types.GenerateContentConfig(**config_params) if config_params else None
                 
-                # Make the API call
+                # Get appropriate client
+                client = self.get_client(model)
+                
                 params = {
                     "model": model,
                     "contents": contents
@@ -1057,7 +1080,7 @@ class GeminiPlatform(LLMPlatform):
                 if config:
                     params["config"] = config
                     
-                response = self.client.models.generate_content(**params)
+                response = client.models.generate_content(**params)
                 response_queue.put(response.text)
             except Exception as e:
                 response_queue.put(e)
@@ -1071,7 +1094,7 @@ class GeminiPlatform(LLMPlatform):
             print("Request timed out")
             return None
 
-    def stream_call(self, messages, model, temperature=None, timeout=None):
+    def stream_call(self, messages, model, temperature=None, timeout=None, **kwargs):
         def call_api():
             try:
                 # Check if client is properly initialized
@@ -1086,8 +1109,21 @@ class GeminiPlatform(LLMPlatform):
                 if temperature is not None:
                     config_params['temperature'] = temperature
                 
+                # For Gemini 3, set defaults as per guide
+                if model and 'gemini-3' in model:
+                    if temperature is None or temperature == 0:
+                        temperature = 1.0
+                        config_params['temperature'] = 1.0
+                    config_params['thinking_level'] = 'high'
+                
+                # Merge user-provided kwargs
+                config_params.update(kwargs)
+                
                 # Create config object if we have parameters
                 config = types.GenerateContentConfig(**config_params) if config_params else None
+                
+                # Get appropriate client
+                client = self.get_client(model)
                 
                 # Make the streaming API call
                 params = {
@@ -1097,7 +1133,7 @@ class GeminiPlatform(LLMPlatform):
                 if config:
                     params["config"] = config
                     
-                response = self.client.models.generate_content_stream(**params)
+                response = client.models.generate_content_stream(**params)
                 for chunk in response:
                     if chunk.text:
                         yield chunk.text
@@ -1177,9 +1213,10 @@ class GeminiPlatform(LLMPlatform):
                     # If no suitable models found, return the default model
                     return self.model_token_limits['default']
 
-    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None):
+    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None, **kwargs):
         """
-        Handle image inference using Gemini's multimodal capabilities.
+        Handle image inference (analysis), generation, or editing using Gemini's multimodal capabilities.
+        For generation/editing, provide a descriptive user_text prompt without input image, and use 'gemini-3-pro-image-preview'.
         """
         # Check if client is properly initialized
         if self.client is None:
@@ -1188,88 +1225,139 @@ class GeminiPlatform(LLMPlatform):
         model = model if model else self.default_model
         
         if model not in self.multimodal_models:
-            raise ValueError(f"Model {model} does not support image inputs.")
+            raise ValueError(f"Model {model} does not support multimodal inputs/outputs.")
             
-        if image_path is None and image_url is None:
-            raise ValueError("Must specify either image_path or image_url.")
+        is_generation_or_editing = (image_path is None and image_url is None)
+        if is_generation_or_editing and 'gemini-3-pro-image-preview' not in model:
+            if 'gemini-3' in model:
+                model = 'gemini-3-pro-image-preview'
+            else:
+                model = 'gemini-2.5-pro'  # Fallback for older models, though limited
 
-        # Prepare the content list
-        contents = []
+        text = user_text if user_text else "Describe this image." if not is_generation_or_editing else "Generate an image based on the prompt."
+        text_part = types.Part(text=text)
         
-        # Add text prompt
-        if user_text:
-            contents.append(user_text)
+        # Prepare image part only if input image provided (for analysis/editing)
+        if not is_generation_or_editing:
+            if image_path:
+                with open(image_path, 'rb') as f:
+                    image_bytes = f.read()
+                
+                # Determine MIME type
+                if image_path.lower().endswith('.png'):
+                    mime_type = "image/png"
+                elif image_path.lower().endswith(('.jpg', '.jpeg')):
+                    mime_type = "image/jpeg"
+                elif image_path.lower().endswith('.gif'):
+                    mime_type = "image/gif"
+                elif image_path.lower().endswith('.webp'):
+                    mime_type = "image/webp"
+                else:
+                    mime_type = "image/jpeg"
+                
+                if model and 'gemini-3' in model:
+                    blob = types.Blob(mime_type=mime_type, data=image_bytes)
+                    media_res = kwargs.pop('media_resolution', {"level": "media_resolution_high"})
+                    image_part = types.Part(
+                        inline_data=blob,
+                        media_resolution=media_res
+                    )
+                else:
+                    image_part = types.Part.from_bytes(
+                        data=image_bytes,
+                        mime_type=mime_type
+                    )
+                    
+            elif image_url:
+                import requests
+                response = requests.get(image_url)
+                if response.status_code != 200:
+                    raise ValueError(f"Failed to fetch image from URL: {image_url}")
+                    
+                image_bytes = response.content
+                
+                # Determine MIME type
+                content_type = response.headers.get('Content-Type', 'image/jpeg')
+                if 'image/' not in content_type:
+                    content_type = 'image/jpeg'
+                mime_type = content_type
+                
+                if model and 'gemini-3' in model:
+                    blob = types.Blob(mime_type=mime_type, data=image_bytes)
+                    media_res = kwargs.pop('media_resolution', {"level": "media_resolution_high"})
+                    image_part = types.Part(
+                        inline_data=blob,
+                        media_resolution=media_res
+                    )
+                else:
+                    image_part = types.Part.from_bytes(
+                        data=image_bytes,
+                        mime_type=mime_type
+                    )
+        
+            parts = [text_part, image_part]
         else:
-            contents.append("Describe this image.")
-            
-        # Add image
-        if image_path:
-            # Read local image file
-            with open(image_path, 'rb') as f:
-                image_bytes = f.read()
-            
-            # Determine MIME type
-            mime_type = "image/jpeg"
-            if image_path.lower().endswith('.png'):
-                mime_type = "image/png"
-            elif image_path.lower().endswith('.gif'):
-                mime_type = "image/gif"
-            elif image_path.lower().endswith('.webp'):
-                mime_type = "image/webp"
-                
-            image_part = types.Part.from_bytes(
-                data=image_bytes,
-                mime_type=mime_type
-            )
-            contents.append(image_part)
-            
-        elif image_url:
-            # Fetch image from URL
-            import requests
-            response = requests.get(image_url)
-            if response.status_code != 200:
-                raise ValueError(f"Failed to fetch image from URL: {image_url}")
-                
-            # Determine MIME type from Content-Type header or URL
-            content_type = response.headers.get('Content-Type', 'image/jpeg')
-            if 'image/' not in content_type:
-                content_type = 'image/jpeg'  # Default fallback
-                
-            image_part = types.Part.from_bytes(
-                data=response.content,
-                mime_type=content_type
-            )
-            contents.append(image_part)
-
+            # For pure generation, just text part
+            parts = [text_part]
+        
+        # Create content with parts
+        content_obj = types.Content(parts=parts)
+        contents = [content_obj]
+        
         # Build config
         config_params = {}
         if temperature is not None:
             config_params['temperature'] = temperature
-            
+        
+        # For Gemini 3, set defaults
+        if model and 'gemini-3' in model:
+            if temperature is None or temperature == 0:
+                temperature = 1.0
+                config_params['temperature'] = 1.0
+            config_params['thinking_level'] = 'high'
+        
+        # Merge user-provided kwargs (e.g., aspect_ratio, etc.)
+        config_params.update(kwargs)
+        
         config = types.GenerateContentConfig(**config_params) if config_params else None
 
+        # Get client
+        client = self.get_client(model)
+        
         # Make the API call
+        params = {
+            "model": model,
+            "contents": contents
+        }
+        if config:
+            params["config"] = config
+            
         try:
-            params = {
-                "model": model,
-                "contents": contents
-            }
-            if config:
-                params["config"] = config
-                
             if stream:
                 def stream_generator():
-                    response = self.client.models.generate_content_stream(**params)
+                    response = client.models.generate_content_stream(**params)
                     for chunk in response:
-                        if chunk.text:
+                        if hasattr(chunk, 'text') and chunk.text:
                             yield chunk.text
+                        elif hasattr(chunk, 'parts') and chunk.parts:
+                            # For image output, yield parts or handle inline_data
+                            for part in chunk.parts:
+                                if part.inline_data:
+                                    yield f"[Image generated: {len(part.inline_data.data)} bytes]"
+                                else:
+                                    yield part.text or ""
                 return stream_generator()
             else:
-                response = self.client.models.generate_content(**params)
+                response = client.models.generate_content(**params)
+                # Handle potential image output
+                if response.parts and any(hasattr(p, 'inline_data') and p.inline_data for p in response.parts):
+                    img_parts = [p for p in response.parts if hasattr(p, 'inline_data') and p.inline_data]
+                    if img_parts:
+                        return f"Generated image: {img_parts[0].inline_data.mime_type}, {len(img_parts[0].inline_data.data)} bytes"
                 return response.text
                 
         except Exception as e:
-            raise Exception(f"Gemini image inference failed: {str(e)}")
+            raise Exception(f"Gemini image inference/generation failed: {str(e)}")
     
     def create_embeddings(self, texts, model=None):
         """
@@ -1372,7 +1460,7 @@ class LLMClient:
 
         return {'text': text, 'history': history, 'context': context}
 
-    def text_llm(self, user_input: str = '', history: str = '', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5):
+    def text_llm(self, user_input: str = '', history: str = '', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5, **kwargs):
         timeout = self.timeout if not timeout else timeout
         prompt_template = custom_prompt if custom_prompt else self.prompt
 
@@ -1394,7 +1482,7 @@ class LLMClient:
         messages.append({"role": "user", "content": prompt})
 
         for _ in range(max_retries):
-            response = self.platform.make_call(messages, model, temperature, timeout)
+            response = self.platform.make_call(messages, model, temperature, timeout, **kwargs)
             if response is not None:
                 return response
             print("Retrying...")
@@ -1429,7 +1517,7 @@ class LLMClient:
                 max_retries=max_retries
             )
         
-    def llm(self, user_input: str = '', history: str = '', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5, image_path=None, image_url=None):
+    def llm(self, user_input: str = '', history: str = '', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5, image_path=None, image_url=None, **kwargs):
         """
         Smart LLM method that automatically switches between text-only LLM and image inference
         based on whether image parameters are provided.
@@ -1443,7 +1531,8 @@ class LLMClient:
                 model=model,
                 stream=False,
                 temperature=temperature,
-                timeout=timeout
+                timeout=timeout,
+                **kwargs
             )
         else:
             # Otherwise use regular text LLM
@@ -1454,7 +1543,8 @@ class LLMClient:
                 custom_prompt=custom_prompt,
                 temperature=temperature,
                 timeout=timeout,
-                max_retries=max_retries
+                max_retries=max_retries,
+                **kwargs
             )
 
     def llm_sys(self, content=None, system_message="You are an AI assistant that excels at following instructions exactly.", model=None, temperature=0):
@@ -1518,7 +1608,34 @@ Instructions: {instructions}"""}
 
         raise Exception("Failed to receive response within the timeout period.")
 
-    def llm_stream(self, user_input='', history='', model=None, custom_prompt=False, temperature=0):
+    def llm_stream(self, user_input='', history='', model=None, custom_prompt=False, temperature=0, image_path=None, image_url=None, **kwargs):
+        """
+        Smart LLM streaming method that automatically switches between text-only streaming and image inference streaming
+        based on whether image parameters are provided.
+        """
+        # If image parameters are provided, use image inference streaming
+        if image_path or image_url:
+            yield from self.image_inference(
+                image_path=image_path,
+                image_url=image_url,
+                user_text=user_input,
+                model=model,
+                stream=True,
+                temperature=temperature,
+                **kwargs
+            )
+        else:
+            # Otherwise use regular text LLM streaming
+            yield from self.llm_stream_internal(
+                user_input=user_input,
+                history=history,
+                model=model,
+                custom_prompt=custom_prompt,
+                temperature=temperature,
+                **kwargs
+            )
+
+    def llm_stream_internal(self, user_input='', history='', model=None, custom_prompt=False, temperature=0, **kwargs):
         prompt_template = custom_prompt if custom_prompt else self.prompt
 
         model = model if model else self.default_model
@@ -1538,7 +1655,7 @@ Instructions: {instructions}"""}
         messages = [{"role": "user", "content": history}] if history else []
         messages.append({"role": "user", "content": prompt})
 
-        for message in self.platform.stream_call(messages, model, temperature):
+        for message in self.platform.stream_call(messages, model, temperature, **kwargs):
             if message:
                 yield message
 
@@ -1625,7 +1742,7 @@ Continue from where it leaves off by summarizing the next segment content: {cont
         """Get token count for a string using the platform's tokenizer"""
         return self.platform.get_tokens(string, encoding_name)    
     
-    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None):
+    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None, **kwargs):
         """
         Perform image inference using the underlying platform's image_inference method.
 
@@ -1637,6 +1754,7 @@ Continue from where it leaves off by summarizing the next segment content: {cont
             stream (bool, optional): Whether to stream the response.
             temperature (float, optional): Sampling temperature.
             timeout (int, optional): Timeout in seconds.
+            **kwargs: Additional parameters for the platform (e.g., aspect_ratio, media_resolution for Gemini 3).
 
         Returns:
             str or generator: Model's response as text or a generator if streaming.
@@ -1653,7 +1771,8 @@ Continue from where it leaves off by summarizing the next segment content: {cont
                 model=model,
                 stream=True,
                 temperature=temperature,
-                timeout=timeout
+                timeout=timeout,
+                **kwargs
             )
         else:
             return self.platform.image_inference(
@@ -1663,7 +1782,8 @@ Continue from where it leaves off by summarizing the next segment content: {cont
                 model=model,
                 stream=False,
                 temperature=temperature,
-                timeout=timeout
+                timeout=timeout,
+                **kwargs
             )
         
     def model_token_limit(self, model=None):

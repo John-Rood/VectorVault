@@ -23,11 +23,10 @@ import re
 import json
 import traceback
 import random
-from threading import Thread as T, Event
 from datetime import datetime
 from typing import List, Union, Dict
 from .ai import OpenAIPlatform, AnthropicPlatform, GrokPlatform, GeminiPlatform, LLMClient, get_all_models
-from .cloudmanager import CloudManager, VaultStorageManager, as_completed, ThreadPoolExecutor
+from .cloudmanager import CloudManager, VaultStorageManager, as_completed, ThreadPoolExecutor, Thread, Event
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, load_json
 
 
@@ -100,7 +99,7 @@ class Vault:
             self._cloud_manager_ready.set()
 
         if user and api_key:
-            self._cloud_manager_thread = T(target=_init_cloud_manager, daemon=True)
+            self._cloud_manager_thread = Thread(target=_init_cloud_manager, daemon=True)
             self._cloud_manager_thread.start()
         else:
             self._cloud_manager_ready.set()
@@ -195,6 +194,13 @@ class Vault:
     def vectors(self, value):
         """Allow setting vectors directly"""
         self._vectors = value
+
+    def _invalidate_vector_cache(self):
+        """Mark the in-memory vector index as stale."""
+        self._vectors = None
+        self.vecs_loaded = False
+        self.x_checked = False
+        self.x_loaded_checked = False
 
     @property
     def all_models(self):
@@ -613,10 +619,10 @@ class Vault:
         print('Deleting started. Note: this can take a while for large datasets') if self.verbose else 0
             
         # Clear the local vector data
-        self._vectors = get_vectors(self.dims)
         self.items.clear() 
         self.item_cache.clear() 
         self.cloud_manager.delete()
+        self._invalidate_vector_cache()
         self.x = 0
         vaults = self.cloud_manager.download_vaults_list_from_cloud()
         try:
@@ -1028,14 +1034,18 @@ class Vault:
             except: 
                 time.sleep(.01)
 
-    def load_vectors(self, vault = None):
-        start_time = time.time()
+    def load_vectors(self, vault = None, force_reload: bool = False):
         target_vault = vault if vault else self.vault 
 
         if target_vault != self.vault:
             return self._download_vectors_for_vault(target_vault)
 
-        t = T(target=self.load_mapping, args=(self.vault,))
+        if not force_reload and self.vecs_loaded and self._vectors is not None:
+            self.x_checked = False
+            return self._vectors
+
+        start_time = time.time()
+        t = Thread(target=self.load_mapping, args=(self.vault,))
         t.start()
         temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(self.vault, self.user, self.api))
         self._vectors = get_vectors(self.dims)
@@ -1068,12 +1078,10 @@ class Vault:
             byte = os.path.getsize(vector_temp_file_path)
             self.cloud_manager.upload_temp_file(vector_temp_file_path, name_vecs(vault, self.user, self.api, byte))
         
+        self._invalidate_vector_cache()
         self.delete_temp_file(vector_temp_file_path)
         self.save_mapping(vault)
         self.items.clear()
-        self._vectors = get_vectors(self.dims)
-        self.x_checked = False
-        self.vecs_loaded = False
         self.saved_already = False
 
 
@@ -1433,7 +1441,7 @@ class Vault:
             The distance can be useful for assessing similarity differences in the items returned. 
             Each item has its' own distance number, and this changes the structure of the output.
         '''
-        T(target=self.cloud_manager.build_update, args=(n,)).start()
+        Thread(target=self.cloud_manager.build_update, args=(n,)).start()
         vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
         return self.get_items_by_vector(vector, n, include_distances = include_distances, vault = vault if vault else self.vault)
 
@@ -1459,7 +1467,7 @@ class Vault:
         if not vaults:
             raise ValueError("`vaults` must be provided as a str, list[str], or dict[str, int].")
 
-        T(target=self.cloud_manager.build_update, args=(n,)).start()
+        Thread(target=self.cloud_manager.build_update, args=(n,)).start()
         vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
 
         # Single vault (string): normal single-vault search with distances
@@ -2165,6 +2173,35 @@ class Vault:
         If it's a directory, deletes everything within it recursively.
         """
         self.storage.delete_label(path)
+
+    def preload_cache(self, max_workers: int = 10):
+        """
+        Preload vectors and all items from the vault into the local item_cache to avoid concurrent cloud downloads during parallel queries.
+        Uses a limited thread pool to control concurrency and prevent overwhelming the cloud storage.
+        
+        Args:
+            max_workers (int): Maximum number of concurrent threads for downloading items. Defaults to 10.
+        """
+        # Load vectors first to ensure they are available for searches
+        self.load_vectors()
+        
+        mapping = self.load_mapping()
+        uuids = list(mapping.values())
+        
+        print(f"Preloading {len(uuids)} items into cache with {max_workers} workers...") if self.verbose else 0
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [
+                executor.submit(self._get_item_from_cache, uuid, self.vault)
+                for uuid in uuids
+            ]
+            for future in as_completed(futures):
+                try:
+                    future.result()  # This populates the cache
+                except Exception as e:
+                    print(f"Failed to preload item: {e}") if self.verbose else 0
+        
+        print(f"Preloaded {len(self.item_cache)} items into cache.") if self.verbose else 0
 
 
 class RateLimiter:

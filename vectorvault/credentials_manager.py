@@ -15,6 +15,7 @@
 
 from google.auth.credentials import Credentials
 import requests
+from threading import RLock 
 from datetime import datetime
 
 class CredentialsManager(Credentials):
@@ -24,19 +25,24 @@ class CredentialsManager(Credentials):
         self.token = None
         self.expiry = None
         self._universe_domain = "googleapis.com"
+        self._lock = RLock()
         self.refresh(requests.Request())
 
     def apply(self, headers, token=None):
-        headers["Authorization"] = f"Bearer {self.token}"
+        with self._lock:
+            headers["Authorization"] = f"Bearer {self.token}"
 
     @property
     def valid(self):
-        if self.expiry is None:
-            return False
-        return datetime.utcnow() < self.expiry
+        with self._lock:
+            if self.expiry is None:
+                return False
+            return datetime.utcnow() < self.expiry
 
     def refresh(self, request):
-        if not self.valid:
+        with self._lock:
+            if self.expiry is not None and datetime.utcnow() < self.expiry:
+                return
             data = {
                 "user_id": self.user,
                 "api_key": self.api,
@@ -48,6 +54,7 @@ class CredentialsManager(Credentials):
             self.expiry = datetime.fromisoformat(response_data['expiry'])
 
     def before_request(self, request, method, url, headers):
+        self.refresh(request)
         self.apply(headers)
 
     def __getstate__(self):

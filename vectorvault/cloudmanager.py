@@ -17,6 +17,7 @@ import tempfile
 import os
 import json
 import time
+from threading import Lock as threading_Lock, Event, Thread
 from google.cloud import storage
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from .itemize import cloud_name, name_map
@@ -29,11 +30,15 @@ class CloudManager:
         self.api = api_key
         self.vault = vault
         self.cloud_api = CloudAPI(user, api_key)
+        self._credentials = None
         self._storage_client = None
         self._cloud = None
         self._username = None
         self.cloud_name = cloud_name
         self.req_count = 0
+        self._credentials_lock = threading_Lock()
+        self._storage_client_lock = threading_Lock()
+        self._cloud_lock = threading_Lock()
         
         self._init_data = None
         self._init_data_loaded = False
@@ -47,15 +52,22 @@ class CloudManager:
     @property
     def credentials(self):
         """Lazy initialization of credentials"""
-        if not hasattr(self, '_credentials'):
-            self._credentials = CredentialsManager(self.user, self.api)
+        if self._credentials is None:
+            with self._credentials_lock:
+                if self._credentials is None:
+                    self._credentials = CredentialsManager(self.user, self.api)
         return self._credentials
     
     @property
     def storage_client(self):
         """Lazy initialization of storage client"""
         if self._storage_client is None:
-            self._storage_client = storage.Client(project=self.cloud_api.call_proj(), credentials=self.credentials)
+            with self._storage_client_lock:
+                if self._storage_client is None:
+                    self._storage_client = storage.Client(
+                        project=self.cloud_api.call_proj(),
+                        credentials=self.credentials
+                    )
         return self._storage_client
     
     @property
@@ -69,7 +81,9 @@ class CloudManager:
     def cloud(self):
         """Lazy initialization of cloud bucket"""
         if self._cloud is None:
-            self._cloud = self.storage_client.bucket(self.username)
+            with self._cloud_lock:
+                if self._cloud is None:
+                    self._cloud = self.storage_client.bucket(self.username)
         return self._cloud
     
     def load_init_data(self):

@@ -31,9 +31,9 @@ OPENAI_MODELS = {
     'gpt-4o': 128000,
     'gpt-4o-audio-preview': 128000,
     'chatgpt-4o-latest': 128000,
-    'gpt-5-chat-latest': 400000,
+    'gpt-5.2-chat-latest': 400000,
     'gpt-3.5-turbo': 16000,
-    'default': 'gpt-5-chat-latest'
+    'default': 'gpt-5.2-chat-latest'
 }
 
 OPENAI_FRONT_MODELS = {
@@ -43,19 +43,20 @@ OPENAI_FRONT_MODELS = {
     'o4-mini': 200000,
     'gpt-5': 400000,
     'gpt-5.1': 400000,
+    'gpt-5.2': 400000,
     'gpt-5-mini': 400000,
     'gpt-5-nano': 400000,
     'gpt-4o': 128000,
     'gpt-3.5-turbo': 16000,
     'chatgpt-4o-latest': 128000,
-    'gpt-5-chat-latest': 400000,
-    'default': 'gpt-5-chat-latest'
+    'gpt-5.2-chat-latest': 400000,
+    'default': 'gpt-5.2-chat-latest'
 }
 
 OPENAI_IMG_CAPABLE = [
     'o1', 'gpt-4o', 'gpt-4o-mini', 'gpt-4o-audio-preview',
     'chatgpt-4o-latest',
-    'gpt-5', 'gpt-5.1', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5-chat-latest'
+    'gpt-5', 'gpt-5.1', 'gpt-5.2', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5.2-chat-latest'
 ]
 
 OPENAI_NO_STREAM_LIST = ['o1', 'o1-mini']

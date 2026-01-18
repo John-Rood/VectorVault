@@ -6,29 +6,55 @@ This document contains critical workflow instructions. Read and follow these bef
 
 ---
 
-## 1. Documentation Updates
+## 1. Push Protocol
 
-**When you make changes to the code, update existing documentation.**
+**ALWAYS follow this protocol after making changes:**
 
-- If you modify a function, endpoint, or feature, update the relevant docs
+### 1. Review ALL Changes
+Before committing, review EVERYTHING that changed since the last commit:
+```bash
+git status
+git diff
+git diff --cached
+```
+Make sure you understand and can document ALL changes, not just your current task.
+
+### 2. Update Documentation
+If you modified any function, endpoint, feature, or behavior:
+- Update relevant docs (README.md, Architecture.md, inline comments)
+- Update any user-facing command docs
 - Don't let documentation drift from implementation
-- If no relevant docs exist, note what was changed for future documentation
+
+### 3. Audit & Bug Check
+- Verify all changes are correct and complete
+- Scan for syntax errors, missing imports, logic issues
+- Run any available tests
+
+### 4. Commit with Full Description
+```bash
+git add -A
+git commit -m "type: brief summary" -m "- Change 1
+- Change 2
+- Change 3"
+```
+The commit message MUST cover ALL changes since last commit.
+
+### 5. Push & Deploy
+```bash
+git push origin main
+./deploy.sh  # If code changes were made and deploy script exists
+```
 
 ---
 
-## 2. Push Protocol
+## 2. Documentation Updates
 
-**Follow the push protocol.**
+**When you make code changes, you MUST update existing documentation.**
 
-After completing work:
-
-1. **Audit** - Verify all changes are correct and complete
-2. **Bug check** - Scan for syntax errors, missing imports, logic issues
-3. **Commit** - Use descriptive commit messages
-4. **Push** - Push to remote
-5. **Deploy** - If a deploy script exists, run it after code changes
-
-Reference: See the full push workflow in the [Cline Error Orchestrator](../Cline-Error-Orchestrator/workflows/push.md)
+- If you modify a function, endpoint, or feature → update the relevant docs
+- If you add new functionality → document it
+- If you change behavior → update any affected docs
+- Check: README.md, Architecture.md, any *_COMMANDS.txt files, inline comments
 
 ---
 

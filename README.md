@@ -2,198 +2,223 @@
 
 ![Vector Vault Header](https://images.squarespace-cdn.com/content/646ad2edeaaf682a9bbc36da/297fde6c-f5b4-4076-83bc-81dcfdbffebe/Vector+Vault+Header+5000.jpg)
 
-Vector Vault is a hosted platform for building and running AI agents with persistent memory. You design agent workflows visually in the Vector Flow browser app, and we handle the infrastructure - delivering sub-second response times and scaling to thousands of concurrent operations without you managing servers or databases.
+**Build AI agents that think, remember, and act.** Start free on your machine. Scale to production with zero infrastructure.
 
-The platform centers on PAR (Persistent Agentic Runtime), which separates ephemeral compute from durable state. This architecture enables agents that pause for days waiting on approvals, branch into hundreds of parallel tasks, or maintain conversational context across months—all while keeping your operational overhead minimal.
+## Start Free, Scale When Ready
 
-## What Makes This Different
+Vector Vault gives you two ways to build:
 
-Traditional agent frameworks require you to wire together vector databases, model routers, state stores, and orchestration layers. Even then, you're left optimizing for latency, managing concurrency, and dealing with infrastructure scaling. Vector Vault consolidates these into a managed runtime where:
+**🏠 Local Mode (Free)** — Run entirely on your machine. No account needed. No limits. Perfect for learning, prototyping, and projects where your data stays local.
 
-- **Performance is built-in**: Sub-second streaming responses and ~1,000 writes/sec throughput come standard, not after months of optimization.
-- **State persists automatically**: Agents resume exactly where they left off, whether after 5 minutes or 5 days.
-- **Scaling is transparent**: Handle 10 or 10,000 concurrent conversations without changing your architecture.
-- **Costs stay predictable**: Pay for what you use, not for idle infrastructure or over-provisioned clusters.
-
-## Core Architecture
-
-### Vector Flow: Visual Agent Design
-[Vector Flow](https://app.vectorvault.io/vector-flow) is where you build agents through drag-and-drop composition. Behind its accessible interface lies a sophisticated execution engine:
-
-- **Smart routing via recognition nodes**: Binary decisions execute in ~300ms, enabling real-time conversation flow.
-- **Native parallelism**: Child flows inherit parent state and run concurrently, allowing exponential scaling patterns.
-- **Python-in-the-browser**: The Act node provides a sandboxed Python environment for API integrations and data processing.
-- **Multi-model orchestration**: Switch between OpenAI, Claude, Gemini, and Grok mid-conversation based on task requirements.
-
-### Persistent Agentic Runtime (PAR)
-PAR is the technical foundation that makes Vector Vault agents different:
-
-```
-User Message → Stateless Worker → PAR State Layer → Response
-                     ↑                    ↓
-                     └──── Durable State ────┘
-```
-
-This separation means:
-- **Workers scale elastically**: New instances spin up in milliseconds to handle load spikes.
-- **State remains consistent**: Variables, conversation history, and checkpoints persist across any number of workers.
-- **Long-running flows become trivial**: An agent can wait weeks for a human approval without consuming compute resources.
-
-Performance characteristics (typical production workloads):
-- **Latency**: 200-400ms for vector retrieval + model generation
-- **Throughput**: ~5,000 reads/sec and ~1,000 writes/sec per project
-- **Availability**: 99.9% uptime SLA with automatic failover
-
-## 🚀 Quick Start
+**☁️ Cloud Platform** — When you're ready for production, deploy to our Persistent Agentic Runtime (PAR). Sub-second responses, 99.9% uptime, visual workflow builder, and agents that can pause for days and resume instantly.
 
 ```bash
 pip install vector-vault
 ```
 
-### Your First Agent in 60 Seconds
+## Quick Start (Local Mode)
+
+No signup. No API keys (except OpenAI for embeddings). Just code.
 
 ```python
 from vectorvault import Vault
 
-# Connect to Vector Vault
+# Create a local vault
 vault = Vault(
-    user='YOUR_EMAIL',
-    api_key='YOUR_VECTOR_VAULT_API_KEY', 
+    vault='my_knowledge_base',
     openai_key='YOUR_OPENAI_KEY',
-    anthropic_key='YOUR_ANTHROPIC_KEY',  # optional - for Claude models
-    vault='customer_support'
+    local=True  # Everything stays on your machine
 )
 
-# Add your knowledge base
-vault.add("""
-    Refund policy: Full refund within 30 days...
-    Shipping: Standard 5-7 business days, Express 1-2 days...
-    Customer service hours: 24/7 via chat, 9-5 EST via phone...
-""")
+# Add your data
+vault.add("The mitochondria is the powerhouse of the cell")
+vault.add("Neural networks are inspired by biological brains")
+vault.add("Vector databases enable semantic search")
 vault.get_vectors()
 vault.save()
 
-# Deploy a simple customer service flow
-response = vault.run_flow(
-    'customer_service_agent',
-    user_message='I ordered 5 days ago but haven't received tracking',
-    customer_data={'order_date': '2024-01-10', 'shipping': 'standard'}
-)
-```
+# Search by meaning, not keywords
+results = vault.get_similar("How do AI systems learn?")
+# → Returns: "Neural networks are inspired by biological brains"
 
-## Advanced Capabilities
-
-### Intelligent Context Management
-Our Smart History Search transforms vague follow-ups into precise retrieval queries:
-
-```python
-# Conversation context
-history = """
-User: My PostgreSQL queries are timing out after 30 seconds
-AI: That's likely due to missing indexes or table locks...
-User: How do I fix that?
-"""
-
-
-
+# Or chat with your data
 response = vault.get_chat(
-    "How do I fix that?",
-    history=history,
+    "What powers the cell?",
+    get_context=True  # Automatically retrieves relevant context
+)
+```
+
+## What You Can Build
+
+### RAG Applications
+Give any LLM access to your knowledge base with automatic context retrieval.
+
+```python
+response = vault.get_chat(
+    "How do I configure authentication?",
     get_context=True,
-    smart_history_search=True
-)
-```
-Smart History automatically reformulates the user input "How do I fix that?" 
-into a search query "PostgreSQL query timeout solutions indexes locks"
-So, instead of searching the database for "How do I fix that", 
-We search the database for "PostgreSQL query timeout solutions indexes locks"
-Which yields the right context for answering the question
-
-### Cross-Vault Intelligence
-Search across isolated data repositories while maintaining security boundaries:
-
-```python
-# Simultaneously search documentation, support tickets, and legal policies
-results = vault.get_similar_from_vaults(
-    "GDPR compliance for user data deletion",
-    n=10,
-    vaults={
-        "legal_docs": 3,      # Guarantee 3 results from legal
-        "support_tickets": 2,  # 2 from support history
-        "engineering": None    # Fill remaining slots with best engineering docs
-    }
+    n_context=5
 )
 ```
 
-### Production-Ready Streaming
-Built for real-time applications with proper error handling and backpressure:
+### Semantic Search
+Find content by meaning. Search "budget issues" and find documents about "financial constraints."
 
 ```python
-# Stream to web clients with automatic chunking and keep-alive
-@app.route('/chat-stream')
-def chat_stream():
-    def generate():
-        for token in vault.get_chat_stream(request.json['message'], 
-                                          get_context=True,
-                                          model='claude-4-5-sonnet'):
-            yield f"data: {json.dumps({'token': token})}\n\n"
-    
-    return Response(generate(), mimetype='text/event-stream')
+results = vault.get_similar("budget issues", n=10)
 ```
 
-## Real-World Applications
+### AI Memory Systems
+Give your agents persistent memory across conversations.
 
-### Customer Support Automation
-A major e-commerce platform replaced their traditional chatbot with Vector Vault agents:
-- **Response quality**: 73% → 89% first-contact resolution
-- **Latency**: 2.3s → 0.4s average response time
-- **Scale**: Handles 50K+ concurrent conversations during peak sales
+```python
+# Store conversation
+vault.add(f"User asked about {topic}. Agent responded with {response}")
+vault.get_vectors()
+vault.save()
 
-### AI-Powered Security Platform
-Aegis AI built their entire threat detection system on Vector Flow:
-- **Processing volume**: 100K+ security events daily
-- **Decision speed**: <300ms for threat classification
-- **Zero downtime**: Since deployment 8 months ago
+# Later, retrieve relevant context
+context = vault.get_similar(new_user_message)
+```
 
-### Healthcare Intake Automation
-A telehealth startup uses Vector Vault for patient screening:
-- **Compliance**: HIPAA-compliant isolated vaults per patient
-- **Accuracy**: 94% correct triage decisions
-- **Time savings**: 15-minute manual intake → 3-minute automated flow
+### Document Q&A
+Turn any document collection into a question-answering system.
 
-## When Vector Vault Makes Sense
+```python
+# Load documents
+for doc in documents:
+    vault.add(doc.text, meta={'source': doc.filename})
+vault.get_vectors()
+vault.save()
 
-**Perfect fit:**
-- You need agents that maintain state across long time periods
-- Your use case involves complex, multi-step workflows
-- You want production-grade performance without infrastructure work
-- You need to mix different AI models based on task requirements
+# Answer questions
+answer = vault.get_chat("What's the refund policy?", get_context=True)
+```
 
-**Consider alternatives if:**
-- You want to run local models
-- You require on-premise deployment for regulatory reasons
+## Going to Production
 
-## Pricing Philosophy
+When you're ready to scale, Vector Vault Cloud provides:
 
-We charge for actual usage, not reserved capacity:
-- **No minimum commits**: Start with $0, scale as you grow
-- **Transparent metering**: Pay per operation (embeddings, searches, model calls)
-- **Volume discounts**: Automatic price breaks at scale
-- **Predictable bills**: Hard spending caps available
+### Persistent Agentic Runtime (PAR)
+Agents that pause for days, branch into parallel tasks, and resume instantly — without you managing servers.
 
-Most teams find they spend 40-70% less than running equivalent infrastructure themselves, while getting better performance.
+### Vector Flow
+Design agent workflows visually with drag-and-drop. Branching logic, approvals, integrations, all in the browser.
 
-## Get Started
+### Production Performance
+- Sub-second streaming responses
+- 99.9% uptime SLA
+- Auto-scaling to thousands of concurrent conversations
 
-1. **Try it free**: [VectorVault.io](https://vectorvault.io) - 30-day trial includes all features
-2. **Build visually**: [app.vectorvault.io/vector-flow](https://app.vectorvault.io/vector-flow)
-3. **Install the SDK**: `pip install vector-vault`
+### Enterprise Ready
+- SOC 2 compliant infrastructure
+- Team collaboration
+- Usage-based pricing
 
-### Resources
-- **Complete API Docs**: [Full API Reference](https://github.com/John-Rood/VectorVault/tree/main/vectorvault/documentation/fulldocs.md)
-- **Vector Flow Guide**: [Visual Agent Building](https://github.com/John-Rood/VectorVault/tree/main/documentation/vectoflow_docs)
-- **Architecture Deep Dive**: [How PAR Works](https://github.com/John-Rood/VectorVault/tree/main/vectorvault/documentation/get_chat_docs.md)
-- **Discord Community**: [Join 2,000+ builders](https://discord.com/channels/1111817087007084544/1111817087451676835)
-- **JavaScript SDK**: [Browser & Node.js](https://github.com/John-Rood/VectorVault-js)
+```python
+# Switch to cloud mode
+vault = Vault(
+    user='you@company.com',
+    api_key='YOUR_VECTORVAULT_KEY',
+    openai_key='YOUR_OPENAI_KEY',
+    vault='production_kb'
+)
+
+# Same API, production infrastructure
+response = vault.get_chat("Customer question here", get_context=True)
+
+# Or run visual workflows
+result = vault.run_flow('customer_support_agent', user_message="...")
+```
+
+**[Get started at vectorvault.io →](https://vectorvault.io)**
+
+## Core API
+
+### Initialization
+
+```python
+# Local mode (free, no account)
+vault = Vault(
+    vault='vault_name',
+    openai_key='sk-...',
+    local=True
+)
+
+# Cloud mode (production)
+vault = Vault(
+    user='email',
+    api_key='vv_...',
+    openai_key='sk-...',
+    vault='vault_name'
+)
+```
+
+### Essential Methods
+
+| Method | Description |
+|--------|-------------|
+| `add(text, meta=None)` | Add text to the vault |
+| `get_vectors()` | Generate embeddings |
+| `save()` | Persist to storage |
+| `get_similar(text, n=4)` | Semantic search |
+| `get_chat(text, get_context=True)` | RAG chat |
+| `get_items(ids)` | Retrieve by ID |
+| `edit_item(id, text)` | Update item |
+| `delete_items(ids)` | Remove items |
+
+### Convenience
+
+```python
+# Add + embed + save in one call
+vault.add_n_save("Your text here")
+
+# Stream responses
+for chunk in vault.get_chat_stream("Your question"):
+    print(chunk, end='')
+```
+
+## How It Works
+
+Vector Vault uses FAISS (Facebook AI Similarity Search) for fast, accurate vector operations:
+
+1. **Add** your text data
+2. **Embed** using OpenAI's embedding models  
+3. **Search** by semantic similarity
+4. **Chat** with automatic context retrieval
+
+Local mode stores everything in `~/.vectorvault/`. Cloud mode syncs to our managed infrastructure.
+
+## Requirements
+
+- Python 3.8+
+- OpenAI API key (for embeddings)
+
+## Resources
+
+- **Website**: [vectorvault.io](https://vectorvault.io)
+- **Vector Flow**: [app.vectorvault.io/vector-flow](https://app.vectorvault.io/vector-flow)
+- **Full API Docs**: [Documentation](https://github.com/John-Rood/VectorVault/tree/main/vectorvault/documentation)
+- **Discord**: [Join the community](https://discord.com/channels/1111817087007084544/1111817087451676835)
+- **JavaScript SDK**: [VectorVault-js](https://github.com/John-Rood/VectorVault-js)
+
+## Contributing
+
+```bash
+git clone https://github.com/John-Rood/VectorVault.git
+cd VectorVault
+pip install -e .
+
+# Run tests
+cd VectorVault-Testing
+python run_tests.py        # Cloud tests
+python test_local_mode.py  # Local tests
+```
+
+## License
+
+MIT License
 
 ---
+
+**Start free. Scale infinitely.** [vectorvault.io](https://vectorvault.io)

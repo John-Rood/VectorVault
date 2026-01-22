@@ -28,20 +28,30 @@ from typing import List, Union, Dict
 from .ai import OpenAIPlatform, AnthropicPlatform, GrokPlatform, GeminiPlatform, LLMClient, get_all_models
 from .cloudmanager import CloudManager, VaultStorageManager, as_completed, ThreadPoolExecutor, Thread, Event
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, load_json
+from .local_storage import LocalStorageManager, LocalVaultStorageManager
 
 
 class Vault:
     def __init__(self, user: str = None, api_key: str = None, openai_key: str = None, vault: str = None, 
                  embeddings_model: str = None, verbose: bool = False, 
                  model = None, grok_key: str = None, anthropic_key: str = None,
-                 gemini_key: str = None, main_prompt = None, main_prompt_with_context = None, personality_message = None):
+                 gemini_key: str = None, main_prompt = None, main_prompt_with_context = None, personality_message = None,
+                 local: bool = False, local_dir: str = None):
         ''' 
-        >>> Create a vector database instance:
+        >>> Create a vector database instance (Cloud mode):
         ```
         vault = Vault(user='your_email',
               api_key='vectorvault_api',
               openai_key='openai_api',
               vault='your_vault_name',
+              verbose=True)
+        ```
+
+        >>> Create a local vector database instance (Local mode - no VectorVault API needed):
+        ```
+        vault = Vault(openai_key='openai_api',
+              vault='your_vault_name',
+              local=True,
               verbose=True)
         ```
 
@@ -61,10 +71,36 @@ class Vault:
         >>> Change the model with the `model` param in get_chat:
         `gpt4_rag_answer = vault.get_chat('some question', get_context=True, model='gpt-4')`
 
+        Args:
+            user: Email for VectorVault cloud (not required if local=True)
+            api_key: VectorVault API key (not required if local=True)
+            openai_key: OpenAI API key for embeddings and chat
+            vault: Name of the vault
+            embeddings_model: Model for embeddings (default: text-embedding-3-small)
+            verbose: Enable verbose logging
+            local: If True, use local filesystem instead of cloud
+            local_dir: Base directory for local storage (default: ~/.vectorvault)
+            model: Default model for chat
+            grok_key: Grok API key
+            anthropic_key: Anthropic API key
+            gemini_key: Gemini API key
+            main_prompt: Custom main prompt
+            main_prompt_with_context: Custom prompt with context
+            personality_message: Custom personality message
+
         '''
-        self.user = user.lower()
+        # Store mode flags
+        self.local = local
+        self.local_dir = local_dir or os.path.expanduser('~/.vectorvault')
+        
+        # Set user - handle None for backwards compatibility
+        if local:
+            self.user = user.lower() if user else 'local_user'
+        else:
+            self.user = user.lower() if user else None
+        
         self.vault = vault.strip() if vault else 'home'
-        self.api = api_key
+        self.api = api_key  # May be None in local mode
         self.verbose = verbose
         
         # Initialize embeddings model and dimensions
@@ -85,24 +121,38 @@ class Vault:
             
         self.map = {}
         self._cloud_manager = None
+        self._local_manager = None
         self._cloud_manager_thread = None
         self._cloud_manager_ready = Event()
 
-        def _init_cloud_manager():
-            cm = CloudManager(self.user, self.api, self.vault)
-            self._cloud_manager = cm
-            if cm.item_mapping and not self.map:
-                self.map = dict(cm.item_mapping)
-            self._cached_prompt_with_context = cm.custom_prompt_with_context
-            self._cached_prompt_no_context = cm.custom_prompt_no_context
-            self._cached_personality = cm.personality_message
-            self._cloud_manager_ready.set()
-
-        if user and api_key:
-            self._cloud_manager_thread = Thread(target=_init_cloud_manager, daemon=True)
-            self._cloud_manager_thread.start()
+        if local:
+            # Local mode - initialize LocalStorageManager
+            self._local_manager = LocalStorageManager(self.vault, self.local_dir)
+            self._cloud_manager_ready.set()  # Immediately ready
+            
+            # Load mapping and prompts from local storage
+            if self._local_manager.item_mapping:
+                self.map = dict(self._local_manager.item_mapping)
+            self._cached_prompt_with_context = self._local_manager.custom_prompt_with_context
+            self._cached_prompt_no_context = self._local_manager.custom_prompt_no_context
+            self._cached_personality = self._local_manager.personality_message
         else:
-            self._cloud_manager_ready.set()
+            # Cloud mode - existing behavior
+            def _init_cloud_manager():
+                cm = CloudManager(self.user, self.api, self.vault)
+                self._cloud_manager = cm
+                if cm.item_mapping and not self.map:
+                    self.map = dict(cm.item_mapping)
+                self._cached_prompt_with_context = cm.custom_prompt_with_context
+                self._cached_prompt_no_context = cm.custom_prompt_no_context
+                self._cached_personality = cm.personality_message
+                self._cloud_manager_ready.set()
+
+            if user and api_key:
+                self._cloud_manager_thread = Thread(target=_init_cloud_manager, daemon=True)
+                self._cloud_manager_thread.start()
+            else:
+                self._cloud_manager_ready.set()
         
         # Lazy initialization for other components
         self._storage = None
@@ -164,8 +214,17 @@ class Vault:
         """Get cloud manager (initialized eagerly in __init__)"""
         self._finalize_cloud_manager_initialization()
         if self._cloud_manager is None:
+            if self.local:
+                raise ValueError("Cloud manager is not available in local mode. Use storage_backend instead.")
             raise ValueError("User and API key are required for cloud operations")
         return self._cloud_manager
+
+    @property
+    def storage_backend(self):
+        """Get the active storage backend (local or cloud)."""
+        if self.local:
+            return self._local_manager
+        return self.cloud_manager
 
     def _finalize_cloud_manager_initialization(self):
         if hasattr(self, "_cloud_manager_thread") and self._cloud_manager_thread:
@@ -180,7 +239,11 @@ class Vault:
     def storage(self):
         """Lazy initialization of storage manager"""
         if self._storage is None:
-            self._storage = VaultStorageManager(self.vault, self.cloud_manager)
+            if self.local:
+                from pathlib import Path
+                self._storage = LocalVaultStorageManager(self.vault, Path(self.local_dir))
+            else:
+                self._storage = VaultStorageManager(self.vault, self.cloud_manager)
         return self._storage
 
     @property
@@ -292,7 +355,12 @@ class Vault:
             raise ValueError(f"Item IDs must be less than {max_items}. Got id1={id1}, id2={id2}. "
                            "Note: After deletions, vector indices are renumbered starting from 0.")
         
-        return self.vectors.get_distance(id1, id2)
+        # Get vectors and calculate distance manually for FAISS compatibility
+        vec1 = np.array(self.vectors.get_item_vector(id1), dtype=np.float32)
+        vec2 = np.array(self.vectors.get_item_vector(id2), dtype=np.float32)
+        # Return angular distance (sqrt(2*(1-cos))) for compatibility with Annoy
+        cosine_sim = np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+        return float(np.sqrt(max(0, 2 * (1 - cosine_sim))))
     
 
     def get_item_vector(self, item_id: int):
@@ -411,7 +479,7 @@ class Vault:
             Saves personality_message to the vault and use it by default from now on
         '''
         self._cached_personality = text
-        self.cloud_manager.upload_personality_message(text)
+        self.storage_backend.upload_personality_message(text)
         print(f"Personality message saved") if self.verbose else 0
             
 
@@ -419,14 +487,15 @@ class Vault:
         '''
             Retrieves personality_message from the vault if it is there or else use the defualt
         '''
-        self._finalize_cloud_manager_initialization()
+        if not self.local:
+            self._finalize_cloud_manager_initialization()
         
         if self._cached_personality is not None and self._cached_personality != "":
             return self._cached_personality
         if not self._cloud_manager_ready.is_set():
             return self.personality_message
         try:
-            personality_message = self.cloud_manager.download_personality_message()
+            personality_message = self.storage_backend.download_personality_message()
             if personality_message is not None:
                 self._cached_personality = personality_message
                 return personality_message
@@ -450,7 +519,7 @@ class Vault:
             self._cached_prompt_with_context = text
         else:
             self._cached_prompt_no_context = text
-        self.cloud_manager.upload_custom_prompt(text, context)
+        self.storage_backend.upload_custom_prompt(text, context)
         print(f"Custom prompt saved") if self.verbose else 0
             
 
@@ -460,7 +529,8 @@ class Vault:
             context == False will return custom prompt for not context situations
         '''
         # Wait for CloudManager to initialize and potentially update the cache
-        self._finalize_cloud_manager_initialization()
+        if not self.local:
+            self._finalize_cloud_manager_initialization()
         
         cache = self._cached_prompt_with_context if context else self._cached_prompt_no_context
         if cache is not None:
@@ -468,7 +538,7 @@ class Vault:
         if not self._cloud_manager_ready.is_set():
             return self.main_prompt_with_context if context else self.main_prompt
         try:
-            prompt = self.cloud_manager.download_custom_prompt(context)
+            prompt = self.storage_backend.download_custom_prompt(context)
             if prompt is not None:
                 if context:
                     self._cached_prompt_with_context = prompt
@@ -489,7 +559,8 @@ class Vault:
 
     def save(self, trees: int = 10, vault = None):
         '''
-            Saves all the data added locally to the Cloud. All Vault references are Cloud references.
+            Saves all the data added locally to the Cloud (or local filesystem in local mode). 
+            All Vault references are Cloud references (or local file references in local mode).
             To add data to your Vault and access it later, you must first call add(), then get_vectors(), and finally save().
         '''
         vault = vault if vault else self.vault
@@ -507,7 +578,7 @@ class Vault:
             for item in self.items:
                 item_text, item_id, item_meta = get_item(item)
                 item_uuid = self.map.get(str(item_id))
-                future = executor.submit(self.cloud_manager.upload, item_uuid, item_text, item_meta, vault)
+                future = executor.submit(self.storage_backend.upload, item_uuid, item_text, item_meta, vault)
                 futures.append(future)
                 self._cache_item_entry(item_uuid, item_text, item_meta)
                 total_saved_items += 1
@@ -516,15 +587,15 @@ class Vault:
             for future in futures:
                 future.result()
 
-        all_vaults = self.cloud_manager.download_vaults_list_from_cloud()
+        all_vaults = self.storage_backend.download_vaults_list_from_cloud()
 
         if self.vault not in all_vaults and all_vaults:
             all_vaults.append(self.vault)
-            self.cloud_manager.upload_vaults_list(all_vaults)
+            self.storage_backend.upload_vaults_list(all_vaults)
 
         self.upload_vectors(vault)
         self.update_vault_data(this_vault_only=True)
-        self.cloud_manager.build_data_update()
+        self.storage_backend.build_data_update()
         time.sleep(0.1)
         
         print(f"upload time --- {(time.time() - start_time)} seconds --- {total_saved_items} items saved") if self.verbose else 0
@@ -542,30 +613,30 @@ class Vault:
         vault_name = vault_name if vault_name else self.vault
         start_time = time.time()
         
-        existing_vaults = self.cloud_manager.download_vaults_list_from_cloud()
+        existing_vaults = self.storage_backend.download_vaults_list_from_cloud()
         if vault_name in existing_vaults:
             print(f"Vault '{vault_name}' already exists") if self.verbose else 0
             return
         
-        self.cloud_manager.cloud_api.update_vault_mapping(vault_name, {})
+        self.storage_backend.cloud_api.update_vault_mapping(vault_name, {})
         
         empty_vectors = get_vectors(self.dims)
-        empty_vectors.build(10)  
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        empty_vectors.build(10)  # Build the empty index
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.npz') as temp_file:
             vector_temp_file_path = temp_file.name
             empty_vectors.save(vector_temp_file_path)
             byte = os.path.getsize(vector_temp_file_path)
-            self.cloud_manager.upload_temp_file(vector_temp_file_path, name_vecs(vault_name, self.user, self.api, byte))
+            self.storage_backend.upload_temp_file(vector_temp_file_path, name_vecs(vault_name, self.user, self.api, byte))
         
         self.delete_temp_file(vector_temp_file_path)
         
         # Add vault to vaults_list
         existing_vaults.append(vault_name)
-        self.cloud_manager.upload_vaults_list(existing_vaults)
+        self.storage_backend.upload_vaults_list(existing_vaults)
         
         # Create initial vault metadata
         now = time.time()
-        self.cloud_manager.cloud_api.update_vault_metadata(
+        self.storage_backend.cloud_api.update_vault_metadata(
             vault_name,
             total_items=0,
             last_update=now,
@@ -573,13 +644,13 @@ class Vault:
             total_use=1
         )
         
-        # Save to cloud 
-        self.cloud_manager.build_data_update()
+        # Save to cloud (or local)
+        self.storage_backend.build_data_update()
         
         # Copy prompts and personality from the current vault into the new one
-        self.cloud_manager.cloud_api.save_personality_message(vault_name, self.fetch_personality_message())
-        self.cloud_manager.cloud_api.save_custom_prompt(vault_name, self.fetch_custom_prompt(context=False), context=False)
-        self.cloud_manager.cloud_api.save_custom_prompt(vault_name, self.fetch_custom_prompt(context=True), context=True)
+        self.storage_backend.cloud_api.save_personality_message(vault_name, self.fetch_personality_message())
+        self.storage_backend.cloud_api.save_custom_prompt(vault_name, self.fetch_custom_prompt(context=False), context=False)
+        self.storage_backend.cloud_api.save_custom_prompt(vault_name, self.fetch_custom_prompt(context=True), context=True)
         
         print(f"Vault '{vault_name}' created successfully --- {(time.time() - start_time):.2f} seconds") if self.verbose else 0
 
@@ -621,15 +692,15 @@ class Vault:
         # Clear the local vector data
         self.items.clear() 
         self.item_cache.clear() 
-        self.cloud_manager.delete()
+        self.storage_backend.delete()
         self._invalidate_vector_cache()
         self.x = 0
-        vaults = self.cloud_manager.download_vaults_list_from_cloud()
+        vaults = self.storage_backend.download_vaults_list_from_cloud()
         try:
             vaults.remove(self.vault)
         except: 
             pass
-        self.cloud_manager.upload_vaults_list(vaults)
+        self.storage_backend.upload_vaults_list(vaults)
         self.update_vault_data(remove_vault=True)
         self.map = {}
         self.items = []
@@ -643,19 +714,20 @@ class Vault:
             If vault is None, returns all top-level vaults.
             If vault is a string, returns vaults within that vault directory.
         '''
-        # Ensure cloud manager is initialized
-        self._finalize_cloud_manager_initialization()
+        # Ensure storage backend is initialized
+        if not self.local:
+            self._finalize_cloud_manager_initialization()
         
         # If no vault specified, return all top-level vaults
         if vault is None:
             all_vaults = self.get_all_vaults()
             if all_vaults == []:
-                all_vaults = self.cloud_manager.list_vaults('')
-                self.cloud_manager.upload_vaults_list(all_vaults)
+                all_vaults = self.storage_backend.list_vaults('')
+                self.storage_backend.upload_vaults_list(all_vaults)
             return all_vaults
         
         # Otherwise, list vaults within the specified vault directory
-        return self.cloud_manager.list_vaults(vault)
+        return self.storage_backend.list_vaults(vault)
     
 
     def get_all_vaults(self) -> list:
@@ -663,29 +735,29 @@ class Vault:
             Returns a list of vaults within the current vault directory 
         '''
         try: 
-            return self.cloud_manager.download_vaults_list_from_cloud()
+            return self.storage_backend.download_vaults_list_from_cloud()
         except:
             return []
     
 
     def list_cloud_vaults(self):
         '''
-            Returns a list of all the cloud vaults 
+            Returns a list of all the cloud vaults (or local vaults in local mode)
         '''
-        return self.cloud_manager.list_vaults('')
+        return self.storage_backend.list_vaults('')
     
 
     def save_mapping(self, vault = None):
         vault = self.vault if not vault else vault
         
         if vault == self.vault:
-            self.cloud_manager.item_mapping = self.map.copy()
+            self.storage_backend.item_mapping = self.map.copy()
         
-        self.cloud_manager.cloud_api.update_vault_mapping(vault, self.map)
+        self.storage_backend.cloud_api.update_vault_mapping(vault, self.map)
         
-        if vault == self.vault:
-            self.cloud_manager._init_data_loaded = False
-            self.cloud_manager._init_data = None
+        if vault == self.vault and not self.local:
+            self.storage_backend._init_data_loaded = False
+            self.storage_backend._init_data = None
         
 
     def remap(self, item_id, item_uuid):
@@ -705,11 +777,11 @@ class Vault:
         
         # Iterate through all items in the current map
         for old_key, uuid in self.map.items():
-            meta_path = self.cloud_manager.cloud_name(self.vault, uuid, self.user, self.api, meta=True)
-            if self.cloud_manager.item_exists(uuid):
-                meta_data = json.loads(self.cloud_manager.download_text_from_cloud(meta_path))
+            meta_path = self.storage_backend.cloud_name(self.vault, uuid, self.user, self.api, meta=True)
+            if self.storage_backend.item_exists(uuid):
+                meta_data = json.loads(self.storage_backend.download_text_from_cloud(meta_path))
                 meta_data['item_id'] = new_item_number
-                self.cloud_manager.upload_to_cloud(meta_path, json.dumps(meta_data))
+                self.storage_backend.upload_to_cloud(meta_path, json.dumps(meta_data))
                 new_map[str(new_item_number)] = uuid
                 new_item_number += 1
         
@@ -724,7 +796,7 @@ class Vault:
         """Update the master vault data file that tracks all vaults"""
         nary = []
         try:
-            vault_data = self.cloud_manager.cloud_api.get_user_vault_data()
+            vault_data = self.storage_backend.cloud_api.get_user_vault_data()
             if not vault_data:
                 vault_data = []
             
@@ -777,35 +849,36 @@ class Vault:
                 'total_use': 1
             })
         
-        self.cloud_manager.cloud_api.update_user_vault_data(nary)
+        self.storage_backend.cloud_api.update_user_vault_data(nary)
         
         if not remove_vault:
-            self.cloud_manager.cloud_api.update_vault_metadata(
+            self.storage_backend.cloud_api.update_vault_metadata(
                 self.vault,
                 last_update=time.time()
             )
         else:
-            self.cloud_manager.cloud_api.delete_vault_metadata(self.vault)
+            self.storage_backend.cloud_api.delete_vault_metadata(self.vault)
         
         if remove_vault:
-            self.cloud_manager.vault_metadata = {}
+            self.storage_backend.vault_metadata = {}
         else:
             for entry in nary:
                 if entry['vault'] == self.vault:
-                    self.cloud_manager.vault_metadata = {
+                    self.storage_backend.vault_metadata = {
                         k: v for k, v in entry.items()
                         if k in ('last_update', 'last_use', 'total_items', 'total_use')
                     }
                     break
         
-        self.cloud_manager._init_data_loaded = False
-        self.cloud_manager._init_data = None
+        if not self.local:
+            self.storage_backend._init_data_loaded = False
+            self.storage_backend._init_data = None
 
 
     def hard_remap_vault_data(self):
         """Rebuild user vault metadata using backend APIs (no GCS)."""
         try:
-            existing = self.cloud_manager.cloud_api.get_user_vault_data() or []
+            existing = self.storage_backend.cloud_api.get_user_vault_data() or []
         except Exception:
             existing = []
         existing_map = {}
@@ -815,7 +888,7 @@ class Vault:
 
         rebuilt_entries = []
         for vault_name in self.get_vaults(''):
-            mapping = self.cloud_manager.cloud_api.get_vault_mapping(vault_name) or {}
+            mapping = self.storage_backend.cloud_api.get_vault_mapping(vault_name) or {}
             if isinstance(mapping, list):
                 mapping = {str(index): value for index, value in enumerate(mapping)}
             total_items = len(mapping)
@@ -830,12 +903,13 @@ class Vault:
             }
             rebuilt_entries.append(vault_dict)
 
-        self.cloud_manager.cloud_api.update_user_vault_data(rebuilt_entries)
+        self.storage_backend.cloud_api.update_user_vault_data(rebuilt_entries)
 
         current_meta = next((entry for entry in rebuilt_entries if entry['vault'] == self.vault), {})
-        self.cloud_manager.vault_metadata = current_meta
-        self.cloud_manager._init_data_loaded = False
-        self.cloud_manager._init_data = None
+        self.storage_backend.vault_metadata = current_meta
+        if not self.local:
+            self.storage_backend._init_data_loaded = False
+            self.storage_backend._init_data = None
 
 
     def delete_items(self, item_ids: List[int], trees: int = 10) -> None:
@@ -846,7 +920,7 @@ class Vault:
         def download_and_upload(old_id, new_id):
             item_uuid = self.old_map[str(old_id)]
             meta_path = cloud_name(self.vault, item_uuid, self.user, self.api, meta=True)
-            meta_data = self.cloud_manager.download_text_from_cloud(meta_path)
+            meta_data = self.storage_backend.download_text_from_cloud(meta_path)
             
             if not meta_data:
                 metadata = {"item_id": new_id}
@@ -860,7 +934,7 @@ class Vault:
             upload_success = False
             for attempt in range(3):
                 try:
-                    self.cloud_manager.upload_to_cloud(meta_path, json.dumps(metadata))
+                    self.storage_backend.upload_to_cloud(meta_path, json.dumps(metadata))
                     upload_success = True
                     break
                 except Exception as e:
@@ -908,12 +982,12 @@ class Vault:
             if item_uuid and item_uuid in self.item_cache:
                 del self.item_cache[item_uuid]
             
-            self.cloud_manager.delete_item(item_uuid)
+            self.storage_backend.delete_item(item_uuid)
             self.remap(item_id, item_uuid)
 
         rebuild_vectors(item_ids)
         self.update_vault_data(this_vault_only=True)
-        self.cloud_manager.build_data_update()
+        self.storage_backend.build_data_update()
         time.sleep(0.2)
         
         print(f'Items {item_ids} deleted and database rebuilt') if self.verbose else 0
@@ -943,10 +1017,10 @@ class Vault:
         self.load_vectors()
         item_uuid = self.map.get(str(item_id))
         
-        meta_data = self.cloud_manager.download_text_from_cloud(cloud_name(self.vault, item_uuid, self.user, self.api, meta=True))
+        meta_data = self.storage_backend.download_text_from_cloud(cloud_name(self.vault, item_uuid, self.user, self.api, meta=True))
         metadata = json.loads(meta_data)
         
-        self.cloud_manager.upload_to_cloud(cloud_name(self.vault, item_uuid, self.user, self.api, item=True), new_text)
+        self.storage_backend.upload_to_cloud(cloud_name(self.vault, item_uuid, self.user, self.api, item=True), new_text)
         
         if item_uuid:
             self._cache_item_entry(item_uuid, new_text, metadata)
@@ -954,7 +1028,7 @@ class Vault:
         edit_vector(item_id, self.process_batch([new_text], never_stop=False, loop_timeout=180)[0])
 
         self.update_vault_data(this_vault_only=True)
-        self.cloud_manager.build_data_update()
+        self.storage_backend.build_data_update()
         print(f'Item {item_id} edited') if self.verbose else 0
 
 
@@ -966,7 +1040,7 @@ class Vault:
         if not item_uuid:
             raise ValueError(f"Item id {item_id} does not exist in the vault mapping")
 
-        self.cloud_manager.upload_to_cloud(cloud_name(self.vault, item_uuid, self.user, self.api, meta=True), json.dumps(metadata))
+        self.storage_backend.upload_to_cloud(cloud_name(self.vault, item_uuid, self.user, self.api, meta=True), json.dumps(metadata))
         self._sync_cache_metadata(item_uuid, metadata, self.vault)
         print(f'Item {item_id} metadata saved') if self.verbose else 0
 
@@ -974,7 +1048,7 @@ class Vault:
     def check_index_loaded(self):
         if not self.x_loaded_checked:
             start_time = time.time()
-            if self.cloud_manager.vault_exists(name_vecs(self.vault, self.user, self.api)):
+            if self.storage_backend.vault_exists(name_vecs(self.vault, self.user, self.api)):
                 if not self.vecs_loaded:
                     self.load_vectors()
 
@@ -984,7 +1058,7 @@ class Vault:
     def check_index(self):
         if not self.x_checked:
             start_time = time.time()
-            if self.cloud_manager.vault_exists(name_vecs(self.vault, self.user, self.api)):
+            if self.storage_backend.vault_exists(name_vecs(self.vault, self.user, self.api)):
                 if not self.vecs_loaded:
                     self.load_vectors()
                 self.reload_vectors()
@@ -992,30 +1066,36 @@ class Vault:
             print("initialize index --- %s seconds ---" % (time.time() - start_time)) if self.verbose else 0
 
     def load_mapping(self, vault = None):
-        self._finalize_cloud_manager_initialization()
+        if not self.local:
+            self._finalize_cloud_manager_initialization()
         target_vault = vault if vault else self.vault 
         return self._get_mapping_for_vault(target_vault)
 
     def _get_mapping_for_vault(self, vault):
         if vault == self.vault:
             if not self.map:
-                if not self._cloud_manager:
-                    raise ValueError("Cloud manager not initialized")
-                self.map = self._cloud_manager.item_mapping
+                if self.local:
+                    if not self._local_manager:
+                        raise ValueError("Local storage manager not initialized")
+                    self.map = self._local_manager.item_mapping
+                else:
+                    if not self._cloud_manager:
+                        raise ValueError("Cloud manager not initialized")
+                    self.map = self._cloud_manager.item_mapping
             return self.map
         
-        mapping = self.cloud_manager.cloud_api.get_vault_mapping(vault)
+        mapping = self.storage_backend.cloud_api.get_vault_mapping(vault)
         
-        if not mapping:
-            gcs_mapping = self.cloud_manager.download_old_gcs_mapping(vault)
+        if not mapping and not self.local:
+            gcs_mapping = self.storage_backend.download_old_gcs_mapping(vault)
             if gcs_mapping and len(gcs_mapping) > 0:
-                self.cloud_manager.cloud_api.update_vault_mapping(vault, gcs_mapping)
+                self.storage_backend.cloud_api.update_vault_mapping(vault, gcs_mapping)
                 mapping = gcs_mapping
         
         return mapping
 
     def _download_vectors_for_vault(self, vault):
-        temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(vault, self.user, self.api))
+        temp_file_path = self.storage_backend.download_to_temp_file(name_vecs(vault, self.user, self.api))
         vectors = get_vectors(self.dims)
         vectors.load(temp_file_path)
         self.delete_temp_file(temp_file_path)
@@ -1023,7 +1103,7 @@ class Vault:
 
     def add_to_map(self):
         self.map[str(self.x)] = str(uuid.uuid4())
-        self.cloud_manager.item_mapping = self.map
+        self.storage_backend.item_mapping = self.map
         self.x +=1
     
     def delete_temp_file(self, temp_file_path, attempts = 3):
@@ -1047,7 +1127,7 @@ class Vault:
         start_time = time.time()
         t = Thread(target=self.load_mapping, args=(self.vault,))
         t.start()
-        temp_file_path = self.cloud_manager.download_to_temp_file(name_vecs(self.vault, self.user, self.api))
+        temp_file_path = self.storage_backend.download_to_temp_file(name_vecs(self.vault, self.user, self.api))
         self._vectors = get_vectors(self.dims)
         self._vectors.load(temp_file_path)
         self.delete_temp_file(temp_file_path)
@@ -1072,11 +1152,11 @@ class Vault:
 
     def upload_vectors(self, vault = None):
         vault = vault if vault else self.vault
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.npz') as temp_file:
             vector_temp_file_path = temp_file.name
             self.vectors.save(vector_temp_file_path)
             byte = os.path.getsize(vector_temp_file_path)
-            self.cloud_manager.upload_temp_file(vector_temp_file_path, name_vecs(vault, self.user, self.api, byte))
+            self.storage_backend.upload_temp_file(vector_temp_file_path, name_vecs(vault, self.user, self.api, byte))
         
         self._invalidate_vector_cache()
         self.delete_temp_file(vector_temp_file_path)
@@ -1156,7 +1236,7 @@ class Vault:
 
         target_vault = vault_name if vault_name else self.vault
         item_path = cloud_name(target_vault, item_uuid, self.user, self.api, item=True)
-        item_data = self.cloud_manager.download_text_from_cloud(item_path)
+        item_data = self.storage_backend.download_text_from_cloud(item_path)
         self._cache_item_entry(item_uuid, item_data, metadata)
 
     def _get_item_from_cache(self, item_uuid: str, vault_name: str = None, distance: float = None):
@@ -1171,8 +1251,8 @@ class Vault:
 
             item_path = cloud_name(target_vault, item_uuid, self.user, self.api, item=True)
             meta_path = cloud_name(target_vault, item_uuid, self.user, self.api, meta=True)
-            item_data = self.cloud_manager.download_text_from_cloud(item_path)
-            meta_data = self.cloud_manager.download_text_from_cloud(meta_path)
+            item_data = self.storage_backend.download_text_from_cloud(item_path)
+            meta_data = self.storage_backend.download_text_from_cloud(meta_path)
             
             if not meta_data:
                 # If metadata is missing, return None
@@ -1441,7 +1521,7 @@ class Vault:
             The distance can be useful for assessing similarity differences in the items returned. 
             Each item has its' own distance number, and this changes the structure of the output.
         '''
-        Thread(target=self.cloud_manager.build_update, args=(n,)).start()
+        Thread(target=self.storage_backend.build_update, args=(n,)).start()
         vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
         return self.get_items_by_vector(vector, n, include_distances = include_distances, vault = vault if vault else self.vault)
 
@@ -1467,7 +1547,7 @@ class Vault:
         if not vaults:
             raise ValueError("`vaults` must be provided as a str, list[str], or dict[str, int].")
 
-        Thread(target=self.cloud_manager.build_update, args=(n,)).start()
+        Thread(target=self.storage_backend.build_update, args=(n,)).start()
         vector = self.process_batch([text], never_stop=False, loop_timeout=180)[0]
 
         # Single vault (string): normal single-vault search with distances
@@ -2034,7 +2114,7 @@ class Vault:
         ''' 
             Function to print vault data 
         ''' 
-        vd = self.cloud_manager.get_mapping()
+        vd = self.storage_backend.cloud_api.get_user_vault_data()
         # Function to format datetime
         def format_datetime(dt, is_timestamp=False):
             if is_timestamp:
@@ -2094,7 +2174,15 @@ class Vault:
             
         Returns:
             Full response from the flow execution
+            
+        Raises:
+            NotImplementedError: If running in local mode (flows require cloud)
         """
+        if self.local:
+            raise NotImplementedError(
+                "Flow operations require VectorVault cloud. "
+                "Use cloud mode or call LLM directly with get_chat()."
+            )
         return self.cloud_manager.cloud_api.run_flow(
             flow_name=flow_name,
             message=message,
@@ -2119,7 +2207,15 @@ class Vault:
             
         Yields:
             Stream events from the flow execution
+            
+        Raises:
+            NotImplementedError: If running in local mode (flows require cloud)
         """
+        if self.local:
+            raise NotImplementedError(
+                "Flow operations require VectorVault cloud. "
+                "Use cloud mode or call LLM directly with get_chat_stream()."
+            )
         # Get the generator from run_flow_stream
         stream_generator = self.cloud_manager.cloud_api.run_flow_stream(
             flow_name = flow_name,

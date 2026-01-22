@@ -14,11 +14,126 @@
 # from Vector Vault. See license for consent.import datetime 
 
 from .cloud_api import CloudAPI
-from annoy import AnnoyIndex
+import faiss
+import numpy as np
 from copy import deepcopy
 import datetime
 import time
 import json
+
+
+class FAISSIndex:
+    """FAISS-based vector index with Annoy-compatible interface."""
+    
+    def __init__(self, dims, metric='angular'):
+        self.dims = dims
+        self.metric = metric
+        # Use IndexIDMap to support non-sequential IDs
+        self.index = faiss.IndexIDMap(faiss.IndexFlatIP(dims))
+        self._vectors = {}  # Store original (non-normalized) vectors by id
+        self._built = False
+    
+    @property
+    def ntotal(self):
+        """Compatibility property for FAISS index ntotal."""
+        return self.index.ntotal if self.index else 0
+    
+    def add_item(self, i, vector):
+        """Add a vector at index i."""
+        self._vectors[i] = np.array(vector, dtype=np.float32)
+    
+    def build(self, n_trees=10):
+        """Build the index."""
+        if not self._vectors:
+            self._built = True
+            return
+        
+        # Sort by ID to maintain order
+        ids = sorted(self._vectors.keys())
+        vectors_list = [self._vectors[i] for i in ids]
+        
+        vectors_np = np.array(vectors_list, dtype=np.float32)
+        ids_np = np.array(ids, dtype=np.int64)
+        
+        # Normalize for cosine similarity
+        faiss.normalize_L2(vectors_np)
+        
+        # Reset index and add all vectors
+        self.index = faiss.IndexIDMap(faiss.IndexFlatIP(self.dims))
+        self.index.add_with_ids(vectors_np, ids_np)
+        
+        self._built = True
+    
+    def get_nns_by_vector(self, vector, n, include_distances=False, search_k=-1):
+        """Find n nearest neighbors."""
+        if self.index.ntotal == 0:
+            return ([], []) if include_distances else []
+        
+        query = np.array([vector], dtype=np.float32)
+        faiss.normalize_L2(query)
+        
+        n = min(n, self.index.ntotal)
+        distances, indices = self.index.search(query, n)
+        
+        # Filter out -1 indices (not found)
+        result_indices = [int(idx) for idx in indices[0] if idx >= 0]
+        
+        if include_distances:
+            # Convert similarity to angular distance: sqrt(2 * (1 - similarity))
+            angular_distances = [np.sqrt(max(0, 2 * (1 - d))) for d in distances[0][:len(result_indices)]]
+            return result_indices, angular_distances
+        return result_indices
+    
+    def get_item_vector(self, i):
+        """Get vector at index i."""
+        if i in self._vectors:
+            return self._vectors[i].tolist()
+        return None
+    
+    def get_n_items(self):
+        """Get number of items."""
+        return len(self._vectors)
+    
+    def save(self, filename):
+        """Save index and vectors to file."""
+        filename = str(filename)
+        # Save everything in one npz file (more portable than faiss.write_index)
+        ids = list(self._vectors.keys())
+        vectors = [self._vectors[i] for i in ids]
+        # np.savez_compressed adds .npz extension if not present
+        # To ensure consistent behavior, we explicitly add .npz for loading
+        save_path = filename if filename.endswith('.npz') else filename + '.npz'
+        np.savez_compressed(save_path,
+                           dims=self.dims,
+                           ids=np.array(ids, dtype=np.int64),
+                           vectors=np.array(vectors, dtype=np.float32) if vectors else np.array([], dtype=np.float32).reshape(0, self.dims))
+        # Copy to original filename if different (for backwards compatibility with .ann extension)
+        if save_path != filename:
+            import shutil
+            shutil.copy(save_path, filename)
+    
+    def load(self, filename):
+        """Load index from file."""
+        filename = str(filename)
+        # Try loading as npz first, then try with .npz extension added
+        try:
+            data = np.load(filename)
+        except:
+            data = np.load(filename + '.npz')
+        
+        self.dims = int(data['dims'])
+        ids = data['ids']
+        vectors = data['vectors']
+        
+        self._vectors = {}
+        for i, vec in zip(ids, vectors):
+            self._vectors[int(i)] = vec
+        
+        # Rebuild the FAISS index
+        self.index = faiss.IndexIDMap(faiss.IndexFlatIP(self.dims))
+        if len(self._vectors) > 0:
+            self.build(10)
+        self._built = True
 
 def itemize(vault, x, meta=None, text=None, name=None):
     meta = deepcopy(meta) if meta else {}
@@ -72,7 +187,8 @@ def name_map(vault, user_id, api_key, byte=None):
     return identity(filename) 
 
 def get_vectors(dims):
-    return AnnoyIndex(dims, 'angular')
+    """Return a FAISSIndex with Annoy-compatible interface."""
+    return FAISSIndex(dims, 'angular')
 
 def get_item(item):
     item_id = item["meta"]["item_id"]

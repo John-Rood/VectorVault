@@ -1,5 +1,6 @@
 from .vault import Vault
 from .utils import download_url, wrap
+from .local_storage import LocalStorageManager, LocalVaultStorageManager
 
 try:
     from importlib.metadata import version as _pkg_version, PackageNotFoundError

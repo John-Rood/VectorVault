@@ -25,15 +25,19 @@ OPENAI_MODELS = {
     'gpt-4': 32000,
     'gpt-5': 400000,
     'gpt-5.1': 400000,
+    'gpt-5.2': 400000,
     'gpt-5-mini': 400000,
     'gpt-5-nano': 400000,
     'gpt-4o-mini': 128000,
     'gpt-4o': 128000,
     'gpt-4o-audio-preview': 128000,
     'chatgpt-4o-latest': 128000,
+    'gpt-5-chat-latest': 400000,
+    'gpt-5.1-chat-latest': 400000,
     'gpt-5.2-chat-latest': 400000,
     'gpt-3.5-turbo': 16000,
-    'default': 'gpt-5.2-chat-latest'
+    'chatgpt-latest': 400000,
+    'default': 'chatgpt-latest',
 }
 
 OPENAI_FRONT_MODELS = {
@@ -41,16 +45,15 @@ OPENAI_FRONT_MODELS = {
     'o3-pro': 200000,
     'o3-mini': 128000,
     'o4-mini': 200000,
-    'gpt-5': 400000,
-    'gpt-5.1': 400000,
     'gpt-5.2': 400000,
     'gpt-5-mini': 400000,
     'gpt-5-nano': 400000,
     'gpt-4o': 128000,
     'gpt-3.5-turbo': 16000,
     'chatgpt-4o-latest': 128000,
-    'gpt-5.2-chat-latest': 400000,
-    'default': 'gpt-5.2-chat-latest'
+    'gpt-5-chat-latest': 400000,
+    'chatgpt-latest': 400000,
+    'default': 'chatgpt-latest'
 }
 
 OPENAI_IMG_CAPABLE = [
@@ -73,7 +76,8 @@ GROK_MODELS = {
     "grok-3": 131072,
     "grok-3-mini": 131072,
     "grok-2-vision-latest": 32768,
-    "default": "grok-4-fast-non-reasoning",
+    "default": "grok-4-1",
+    "grok-latest": 256000
 }
 
 GROK_FRONT_MODELS = {
@@ -87,27 +91,30 @@ GROK_FRONT_MODELS = {
     "grok-3": 131072,
     "grok-3-mini": 131072,
     "grok-2-vision-latest": 32768,
-    "default": "grok-4-fast-non-reasoning",
+    "grok-latest": 256000,
+    "default": "grok-4-1",
 }
 
 ANTHROPIC_MODELS = {
+    'claude-opus-4-5': 200000,
     'claude-opus-4-1': 200000,
-    'claude-opus-4-0': 200000,
     'claude-sonnet-4-0': 200000,
     'claude-sonnet-4-5': 1000000,
     'claude-3-7-sonnet-latest': 200000,
     'claude-3-5-sonnet-latest': 200000,
     'claude-3-5-haiku-latest': 200000,
-    'default': 'claude-sonnet-4-0'
+    'claude-latest': 200000,
+    'default': 'claude-3-7-sonnet-latest',
 }
 
 ANTHROPIC_FRONT_MODELS = {
+    'claude-opus-4-5': 200000,
     'claude-opus-4-1': 200000,
-    'claude-opus-4-0': 200000,
     'claude-sonnet-4-0': 200000,
     'claude-sonnet-4-5': 1000000,
     'claude-3-7-sonnet-latest': 200000,
-    'default': 'claude-sonnet-4-5'
+    'claude-latest': 200000,
+    'default': 'claude-3-7-sonnet-latest',
 }
 
 GEMINI_MODELS = {
@@ -117,7 +124,8 @@ GEMINI_MODELS = {
     'gemini-2.0-flash': 1000000,
     'gemini-3-pro-preview': 1000000,
     'gemini-3-pro-image-preview': 65000,
-    'default': 'gemini-2.5-flash'
+    'gemini-latest': 1000000,
+    'default': 'gemini-3-pro-preview',
 }
 
 GEMINI_FRONT_MODELS = {
@@ -126,7 +134,8 @@ GEMINI_FRONT_MODELS = {
     'gemini-2.0-flash': 1000000,
     'gemini-3-pro-preview': 1000000,
     'gemini-3-pro-image-preview': 65000,
-    'default': 'gemini-2.5-flash'
+    'gemini-latest': 1000000,
+    'default': 'gemini-3-pro-preview',
 }
 
 GEMINI_MULTIMODAL_MODELS = [
@@ -136,6 +145,13 @@ GEMINI_MULTIMODAL_MODELS = [
 
 GEMINI_THINKING_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite',
                           'gemini-3-pro-preview']
+
+LATEST_MODELS_MAP = {
+    'chatgpt-latest': 'gpt-5.2-chat-latest',
+    'claude-latest': 'claude-4-5-sonnet-latest',
+    'grok-latest': 'grok-4-1',
+    'gemini-latest': 'gemini-3-pro-preview'
+}
 
 
 # ============================================================================
@@ -371,6 +387,10 @@ class OpenAIPlatform(LLMPlatform):
 
     def make_call(self, messages, model, temperature=None, timeout=None):
         timeout = timeout
+        
+        if model in LATEST_MODELS_MAP:
+            model = LATEST_MODELS_MAP[model]
+
         def call_api(response_queue):
             try:
                 # Build params
@@ -397,6 +417,9 @@ class OpenAIPlatform(LLMPlatform):
             
     def stream_call(self, messages, model, temperature=None, timeout=None):
         timeout = timeout
+        
+        if model in LATEST_MODELS_MAP:
+            model = LATEST_MODELS_MAP[model]
 
         def call_api():
             try:
@@ -604,6 +627,9 @@ class GrokPlatform(LLMPlatform):
         if self.client is None:
             raise ValueError("Grok client not initialized. Please provide a valid API key.")
             
+        if model in LATEST_MODELS_MAP:
+            model = LATEST_MODELS_MAP[model]
+
         def call_api(response_queue):
             try:
                 params = {
@@ -638,6 +664,9 @@ class GrokPlatform(LLMPlatform):
         if self.client is None:
             raise ValueError("Grok client not initialized. Please provide a valid API key.")
             
+        if model in LATEST_MODELS_MAP:
+            model = LATEST_MODELS_MAP[model]
+
         def call_api():
             try:
                 params = {
@@ -818,6 +847,9 @@ class AnthropicPlatform(LLMPlatform):
         if self.client is None:
             raise ValueError("Anthropic client not initialized. Please provide a valid API key or set ANTHROPIC_API_KEY environment variable.")
             
+        if model in LATEST_MODELS_MAP:
+            model = LATEST_MODELS_MAP[model]
+
         def call_api(response_queue):
             try:
                 response = self.client.messages.create(
@@ -843,6 +875,9 @@ class AnthropicPlatform(LLMPlatform):
         if self.client is None:
             raise ValueError("Anthropic client not initialized. Please provide a valid API key or set ANTHROPIC_API_KEY environment variable.")
             
+        if model in LATEST_MODELS_MAP:
+            model = LATEST_MODELS_MAP[model]
+
         def call_api():
             try:
                 response = self.client.messages.create(
@@ -974,6 +1009,7 @@ class AnthropicPlatform(LLMPlatform):
 class GeminiPlatform(LLMPlatform):
     def __init__(self, api_key=None):
         # Initialize client - will use environment variable GOOGLE_API_KEY if api_key is None
+        self.api_key = api_key
         self.client = None
         self._client_initialized = False
         
@@ -1000,6 +1036,10 @@ class GeminiPlatform(LLMPlatform):
 
     def get_client(self, model=None):
         if model and 'gemini-3' in model:
+            # When initializing a new client for v1alpha, we need to pass the API key explicitly
+            # if we have it, otherwise it will try to look for environment variables.
+            if self.api_key:
+                 return genai.Client(api_key=self.api_key, http_options={'api_version': 'v1alpha'})
             return genai.Client(http_options={'api_version': 'v1alpha'})
         return self.client
 
@@ -1050,6 +1090,9 @@ class GeminiPlatform(LLMPlatform):
         self.close()
 
     def make_call(self, messages, model, temperature=None, timeout=None, **kwargs):
+        if model in LATEST_MODELS_MAP:
+            model = LATEST_MODELS_MAP[model]
+
         def call_api(response_queue):
             try:
                 # Check if client is properly initialized
@@ -1067,9 +1110,7 @@ class GeminiPlatform(LLMPlatform):
                 # For Gemini 3, set defaults as per guide
                 if model and 'gemini-3' in model:
                     if temperature is None or temperature == 0:
-                        temperature = 1.0
-                        config_params['temperature'] = 1.0
-                    config_params['thinking_level'] = 'high'
+                        config_params['temperature'] = 0
                 
                 # Merge user-provided kwargs
                 config_params.update(kwargs)
@@ -1102,6 +1143,9 @@ class GeminiPlatform(LLMPlatform):
             return None
 
     def stream_call(self, messages, model, temperature=None, timeout=None, **kwargs):
+        if model in LATEST_MODELS_MAP:
+            model = LATEST_MODELS_MAP[model]
+
         def call_api():
             try:
                 # Check if client is properly initialized
@@ -1119,9 +1163,7 @@ class GeminiPlatform(LLMPlatform):
                 # For Gemini 3, set defaults as per guide
                 if model and 'gemini-3' in model:
                     if temperature is None or temperature == 0:
-                        temperature = 1.0
-                        config_params['temperature'] = 1.0
-                    config_params['thinking_level'] = 'high'
+                        config_params['temperature'] = 0
                 
                 # Merge user-provided kwargs
                 config_params.update(kwargs)
@@ -1319,9 +1361,7 @@ class GeminiPlatform(LLMPlatform):
         # For Gemini 3, set defaults
         if model and 'gemini-3' in model:
             if temperature is None or temperature == 0:
-                temperature = 1.0
-                config_params['temperature'] = 1.0
-            config_params['thinking_level'] = 'high'
+                config_params['temperature'] = 0
         
         # Merge user-provided kwargs (e.g., aspect_ratio, etc.)
         config_params.update(kwargs)
@@ -1472,6 +1512,10 @@ class LLMClient:
         prompt_template = custom_prompt if custom_prompt else self.prompt
 
         model = model if model else self.default_model
+        
+        if model in LATEST_MODELS_MAP:
+            model = LATEST_MODELS_MAP[model]
+            
         token_count = self.platform.get_tokens(str(history) + str(user_input) + str(prompt_template))
         model = self.platform.model_check(token_count, model)
         max_tokens = self.platform.model_token_limits.get(model) if model in self.platform.model_token_limits.keys() else self.fine_tuned_context_window

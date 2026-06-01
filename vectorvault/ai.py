@@ -26,6 +26,9 @@ OPENAI_MODELS = {
     'gpt-5': 400000,
     'gpt-5.1': 400000,
     'gpt-5.2': 400000,
+    'gpt-5.3': 400000,
+    'gpt-5.4': 400000,
+    'gpt-5.5': 400000,
     'gpt-5-mini': 400000,
     'gpt-5-nano': 400000,
     'gpt-4o-mini': 128000,
@@ -35,6 +38,9 @@ OPENAI_MODELS = {
     'gpt-5-chat-latest': 400000,
     'gpt-5.1-chat-latest': 400000,
     'gpt-5.2-chat-latest': 400000,
+    'gpt-5.3-chat-latest': 400000,
+    'gpt-5.4-chat-latest': 400000,
+    'gpt-5.5-chat-latest': 400000,
     'gpt-3.5-turbo': 16000,
     'chatgpt-latest': 400000,
     'default': 'chatgpt-latest',
@@ -45,6 +51,9 @@ OPENAI_FRONT_MODELS = {
     'o3-pro': 200000,
     'o3-mini': 128000,
     'o4-mini': 200000,
+    'gpt-5.5': 400000,
+    'gpt-5.4': 400000,
+    'gpt-5.3': 400000,
     'gpt-5.2': 400000,
     'gpt-5-mini': 400000,
     'gpt-5-nano': 400000,
@@ -59,11 +68,18 @@ OPENAI_FRONT_MODELS = {
 OPENAI_IMG_CAPABLE = [
     'o1', 'gpt-4o', 'gpt-4o-mini', 'gpt-4o-audio-preview',
     'chatgpt-4o-latest',
-    'gpt-5', 'gpt-5.1', 'gpt-5.2', 'gpt-5-mini', 'gpt-5-nano', 'gpt-5.2-chat-latest'
+    'gpt-5', 'gpt-5.1', 'gpt-5.2', 'gpt-5.3', 'gpt-5.4', 'gpt-5.5',
+    'gpt-5-mini', 'gpt-5-nano', 'gpt-5.2-chat-latest', 'gpt-5.3-chat-latest',
+    'gpt-5.4-chat-latest', 'gpt-5.5-chat-latest'
 ]
 
 OPENAI_NO_STREAM_LIST = ['o1', 'o1-mini']
 OPENAI_NO_TEMPERATURE_LIST = ['o1', 'o1-mini', 'o3', 'o3-mini']
+
+# Anthropic models that deprecated/reject the `temperature` parameter (newer reasoning-capable Opus line).
+ANTHROPIC_NO_TEMPERATURE_LIST = [
+    'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6',
+]
 
 GROK_MODELS = {
     "grok-code-fast": 256000,
@@ -73,84 +89,104 @@ GROK_MODELS = {
     "grok-4-1": 256000,
     "grok-4-1-fast-reasoning": 2000000,
     "grok-4-1-fast-non-reasoning": 2000000,
+    "grok-4-2": 256000,
+    "grok-4-3": 256000,
     "grok-3": 131072,
     "grok-3-mini": 131072,
     "grok-2-vision-latest": 32768,
-    "default": "grok-4-1",
+    "default": "grok-4-3",
     "grok-latest": 256000
 }
 
 GROK_FRONT_MODELS = {
     "grok-code-fast": 256000,
+    "grok-4-3": 256000,
+    "grok-4-2": 256000,
+    "grok-4-1": 256000,
     "grok-4": 256000,
     "grok-4-fast-reasoning": 2000000,
     "grok-4-fast-non-reasoning": 2000000,
-    "grok-4-1": 256000,
-    "grok-4-1-fast-reasoning": 2000000,
-    "grok-4-1-fast-non-reasoning": 2000000,
     "grok-3": 131072,
     "grok-3-mini": 131072,
     "grok-2-vision-latest": 32768,
     "grok-latest": 256000,
-    "default": "grok-4-1",
+    "default": "grok-4-3",
 }
 
 ANTHROPIC_MODELS = {
+    'claude-opus-4-8': 200000,
+    'claude-opus-4-7': 200000,
+    'claude-opus-4-6': 200000,
     'claude-opus-4-5': 200000,
     'claude-opus-4-1': 200000,
-    'claude-sonnet-4-0': 200000,
+    'claude-sonnet-4-6': 1000000,
     'claude-sonnet-4-5': 1000000,
+    'claude-sonnet-4-0': 200000,
+    'claude-haiku-4-5': 200000,
     'claude-3-7-sonnet-latest': 200000,
     'claude-3-5-sonnet-latest': 200000,
     'claude-3-5-haiku-latest': 200000,
     'claude-latest': 200000,
-    'default': 'claude-3-7-sonnet-latest',
+    'default': 'claude-opus-4-8',
 }
 
 ANTHROPIC_FRONT_MODELS = {
+    'claude-opus-4-8': 200000,
+    'claude-opus-4-7': 200000,
+    'claude-opus-4-6': 200000,
     'claude-opus-4-5': 200000,
     'claude-opus-4-1': 200000,
-    'claude-sonnet-4-0': 200000,
+    'claude-sonnet-4-6': 1000000,
     'claude-sonnet-4-5': 1000000,
+    'claude-sonnet-4-0': 200000,
+    'claude-haiku-4-5': 200000,
     'claude-3-7-sonnet-latest': 200000,
     'claude-latest': 200000,
-    'default': 'claude-3-7-sonnet-latest',
+    'default': 'claude-opus-4-8',
 }
 
 GEMINI_MODELS = {
+    'gemini-3.5-flash': 1000000,
+    'gemini-3.1-pro': 1000000,
+    'gemini-3.1-flash-lite': 1000000,
+    'gemini-3-pro-preview': 1000000,
+    'gemini-3-pro-image-preview': 65000,
     'gemini-2.5-pro': 1000000,
     'gemini-2.5-flash': 1000000,
     'gemini-2.5-flash-lite': 1000000,
     'gemini-2.0-flash': 1000000,
-    'gemini-3-pro-preview': 1000000,
-    'gemini-3-pro-image-preview': 65000,
     'gemini-latest': 1000000,
-    'default': 'gemini-3-pro-preview',
+    'default': 'gemini-3.1-pro',
 }
 
 GEMINI_FRONT_MODELS = {
+    'gemini-3.5-flash': 1000000,
+    'gemini-3.1-pro': 1000000,
+    'gemini-3.1-flash-lite': 1000000,
+    'gemini-3-pro-preview': 1000000,
+    'gemini-3-pro-image-preview': 65000,
     'gemini-2.5-pro': 1000000,
     'gemini-2.5-flash': 1000000,
     'gemini-2.0-flash': 1000000,
-    'gemini-3-pro-preview': 1000000,
-    'gemini-3-pro-image-preview': 65000,
     'gemini-latest': 1000000,
-    'default': 'gemini-3-pro-preview',
+    'default': 'gemini-3.1-pro',
 }
 
 GEMINI_MULTIMODAL_MODELS = [
+    'gemini-3.5-flash', 'gemini-3.1-pro', 'gemini-3.1-flash-lite',
     'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash',
     'gemini-3-pro-preview', 'gemini-3-pro-image-preview'
 ]
 
-GEMINI_THINKING_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite',
+GEMINI_THINKING_MODELS = ['gemini-3.5-flash', 'gemini-3.1-pro', 'gemini-3.1-flash-lite',
+                          'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite',
                           'gemini-3-pro-preview']
 
 LATEST_MODELS_MAP = {
-    'chatgpt-latest': 'gpt-5.2-chat-latest',
-    'claude-latest': 'claude-4-5-sonnet-latest',
-    'grok-latest': 'grok-4-1',
-    'gemini-latest': 'gemini-3-pro-preview'
+    'chatgpt-latest': 'gpt-5.5-chat-latest',
+    'claude-latest': 'claude-opus-4-8',
+    'grok-latest': 'grok-4-3',
+    'gemini-latest': 'gemini-3.1-pro'
 }
 
 
@@ -818,6 +854,7 @@ class AnthropicPlatform(LLMPlatform):
         # Reference module-level constants
         self.model_token_limits = ANTHROPIC_MODELS
         self.front_model_token_limits = ANTHROPIC_FRONT_MODELS
+        self.no_temperature_list = ANTHROPIC_NO_TEMPERATURE_LIST
         self.default_model = self.model_token_limits['default']
 
     def list_models(self):
@@ -852,12 +889,15 @@ class AnthropicPlatform(LLMPlatform):
 
         def call_api(response_queue):
             try:
-                response = self.client.messages.create(
-                    model=model,
-                    messages=messages,  # Already in the correct format
-                    temperature=temperature if temperature else 0,
-                    max_tokens=8192
-                )
+                params = {
+                    "model": model,
+                    "messages": messages,  # Already in the correct format
+                    "max_tokens": 8192,
+                }
+                # Newer Anthropic models reject `temperature`; only send it when supported.
+                if model not in self.no_temperature_list:
+                    params["temperature"] = temperature if temperature else 0
+                response = self.client.messages.create(**params)
                 response_queue.put(response.content[0].text)
             except Exception as e:
                 response_queue.put(e)
@@ -880,13 +920,16 @@ class AnthropicPlatform(LLMPlatform):
 
         def call_api():
             try:
-                response = self.client.messages.create(
-                    model=model,
-                    messages=messages,  # Already in the correct format
-                    temperature=temperature if temperature else 0,
-                    max_tokens=8192,
-                    stream=True
-                )
+                params = {
+                    "model": model,
+                    "messages": messages,  # Already in the correct format
+                    "max_tokens": 8192,
+                    "stream": True,
+                }
+                # Newer Anthropic models reject `temperature`; only send it when supported.
+                if model not in self.no_temperature_list:
+                    params["temperature"] = temperature if temperature else 0
+                response = self.client.messages.create(**params)
 
 
                 for chunk in response:

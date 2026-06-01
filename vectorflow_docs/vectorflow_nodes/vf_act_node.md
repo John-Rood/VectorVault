@@ -96,18 +96,47 @@ if "refund" in conversation.lower():
 ```
 
 ### Credentials Access
-Your VectorVault credentials are automatically available as global variables:
+Your VectorVault credentials and all AI provider keys are automatically available as global variables — no `os.environ` needed:
+
+| Global | Description |
+|--------|-------------|
+| `USER` | Your account email |
+| `API_KEY` | Your VectorVault API key |
+| `VAULT` | The current vault name |
+| `OPENAI_KEY` | Your OpenAI API key |
+| `ANTHROPIC_KEY` | Your Anthropic (Claude) API key |
+| `GEMINI_KEY` | Your Google Gemini API key |
+| `GROK_KEY` | Your xAI Grok API key |
+
+> Provider keys are `None` if you haven't saved that key in your settings.
+
 ```python
 # Access your credentials directly (no os.environ needed)
-user_email = USER
-api_key = API_KEY
-openai_key = OPENAI_KEY
-vault_name = VAULT
+user_email   = USER
+api_key      = API_KEY
+vault_name   = VAULT
+openai_key   = OPENAI_KEY
+anthropic_key = ANTHROPIC_KEY
+gemini_key   = GEMINI_KEY
+grok_key     = GROK_KEY
 
-# You can create a new vault instance within your script
+# Create a new vault instance within your script with any provider(s)
 from vectorvault import Vault
-vault = Vault(user=user_email, api_key=api_key, openai_key=openai_key, vault=vault_name)
+vault = Vault(
+    user=user_email,
+    api_key=api_key,
+    openai_key=openai_key,
+    anthropic_key=anthropic_key,
+    gemini_key=gemini_key,
+    grok_key=grok_key,
+    vault=vault_name,
+)
+
+# Then call any model across providers, e.g.:
+response = vault.get_chat("Summarize this", model="claude-opus-4-8")
 ```
+
+A live `vault` instance (using your saved keys) is also pre-injected as the global `vault`, so for most cases you can skip manual instantiation and just call `vault.get_chat(...)` directly.
 
 ### Saving Variables Back to Flow
 

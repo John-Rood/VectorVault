@@ -42,8 +42,10 @@ The Act node runs in a restricted environment designed for safety:
 **Blocked Built-ins**: 
 - File system access: `open`, `input`, `execfile`
 - Dynamic execution: `exec`, `eval`, `compile`  
-- Introspection: `globals`, `locals`, `vars`, `dir`
+- Introspection: `locals`, `vars`, `dir`
 - System access: `help`, `exit`, `quit`
+
+> **Note:** `globals()` **is available** in the Act node (it's re-injected by the runtime) and returns the dict of all variables in scope — including every flow variable. This makes it the tool for *dynamic* variable lookup (looking up a variable whose name is itself stored in another variable). See [Dynamic Variable Lookup](#dynamic-variable-lookup-name-stored-in-another-variable) below.
 
 **Allowed Modules** (complete list):
 ```python
@@ -78,6 +80,31 @@ print(f"Processing order for customer {customer_id}")
 print(f"Order total: ${order_total}")
 print(f"User tier: {user_tier}")
 ```
+
+### Dynamic Variable Lookup (name stored in another variable)
+
+Sometimes a variable's **value** is itself the *name* of another variable. For example, you save `cretors_diagram_title = "M5CD1PVr4"`, where `M5CD1PVr4` is the name of the variable that actually holds the diagram data.
+
+This is a **double-dereference**, and the `{...}` template syntax used in prompt/message nodes can't do it — template substitution is **single-pass**, so `{cretors_diagram_title}` resolves to the literal string `M5CD1PVr4` and stops there. It will never go on to resolve `{M5CD1PVr4}`.
+
+**Solve it in an Act node** using `globals()` to look up a variable by a name held in another variable:
+
+```python
+# Step 1: read the pointer variable directly (it's already a global)
+target_name = cretors_diagram_title          # e.g. "M5CD1PVr4"
+
+# Step 2: dereference — look up the variable whose NAME is in target_name
+resolved_diagram = globals().get(target_name, "")   # the actual diagram value
+
+# Step 3: save it to a clean variable for downstream nodes
+save['resolved_diagram'] = resolved_diagram
+```
+
+Then in any later node, reference `{resolved_diagram}` and you'll get the actual diagram value — not the pointer string.
+
+> **Why `globals().get(name, "")` instead of `globals()[name]`?** `globals()[name]` raises `KeyError` if no variable with that name exists. `.get(name, "")` returns a safe default instead, so a missing/typo'd pointer won't crash the node.
+
+**Reminder:** flow variables are injected as plain globals, so when you know the name at write-time you just reference it directly (`cretors_diagram_title`). Use `globals()[...]` / `globals().get(...)` only when the name is **dynamic** (computed or stored in another variable).
 
 ### Built-in Global Variables
 

@@ -95,8 +95,26 @@ if "refund" in conversation.lower():
     print("User mentioned refunds previously")
 ```
 
-### Credentials Access
-Your VectorVault credentials and all AI provider keys are automatically available as global variables — no `os.environ` needed:
+### Using the Vault
+
+A fully-initialized `vault` instance is **already available** in your Act node — pre-loaded with your account and every AI provider key you've saved. **Just use it directly.** No imports, no setup.
+
+```python
+# `vault` is ready to go — already authenticated with your keys.
+response = vault.get_chat("Summarize this conversation", model="claude-opus-4-8")
+print(response)
+
+# Use any provider/model you've saved a key for:
+response = vault.get_chat("...", model="gpt-5.5")
+response = vault.get_chat("...", model="gemini-3.1-pro")
+response = vault.get_chat("...", model="grok-4-3")
+```
+
+> ⚠️ **Do not `import vectorvault` or create your own `Vault(...)`.** The script runs in a sandbox that blocks imports, and the provided `vault` is already the right instance with all your credentials loaded. Just call methods on `vault`.
+
+### Credentials Access (advanced)
+
+If you need the raw values (e.g. to call an external API), your credentials are also available as global variables — no `os.environ` needed:
 
 | Global | Description |
 |--------|-------------|
@@ -112,31 +130,14 @@ Your VectorVault credentials and all AI provider keys are automatically availabl
 
 ```python
 # Access your credentials directly (no os.environ needed)
-user_email   = USER
-api_key      = API_KEY
-vault_name   = VAULT
-openai_key   = OPENAI_KEY
+user_email    = USER
+api_key       = API_KEY
+vault_name    = VAULT
+openai_key    = OPENAI_KEY
 anthropic_key = ANTHROPIC_KEY
-gemini_key   = GEMINI_KEY
-grok_key     = GROK_KEY
-
-# Create a new vault instance within your script with any provider(s)
-from vectorvault import Vault
-vault = Vault(
-    user=user_email,
-    api_key=api_key,
-    openai_key=openai_key,
-    anthropic_key=anthropic_key,
-    gemini_key=gemini_key,
-    grok_key=grok_key,
-    vault=vault_name,
-)
-
-# Then call any model across providers, e.g.:
-response = vault.get_chat("Summarize this", model="claude-opus-4-8")
+gemini_key    = GEMINI_KEY
+grok_key      = GROK_KEY
 ```
-
-A live `vault` instance (using your saved keys) is also pre-injected as the global `vault`, so for most cases you can skip manual instantiation and just call `vault.get_chat(...)` directly.
 
 ### Saving Variables Back to Flow
 

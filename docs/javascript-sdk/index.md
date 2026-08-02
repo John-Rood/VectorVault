@@ -27,9 +27,9 @@ npm install vectorvault
 - **[API Documentation](api-reference.md)** - Complete API reference
 
 **Advanced Features:**
-- **[VectorFlow Integration](vectorflow-integration.md)** - Execute flows from JavaScript
-- **[VectorFlow Logging Reference](vectorflow-logging.md)** - Flow execution logging details
-- **[Understanding VectorFlow](../blog/understanding-vectorflow.md)** - Architecture and concepts (blog)
+- **[VectorFlow Integration](../vectorflow/index.md)** - Execute flows from JavaScript
+- **[VectorFlow Logging Reference](../vectorflow/logging.md)** - Flow execution logging details
+- **[Understanding VectorFlow](../vectorflow/advanced-features.md)** - Architecture and concepts (blog)
 
 <br />
 
@@ -453,9 +453,9 @@ This package includes comprehensive documentation:
 
 - **[Quick Reference](quick-reference.md)** - Quick lookup guide for common methods and patterns
 - **[API Documentation](api-reference.md)** - Complete API reference with detailed parameters and examples
-- **[VectorFlow Integration](vectorflow-integration.md)** - Execute flows from JavaScript applications
-- **[VectorFlow Logging Reference](vectorflow-logging.md)** - Detailed logging structure for flows
-- **[Understanding VectorFlow](../blog/understanding-vectorflow.md)** - Architecture concepts and design patterns
+- **[VectorFlow Integration](../vectorflow/index.md)** - Execute flows from JavaScript applications
+- **[VectorFlow Logging Reference](../vectorflow/logging.md)** - Detailed logging structure for flows
+- **[Understanding VectorFlow](../vectorflow/advanced-features.md)** - Architecture concepts and design patterns
 
 ## Conclusion
 

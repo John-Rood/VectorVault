@@ -22,13 +22,19 @@ OPENAI_MODELS = {
     'o3-pro': 200000,
     'o3-mini': 128000,
     'o4-mini': 200000,
-    'gpt-4': 32000,
+    'gpt-4': 8192,
     'gpt-5': 400000,
     'gpt-5.1': 400000,
     'gpt-5.2': 400000,
     'gpt-5.3': 400000,
-    'gpt-5.4': 400000,
-    'gpt-5.5': 400000,
+    'gpt-5.4': 1050000,
+    'gpt-5.5': 1050000,
+    'gpt-5.4-mini': 400000,
+    'gpt-5.4-nano': 400000,
+    'gpt-5.6': 1050000,
+    'gpt-5.6-sol': 1050000,
+    'gpt-5.6-terra': 1050000,
+    'gpt-5.6-luna': 1050000,
     'gpt-5-mini': 400000,
     'gpt-5-nano': 400000,
     'gpt-4o-mini': 128000,
@@ -38,37 +44,40 @@ OPENAI_MODELS = {
     'gpt-5-chat-latest': 400000,
     'gpt-5.1-chat-latest': 400000,
     'gpt-5.2-chat-latest': 400000,
-    'gpt-5.3-chat-latest': 400000,
+    'gpt-5.3-chat-latest': 128000,
     'gpt-5.4-chat-latest': 400000,
     'gpt-5.5-chat-latest': 400000,
-    'gpt-3.5-turbo': 16000,
+    'gpt-3.5-turbo': 16385,
+    'chat-latest': 400000,
     'chatgpt-latest': 400000,
-    'default': 'chatgpt-latest',
+    'default': 'gpt-5.6',
 }
 
 OPENAI_FRONT_MODELS = {
-    'o3': 200000,
-    'o3-pro': 200000,
-    'o3-mini': 128000,
-    'o4-mini': 200000,
-    'gpt-5.5': 400000,
-    'gpt-5.4': 400000,
-    'gpt-5.3': 400000,
-    'gpt-5.2': 400000,
+    'gpt-5.6': 1050000,
+    'gpt-5.6-sol': 1050000,
+    'gpt-5.6-terra': 1050000,
+    'gpt-5.6-luna': 1050000,
+    'gpt-5.5': 1050000,
+    'gpt-5.4': 1050000,
+    'gpt-5.4-mini': 400000,
+    'gpt-5.4-nano': 400000,
     'gpt-5-mini': 400000,
     'gpt-5-nano': 400000,
+    'o3': 200000,
+    'o3-pro': 200000,
+    'o4-mini': 200000,
     'gpt-4o': 128000,
-    'gpt-3.5-turbo': 16000,
-    'chatgpt-4o-latest': 128000,
-    'gpt-5-chat-latest': 400000,
-    'chatgpt-latest': 400000,
-    'default': 'chatgpt-latest'
+    'chat-latest': 400000,
+    'default': 'gpt-5.6',
 }
 
 OPENAI_IMG_CAPABLE = [
     'o1', 'gpt-4o', 'gpt-4o-mini', 'gpt-4o-audio-preview',
     'chatgpt-4o-latest',
     'gpt-5', 'gpt-5.1', 'gpt-5.2', 'gpt-5.3', 'gpt-5.4', 'gpt-5.5',
+    'gpt-5.6', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna',
+    'gpt-5.4-mini', 'gpt-5.4-nano', 'chat-latest',
     'gpt-5-mini', 'gpt-5-nano', 'gpt-5.2-chat-latest', 'gpt-5.3-chat-latest',
     'gpt-5.4-chat-latest', 'gpt-5.5-chat-latest'
 ]
@@ -76,117 +85,217 @@ OPENAI_IMG_CAPABLE = [
 OPENAI_NO_STREAM_LIST = ['o1', 'o1-mini']
 OPENAI_NO_TEMPERATURE_LIST = ['o1', 'o1-mini', 'o3', 'o3-mini']
 
-# Anthropic models that deprecated/reject the `temperature` parameter (newer reasoning-capable Opus line).
+# Models with adaptive/default thinking reject non-default sampling parameters.
 ANTHROPIC_NO_TEMPERATURE_LIST = [
+    'claude-fable-5', 'claude-opus-5', 'claude-sonnet-5',
     'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6',
 ]
 
 GROK_MODELS = {
-    "grok-code-fast": 256000,
-    "grok-4": 256000,
-    "grok-4-fast-reasoning": 2000000,
-    "grok-4-fast-non-reasoning": 2000000,
-    "grok-4-1": 256000,
-    "grok-4-1-fast-reasoning": 2000000,
-    "grok-4-1-fast-non-reasoning": 2000000,
-    "grok-4-2": 256000,
-    "grok-4-3": 256000,
-    "grok-3": 131072,
-    "grok-3-mini": 131072,
-    "grok-2-vision-latest": 32768,
-    "default": "grok-4-3",
-    "grok-latest": 256000
+    'grok-build-0.1': 256000,
+    'grok-code-fast': 256000,
+    'grok-4.5': 500000,
+    'grok-4.3': 1000000,
+    'grok-4.20': 1000000,
+    'grok-4.20-0309-reasoning': 1000000,
+    'grok-4.20-0309-non-reasoning': 1000000,
+    # Legacy/redirected IDs retained for saved flows. xAI redirects these to 4.3.
+    'grok-4-3': 1000000,
+    'grok-4': 256000,
+    'grok-4-fast-reasoning': 1000000,
+    'grok-4-fast-non-reasoning': 1000000,
+    'grok-4-1': 256000,
+    'grok-4-1-fast-reasoning': 1000000,
+    'grok-4-1-fast-non-reasoning': 1000000,
+    'grok-4-2': 256000,
+    'grok-3': 1000000,
+    'grok-3-mini': 131072,
+    'grok-2-vision-latest': 32768,
+    'grok-latest': 1000000,
+    'default': 'grok-4.5',
 }
 
 GROK_FRONT_MODELS = {
-    "grok-code-fast": 256000,
-    "grok-4-3": 256000,
-    "grok-4-2": 256000,
-    "grok-4-1": 256000,
-    "grok-4": 256000,
-    "grok-4-fast-reasoning": 2000000,
-    "grok-4-fast-non-reasoning": 2000000,
-    "grok-3": 131072,
-    "grok-3-mini": 131072,
-    "grok-2-vision-latest": 32768,
-    "grok-latest": 256000,
-    "default": "grok-4-3",
+    'grok-4.5': 500000,
+    'grok-4.3': 1000000,
+    'grok-4.20': 1000000,
+    'grok-4.20-0309-reasoning': 1000000,
+    'grok-4.20-0309-non-reasoning': 1000000,
+    'grok-build-0.1': 256000,
+    'grok-latest': 1000000,
+    'default': 'grok-4.5',
 }
 
 ANTHROPIC_MODELS = {
-    'claude-opus-4-8': 200000,
-    'claude-opus-4-7': 200000,
-    'claude-opus-4-6': 200000,
+    'claude-fable-5': 1000000,
+    'claude-opus-5': 1000000,
+    'claude-sonnet-5': 1000000,
+    'claude-opus-4-8': 1000000,
+    'claude-opus-4-7': 1000000,
+    'claude-opus-4-6': 1000000,
     'claude-opus-4-5': 200000,
     'claude-opus-4-1': 200000,
     'claude-sonnet-4-6': 1000000,
     'claude-sonnet-4-5': 1000000,
+    # Retired Sonnet 4 IDs are backend-only for saved-flow compatibility.
     'claude-sonnet-4-0': 200000,
+    'claude-sonnet-4-20250514': 200000,
     'claude-haiku-4-5': 200000,
     'claude-3-7-sonnet-latest': 200000,
     'claude-3-5-sonnet-latest': 200000,
     'claude-3-5-haiku-latest': 200000,
-    'claude-latest': 200000,
-    'default': 'claude-opus-4-8',
+    'claude-latest': 1000000,
+    'default': 'claude-opus-5',
 }
 
 ANTHROPIC_FRONT_MODELS = {
-    'claude-opus-4-8': 200000,
-    'claude-opus-4-7': 200000,
-    'claude-opus-4-6': 200000,
+    'claude-fable-5': 1000000,
+    'claude-opus-5': 1000000,
+    'claude-sonnet-5': 1000000,
+    'claude-opus-4-8': 1000000,
+    'claude-opus-4-7': 1000000,
+    'claude-opus-4-6': 1000000,
     'claude-opus-4-5': 200000,
-    'claude-opus-4-1': 200000,
     'claude-sonnet-4-6': 1000000,
     'claude-sonnet-4-5': 1000000,
-    'claude-sonnet-4-0': 200000,
     'claude-haiku-4-5': 200000,
-    'claude-3-7-sonnet-latest': 200000,
-    'claude-latest': 200000,
-    'default': 'claude-opus-4-8',
+    'claude-latest': 1000000,
+    'default': 'claude-opus-5',
 }
 
 GEMINI_MODELS = {
-    'gemini-3.5-flash': 1000000,
-    'gemini-3.1-pro': 1000000,
-    'gemini-3.1-flash-lite': 1000000,
+    'gemini-3.6-flash': 1048576,
+    'gemini-3.5-flash': 1048576,
+    'gemini-3.5-flash-lite': 1048576,
+    'gemini-3.1-flash-lite': 1048576,
+    # Preview is backend-only; the old shorthand resolves to this exact ID.
+    'gemini-3.1-pro-preview': 1048576,
+    'gemini-3.1-pro': 1048576,
     'gemini-3-pro-preview': 1000000,
-    'gemini-3-pro-image-preview': 65000,
-    'gemini-2.5-pro': 1000000,
-    'gemini-2.5-flash': 1000000,
-    'gemini-2.5-flash-lite': 1000000,
-    'gemini-2.0-flash': 1000000,
-    'gemini-latest': 1000000,
-    'default': 'gemini-3.1-pro',
+    'gemini-3-pro-image': 65536,
+    'gemini-3-pro-image-preview': 65536,
+    'gemini-2.5-pro': 1048576,
+    'gemini-2.5-flash': 1048576,
+    'gemini-2.5-flash-lite': 1048576,
+    'gemini-2.0-flash': 1048576,
+    'gemini-latest': 1048576,
+    'default': 'gemini-3.6-flash',
 }
 
 GEMINI_FRONT_MODELS = {
-    'gemini-3.5-flash': 1000000,
-    'gemini-3.1-pro': 1000000,
-    'gemini-3.1-flash-lite': 1000000,
-    'gemini-3-pro-preview': 1000000,
-    'gemini-3-pro-image-preview': 65000,
-    'gemini-2.5-pro': 1000000,
-    'gemini-2.5-flash': 1000000,
-    'gemini-2.0-flash': 1000000,
-    'gemini-latest': 1000000,
-    'default': 'gemini-3.1-pro',
+    'gemini-3.6-flash': 1048576,
+    'gemini-3.5-flash': 1048576,
+    'gemini-3.5-flash-lite': 1048576,
+    'gemini-3.1-flash-lite': 1048576,
+    'gemini-2.5-pro': 1048576,
+    'gemini-2.5-flash': 1048576,
+    'gemini-2.5-flash-lite': 1048576,
+    'gemini-latest': 1048576,
+    'default': 'gemini-3.6-flash',
 }
 
 GEMINI_MULTIMODAL_MODELS = [
-    'gemini-3.5-flash', 'gemini-3.1-pro', 'gemini-3.1-flash-lite',
+    'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite', 'gemini-3.1-pro-preview', 'gemini-3.1-pro',
     'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash',
-    'gemini-3-pro-preview', 'gemini-3-pro-image-preview'
+    'gemini-3-pro-preview', 'gemini-3-pro-image', 'gemini-3-pro-image-preview'
 ]
 
-GEMINI_THINKING_MODELS = ['gemini-3.5-flash', 'gemini-3.1-pro', 'gemini-3.1-flash-lite',
-                          'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite',
-                          'gemini-3-pro-preview']
+GEMINI_THINKING_MODELS = [
+    'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite', 'gemini-3.1-pro-preview', 'gemini-3.1-pro',
+    'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite',
+    'gemini-3-pro-preview'
+]
 
 LATEST_MODELS_MAP = {
-    'chatgpt-latest': 'gpt-5.5-chat-latest',
-    'claude-latest': 'claude-opus-4-8',
-    'grok-latest': 'grok-4-3',
-    'gemini-latest': 'gemini-3.1-pro'
+    'chatgpt-latest': 'chat-latest',
+    'gpt-5.3': 'gpt-5.4',
+    'gpt-5.3-chat-latest': 'gpt-5.4',
+    'gpt-5.4-chat-latest': 'gpt-5.4',
+    'gpt-5.5-chat-latest': 'gpt-5.5',
+    'claude-latest': 'claude-opus-5',
+    'grok-latest': 'grok-4.3',
+    'grok-4-3': 'grok-4.3',
+    'grok-code-fast': 'grok-4.3',
+    'grok-4-fast-reasoning': 'grok-4.3',
+    'grok-4-fast-non-reasoning': 'grok-4.3',
+    'grok-4-1-fast-reasoning': 'grok-4.3',
+    'grok-4-1-fast-non-reasoning': 'grok-4.3',
+    'grok-3': 'grok-4.3',
+    'gemini-latest': 'gemini-3.6-flash',
+    'gemini-3.1-pro': 'gemini-3.1-pro-preview',
+    'gemini-3-pro-preview': 'gemini-3.1-pro-preview',
+    'gemini-3-pro-image-preview': 'gemini-3-pro-image',
+    'gemini-2.0-flash': 'gemini-3.6-flash',
+}
+
+# Published API capabilities that are not represented by the context-limit maps.
+MODEL_METADATA = {
+    model: {
+        'context_window': 1050000,
+        'max_input_tokens': 922000,
+        'max_output_tokens': 128000,
+        'input_modalities': ('text', 'image'),
+        'output_modalities': ('text',),
+        'endpoints': ('chat_completions', 'responses'),
+    }
+    for model in ('gpt-5.6', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna')
+}
+MODEL_METADATA.update({
+    model: {
+        'context_window': 1050000,
+        'max_output_tokens': 128000,
+        'input_modalities': ('text', 'image'),
+        'output_modalities': ('text',),
+        'endpoints': ('chat_completions', 'responses'),
+    }
+    for model in ('gpt-5.4', 'gpt-5.5')
+})
+MODEL_METADATA.update({
+    model: {
+        'context_window': 400000,
+        'max_output_tokens': 128000,
+        'input_modalities': ('text', 'image'),
+        'output_modalities': ('text',),
+        'endpoints': ('chat_completions', 'responses'),
+    }
+    for model in ('gpt-5.4-mini', 'gpt-5.4-nano', 'chat-latest')
+})
+MODEL_METADATA.update({
+    model: {
+        'context_window': 1000000,
+        'max_output_tokens': 128000,
+        'input_modalities': ('text', 'image'),
+        'output_modalities': ('text',),
+    }
+    for model in ('claude-fable-5', 'claude-opus-5', 'claude-sonnet-5')
+})
+MODEL_METADATA.update({
+    model: {
+        'context_window': GEMINI_FRONT_MODELS[model],
+        'max_output_tokens': 65536,
+        'input_modalities': ('text', 'image'),
+        'output_modalities': ('text',),
+    }
+    for model in (
+        'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite',
+        'gemini-3.1-flash-lite', 'gemini-2.5-pro', 'gemini-2.5-flash',
+        'gemini-2.5-flash-lite',
+    )
+})
+MODEL_METADATA['gemini-3.1-pro-preview'] = {
+    'context_window': 1048576,
+    'max_output_tokens': 65536,
+    'input_modalities': ('text', 'image'),
+    'output_modalities': ('text',),
+    'release_status': 'preview',
+}
+MODEL_METADATA['gemini-3-pro-image'] = {
+    'context_window': 65536,
+    'input_modalities': ('text', 'image'),
+    'output_modalities': ('text', 'image'),
+    'release_status': 'stable',
 }
 
 
@@ -1308,7 +1417,8 @@ class GeminiPlatform(LLMPlatform):
     def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None, **kwargs):
         """
         Handle image inference (analysis), generation, or editing using Gemini's multimodal capabilities.
-        For generation/editing, provide a descriptive user_text prompt without input image, and use 'gemini-3-pro-image-preview'.
+        For generation/editing, provide a descriptive user_text prompt without input image; the stable
+        `gemini-3-pro-image` model is selected automatically.
         """
         # Check if client is properly initialized
         if self.client is None:
@@ -1320,11 +1430,8 @@ class GeminiPlatform(LLMPlatform):
             raise ValueError(f"Model {model} does not support multimodal inputs/outputs.")
             
         is_generation_or_editing = (image_path is None and image_url is None)
-        if is_generation_or_editing and 'gemini-3-pro-image-preview' not in model:
-            if 'gemini-3' in model:
-                model = 'gemini-3-pro-image-preview'
-            else:
-                model = 'gemini-2.5-pro'  # Fallback for older models, though limited
+        if is_generation_or_editing and model != 'gemini-3-pro-image':
+            model = 'gemini-3-pro-image'
 
         text = user_text if user_text else "Describe this image." if not is_generation_or_editing else "Generate an image based on the prompt."
         text_part = types.Part(text=text)

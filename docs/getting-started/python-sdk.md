@@ -16,14 +16,14 @@ All three layers share the same authentication and can be mixed freely—use vau
 ## Table of Contents
 
 ### Getting Started
-- [Key Features](#key-features)
-- [Getting Started](#getting-started)
-- [Advantages](#advantages)
-- [Use Cases](#use-cases)
+- [Architecture Overview](#architecture-overview)
+- [Why Vector Vault SDK?](#why-vector-vault-sdk)
+- [Technical Advantages](#technical-advantages)
+- [Operational Benefits](#operational-benefits)
 
 ### Python API Documentation
-- [Installation](#install)
-- [Initialization & API Keys](#initialization--api-keys)
+- [Installation](#installation)
+- [Initialization & API Keys](#initialization-api-keys)
   - [Basic Setup (OpenAI Only)](#basic-setup-openai-only)
   - [Multi-Platform Setup (All Providers)](#multi-platform-setup-all-providers)
   - [API Key Requirements](#api-key-requirements)
@@ -32,22 +32,22 @@ All three layers share the same authentication and can be mixed freely—use vau
   - [Advanced Initialization Options](#advanced-initialization-options)
 
 ### Core Operations
-- [Upload Data](#upload)
+- [Build a Knowledge Base](#basic-usage-build-a-knowledge-base)
 - [Vault Management](#vault-management)
   - [Creating Vaults](#creating-vaults)
 - [Search Your Data](#search-your-data)
-- [Talk to Your Data](#talk-to-your-data)
+- [Talk to Your Data](#production-rag-pipeline)
   - [The get_chat() Function](#the-get_chat-function)
-  - [Basic Usage](#basic-usage)
+  - [Customer Support Example](#real-world-example-customer-support-agent)
   - [Change the Personality](#change-the-personality)
 
 ### Advanced Features
 - [Summarize Anything](#summarize-anything)
-- [Streaming](#streaming)
+- [Streaming](#production-streaming)
 - [Metadata Made Easy](#metadata-made-easy)
   - [Add Any Fields](#add-any-fields)
 - [Vaults](#vaults)
-- [Build an AI Customer Service Chatbot](#build-an-ai-cusomter-service-chatbot)
+- [Enterprise Customer Service Agent](#enterprise-customer-service-agent)
 - [Advanced Features](#advanced-features)
   - [Multi-Platform Model Switching](#multi-platform-model-switching)
   - [Image Processing](#image-processing)
@@ -90,7 +90,9 @@ Based on production workloads across thousands of projects:
 <br>
 <br>
 
-# Full Python API:
+# Full Python API
+
+## Installation
 
 Install:
 <br>
@@ -145,16 +147,16 @@ vault.get_chat("Hello", model="gpt-4o-mini")
 vault.get_chat("Hello", model="o1")
 
 # Grok models (requires grok_key)  
-vault.get_chat("Hello", model="grok-4")
-vault.get_chat("Hello", model="grok-3")
+vault.get_chat("Hello", model="grok-4.5")
+vault.get_chat("Hello", model="grok-4.3")
 
 # Claude models (requires anthropic_key)
-vault.get_chat("Hello", model="claude-sonnet-4-0")
-vault.get_chat("Hello", model="claude-sonnet-4-5")
+vault.get_chat("Hello", model="claude-opus-5")
+vault.get_chat("Hello", model="claude-sonnet-5")
 
 # Gemini models (requires gemini_key)
-vault.get_chat("Hello", model="gemini-2.5-pro")
-vault.get_chat("Hello", model="gemini-2.5-flash")
+vault.get_chat("Hello", model="gemini-3.6-flash")
+vault.get_chat("Hello", model="gemini-3.5-flash-lite")
 ```
 
 ## Getting API Keys
@@ -183,7 +185,7 @@ vault = Vault(
     
     # Conversation Features  
     conversation_user_id='user123',  # Enable conversation history
-    model='claude-sonnet-4-5',       # Set default model
+    model='claude-sonnet-5',       # Set default model
     
     # Custom Prompting (overrides saved prompts/personality)
     main_prompt="Answer: {content}",
@@ -561,7 +563,7 @@ async def handle_chat_stream(request):
             history=request.conversation_history,
             get_context=True,
             n_context=8,
-            model='claude-sonnet-4-5',  # Streaming optimized model
+            model='claude-sonnet-5',  # Streaming optimized model
             smart_history_search=True,
             temperature=0.7
         )
@@ -963,13 +965,13 @@ Switch between AI platforms seamlessly mid-conversation:
 response = vault.get_chat("Analyze this data", model="gpt-4o")
 
 # Switch to Claude for opinion
-response = vault.get_chat("What's your take?", model="claude-sonnet-4-0")
+response = vault.get_chat("What's your take?", model="claude-opus-5")
 
 # Try Grok for creativity
-response = vault.get_chat("Be creative", model="grok-4")
+response = vault.get_chat("Be creative", model="grok-4.5")
 
 # Use Gemini for multimodal tasks
-response = vault.get_chat("Analyze this", model="gemini-2.5-pro")
+response = vault.get_chat("Analyze this", model="gemini-3.6-flash")
 ```
 
 ## Image Processing

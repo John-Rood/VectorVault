@@ -128,13 +128,13 @@ A fully-initialized `vault` instance is **already available** in your Act node �
 
 ```python
 # `vault` is ready to go — already authenticated with your keys.
-response = vault.get_chat("Summarize this conversation", model="claude-opus-4-8")
+response = vault.get_chat("Summarize this conversation", model="claude-opus-5")
 print(response)
 
 # Use any provider/model you've saved a key for:
-response = vault.get_chat("...", model="gpt-5.5")
-response = vault.get_chat("...", model="gemini-3.1-pro")
-response = vault.get_chat("...", model="grok-4-3")
+response = vault.get_chat("...", model="gpt-5.6")
+response = vault.get_chat("...", model="gemini-3.6-flash")
+response = vault.get_chat("...", model="grok-4.5")
 ```
 
 > ⚠️ **Do not `import vectorvault` or create your own `Vault(...)`.** The script runs in a sandbox that blocks imports, and the provided `vault` is already the right instance with all your credentials loaded. Just call methods on `vault`.

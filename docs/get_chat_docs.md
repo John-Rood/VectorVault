@@ -244,10 +244,10 @@ The AI system automatically handles model switching between platforms. Simply ch
 response = vault.get_chat("Analyze this data", model="gpt-4o")
 
 # Switch to Claude mid-conversation 
-response = vault.get_chat("What's your opinion?", model="claude-sonnet-4-0")
+response = vault.get_chat("What's your opinion?", model="claude-opus-5")
 
 # Switch to Grok
-response = vault.get_chat("Be creative", model="grok-4")
+response = vault.get_chat("Be creative", model="grok-4.5")
 
 # All in the same conversation - platform switching is automatic
 for chunk in vault.get_chat_stream(

@@ -7,6 +7,11 @@ repo_name: John-Rood/VectorVault
 repo_url: https://github.com/John-Rood/VectorVault
 edit_uri: edit/main/docs/
 
+# README/get_chat_docs are maintained source mirrors of nav pages.
+exclude_docs: |
+  README.md
+  get_chat_docs.md
+
 theme:
   name: readthedocs
   highlightjs: true
@@ -21,6 +26,7 @@ nav:
   - Getting Started:
       - Python SDK: getting-started/python-sdk.md
       - Get Chat Documentation: getting-started/get-chat.md
+      - Supported Models: supported_models.md
   - JavaScript SDK:
       - Introduction: javascript-sdk/index.md
       - Quick Reference: javascript-sdk/quick-reference.md

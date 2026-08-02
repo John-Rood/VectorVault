@@ -1,6 +1,6 @@
 # Supported AI Models
 
-Vector Vault routes model IDs to OpenAI, Anthropic, xAI, or Google by catalog membership. The aliases below are the recommended defaults as of **August 2, 2026**; explicit stable IDs are also supported.
+Vector Vault routes model IDs to OpenAI, Anthropic, xAI, or Google by catalog membership. The aliases below are the recommended VectorVault Cloud/runtime defaults as of **August 2, 2026**; explicit stable IDs are also supported. The SDK source on `main` mirrors this catalog, while the current PyPI package remains `vector-vault==7.4.9.11` until its documented release pipeline is restored; portable SDK examples therefore use `model="default"`.
 
 | Provider | Recommended default | Current stable IDs | Context window | Max output |
 | --- | --- | --- | ---: | ---: |

@@ -105,7 +105,7 @@ response = vault.get_chat("Summarize this conversation", model="claude-opus-5")
 print(response)
 
 # Use any provider/model you've saved a key for:
-response = vault.get_chat("...", model="gpt-5.6")
+response = vault.get_chat("...", model="default")
 response = vault.get_chat("...", model="gemini-3.6-flash")
 response = vault.get_chat("...", model="grok-4.5")
 ```

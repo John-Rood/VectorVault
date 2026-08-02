@@ -306,7 +306,8 @@ MODEL_METADATA['gemini-3.1-pro-preview'] = {
     'release_status': 'preview',
 }
 MODEL_METADATA['gemini-3-pro-image'] = {
-    'context_window': 65536,
+    'context_window': 131072,
+    'max_output_tokens': 32768,
     'input_modalities': ('text', 'image'),
     'output_modalities': ('text', 'image'),
     'release_status': 'stable',

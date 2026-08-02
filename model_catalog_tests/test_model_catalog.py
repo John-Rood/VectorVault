@@ -48,7 +48,8 @@ class ModelCatalogTests(unittest.TestCase):
         self.assertEqual(ai.MODEL_METADATA['gemini-2.5-pro']['max_output_tokens'], 65_536)
         self.assertEqual(ai.GEMINI_MODELS['gemini-3.5-flash-lite'], 1_048_576)
         self.assertEqual(ai.GEMINI_MODELS['gemini-3.1-pro-preview'], 1_048_576)
-        self.assertEqual(ai.GEMINI_MODELS['gemini-3-pro-image'], 65_536)
+        self.assertEqual(ai.GEMINI_MODELS['gemini-3-pro-image'], 131_072)
+        self.assertEqual(ai.MODEL_METADATA['gemini-3-pro-image']['max_output_tokens'], 32_768)
         for model in ('claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6'):
             self.assertEqual(ai.ANTHROPIC_MODELS[model], 1_000_000)
         self.assertEqual(ai.OPENAI_MODELS['gpt-4'], 8_192)

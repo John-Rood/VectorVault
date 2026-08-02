@@ -13,7 +13,7 @@ OpenAI GPT-5.6 accepts text and image input and returns text through Chat Comple
 
 Anthropic's `claude-opus-5` is the default because Anthropic recommends Opus 5 for complex work; Fable 5 remains available as the highest-capability GA model, and Sonnet 5 is the speed/intelligence option. Fable 5 and Opus 5 allow up to 128,000 output tokens; Sonnet 5 allows 64,000. Invitation-only `claude-mythos-5` is not listed.
 
-Gemini image generation uses the stable backend-only `gemini-3-pro-image` model. It is not shown in text-chat selectors; the retired `gemini-3-pro-image-preview` ID is translated locally for saved integrations.
+Gemini image generation uses the stable backend-only `gemini-3-pro-image` model with the Models API's 131,072-token input and 32,768-token output limits. It is not shown in text-chat selectors; the retired `gemini-3-pro-image-preview` ID is translated locally for saved integrations.
 
 ## Compatibility IDs
 

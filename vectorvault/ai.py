@@ -211,7 +211,7 @@ GEMINI_THINKING_MODELS = [
 LATEST_MODELS_MAP = {
     'chatgpt-latest': 'chat-latest',
     'gpt-5.3': 'gpt-5.4',
-    'gpt-5.3-chat-latest': 'gpt-5.4',
+    # The documented deprecated chat snapshot remains a pass-through ID.
     'gpt-5.4-chat-latest': 'gpt-5.4',
     'gpt-5.5-chat-latest': 'gpt-5.5',
     'claude-latest': 'claude-opus-5',
@@ -262,6 +262,14 @@ MODEL_METADATA.update({
     }
     for model in ('gpt-5.4-mini', 'gpt-5.4-nano', 'chat-latest')
 })
+MODEL_METADATA['gpt-5.3-chat-latest'] = {
+    'context_window': 128000,
+    'max_output_tokens': 16384,
+    'input_modalities': ('text', 'image'),
+    'output_modalities': ('text',),
+    'endpoints': ('chat_completions',),
+    'release_status': 'deprecated',
+}
 MODEL_METADATA.update({
     model: {
         'context_window': 1000000,

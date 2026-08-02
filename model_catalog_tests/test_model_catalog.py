@@ -71,6 +71,8 @@ class ModelCatalogTests(unittest.TestCase):
         }
         for alias, target in expected.items():
             self.assertEqual(ai.LATEST_MODELS_MAP[alias], target)
+        self.assertNotIn('gpt-5.3-chat-latest', ai.LATEST_MODELS_MAP)
+        self.assertEqual(ai.MODEL_METADATA['gpt-5.3-chat-latest']['max_output_tokens'], 16_384)
         self.assertEqual(ai.OPENAI_MODELS['default'], 'gpt-5.6')
         self.assertEqual(ai.ANTHROPIC_MODELS['default'], 'claude-opus-5')
         self.assertEqual(ai.GROK_MODELS['default'], 'grok-4.5')

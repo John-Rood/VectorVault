@@ -94,7 +94,7 @@ ANTHROPIC_NO_TEMPERATURE_LIST = [
 GROK_MODELS = {
     'grok-build-0.1': 256000,
     'grok-code-fast': 256000,
-    'grok-4.5': 500000,
+    'grok-4.5': 256000,
     'grok-4.3': 1000000,
     'grok-4.20': 1000000,
     'grok-4.20-0309-reasoning': 1000000,
@@ -116,7 +116,7 @@ GROK_MODELS = {
 }
 
 GROK_FRONT_MODELS = {
-    'grok-4.5': 500000,
+    'grok-4.5': 256000,
     'grok-4.3': 1000000,
     'grok-4.20': 1000000,
     'grok-4.20-0309-reasoning': 1000000,
@@ -172,8 +172,8 @@ GEMINI_MODELS = {
     'gemini-3.1-pro-preview': 1048576,
     'gemini-3.1-pro': 1048576,
     'gemini-3-pro-preview': 1000000,
-    'gemini-3-pro-image': 65536,
-    'gemini-3-pro-image-preview': 65536,
+    'gemini-3-pro-image': 131072,
+    'gemini-3-pro-image-preview': 131072,
     'gemini-2.5-pro': 1048576,
     'gemini-2.5-flash': 1048576,
     'gemini-2.5-flash-lite': 1048576,
@@ -277,8 +277,14 @@ MODEL_METADATA.update({
         'input_modalities': ('text', 'image'),
         'output_modalities': ('text',),
     }
-    for model in ('claude-fable-5', 'claude-opus-5', 'claude-sonnet-5')
+    for model in ('claude-fable-5', 'claude-opus-5')
 })
+MODEL_METADATA['claude-sonnet-5'] = {
+    'context_window': 1000000,
+    'max_output_tokens': 64000,
+    'input_modalities': ('text', 'image'),
+    'output_modalities': ('text',),
+}
 MODEL_METADATA.update({
     model: {
         'context_window': GEMINI_FRONT_MODELS[model],

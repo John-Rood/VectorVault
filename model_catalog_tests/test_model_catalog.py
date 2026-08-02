@@ -30,8 +30,10 @@ class ModelCatalogTests(unittest.TestCase):
             self.assertEqual(ai.MODEL_METADATA[model]['max_output_tokens'], 128_000)
         for model in ('claude-fable-5', 'claude-opus-5', 'claude-sonnet-5'):
             self.assertEqual(ai.ANTHROPIC_MODELS[model], 1_000_000)
+        for model in ('claude-fable-5', 'claude-opus-5'):
             self.assertEqual(ai.MODEL_METADATA[model]['max_output_tokens'], 128_000)
-        self.assertEqual(ai.GROK_MODELS['grok-4.5'], 500_000)
+        self.assertEqual(ai.MODEL_METADATA['claude-sonnet-5']['max_output_tokens'], 64_000)
+        self.assertEqual(ai.GROK_MODELS['grok-4.5'], 256_000)
         for model in ('grok-4.3', 'grok-4.20', 'grok-4.20-0309-reasoning', 'grok-4.20-0309-non-reasoning'):
             self.assertEqual(ai.GROK_MODELS[model], 1_000_000)
         self.assertEqual(ai.GROK_MODELS['grok-build-0.1'], 256_000)

@@ -135,12 +135,22 @@ EXPECTED_COMPATIBILITY_MODEL_IDS = frozenset({'chat-latest',
  'grok-4-fast-non-reasoning',
  'grok-4-fast-reasoning',
  'grok-4.20',
+ 'grok-4.20-0309',
  'grok-4.20-0309-non-reasoning',
  'grok-4.20-0309-reasoning',
+ 'grok-4.20-non-reasoning',
+ 'grok-4.20-non-reasoning-latest',
+ 'grok-4.20-reasoning',
+ 'grok-4.20-reasoning-latest',
  'grok-4.3',
+ 'grok-4.3-latest',
  'grok-4.5',
+ 'grok-4.5-latest',
  'grok-build-0.1',
+ 'grok-build-latest',
  'grok-code-fast',
+ 'grok-code-fast-1',
+ 'grok-code-fast-1-0825',
  'grok-latest',
  'o1',
  'o1-mini',
@@ -165,11 +175,19 @@ class ModelCatalogTests(unittest.TestCase):
         for model in ('claude-fable-5', 'claude-opus-5'):
             self.assertEqual(ai.MODEL_METADATA[model]['max_output_tokens'], 128_000)
         self.assertEqual(ai.MODEL_METADATA['claude-sonnet-5']['max_output_tokens'], 64_000)
-        self.assertEqual(ai.GROK_MODELS['grok-4.5'], 256_000)
-        self.assertEqual(ai.GROK_MODELS['grok-4.3'], 1_000_000)
-        for model in ('grok-4.20', 'grok-4.20-0309-reasoning', 'grok-4.20-0309-non-reasoning'):
-            self.assertEqual(ai.GROK_MODELS[model], 2_000_000)
-        self.assertEqual(ai.GROK_MODELS['grok-build-0.1'], 256_000)
+        for model in ('grok-4.5', 'grok-4.5-latest', 'grok-build-latest'):
+            self.assertEqual(ai.GROK_MODELS[model], 500_000)
+        for model in ('grok-4.3', 'grok-4.3-latest'):
+            self.assertEqual(ai.GROK_MODELS[model], 1_000_000)
+        for model in (
+            'grok-4.20', 'grok-4.20-0309', 'grok-4.20-reasoning',
+            'grok-4.20-reasoning-latest', 'grok-4.20-0309-reasoning',
+            'grok-4.20-non-reasoning', 'grok-4.20-non-reasoning-latest',
+            'grok-4.20-0309-non-reasoning',
+        ):
+            self.assertEqual(ai.GROK_MODELS[model], 1_000_000)
+        for model in ('grok-build-0.1', 'grok-code-fast', 'grok-code-fast-1', 'grok-code-fast-1-0825'):
+            self.assertEqual(ai.GROK_MODELS[model], 256_000)
         self.assertEqual(ai.GROK_MODELS['grok-latest'], 1_000_000)
         self.assertEqual(ai.OPENAI_MODELS['gpt-5.4'], 1_050_000)
         self.assertEqual(ai.OPENAI_MODELS['gpt-5.5'], 1_050_000)
@@ -197,7 +215,19 @@ class ModelCatalogTests(unittest.TestCase):
             'gpt-5.5-chat-latest': 'gpt-5.5',
             'claude-latest': 'claude-opus-5',
             'grok-latest': 'grok-4.3',
+            'grok-4.3-latest': 'grok-4.3',
+            'grok-4.5-latest': 'grok-4.5',
+            'grok-build-latest': 'grok-4.5',
+            'grok-4.20': 'grok-4.20-0309-reasoning',
+            'grok-4.20-0309': 'grok-4.20-0309-reasoning',
+            'grok-4.20-reasoning': 'grok-4.20-0309-reasoning',
+            'grok-4.20-reasoning-latest': 'grok-4.20-0309-reasoning',
+            'grok-4.20-non-reasoning': 'grok-4.20-0309-non-reasoning',
+            'grok-4.20-non-reasoning-latest': 'grok-4.20-0309-non-reasoning',
             'grok-4-3': 'grok-4.3',
+            'grok-code-fast': 'grok-build-0.1',
+            'grok-code-fast-1': 'grok-build-0.1',
+            'grok-code-fast-1-0825': 'grok-build-0.1',
             'grok-3': 'grok-4.3',
             'gemini-latest': 'gemini-3.6-flash',
             'gemini-3.1-pro': 'gemini-3.1-pro-preview',
@@ -237,12 +267,44 @@ class ModelCatalogTests(unittest.TestCase):
             self.assertEqual(captured[-1], upstream)
         self.assertNotIn('chatgpt-latest', captured)
 
+    def test_xai_aliases_are_resolved_before_provider_call(self):
+        captured = []
+
+        def create(**kwargs):
+            captured.append(kwargs['model'])
+            message = types.SimpleNamespace(content='ok')
+            return types.SimpleNamespace(choices=[types.SimpleNamespace(message=message)])
+
+        platform = ai.GrokPlatform.__new__(ai.GrokPlatform)
+        platform.client = types.SimpleNamespace(
+            chat=types.SimpleNamespace(completions=types.SimpleNamespace(create=create))
+        )
+        for alias, upstream in (
+            ('grok-4.5-latest', 'grok-4.5'),
+            ('grok-build-latest', 'grok-4.5'),
+            ('grok-code-fast', 'grok-build-0.1'),
+            ('grok-4.20', 'grok-4.20-0309-reasoning'),
+            ('grok-4.20-non-reasoning-latest', 'grok-4.20-0309-non-reasoning'),
+        ):
+            self.assertEqual(platform.make_call([], alias, timeout=1), 'ok')
+            self.assertEqual(captured[-1], upstream)
+        self.assertNotIn('grok-build-latest', captured)
+
     def test_front_catalog_hides_legacy_but_backend_retains_it(self):
         backend = ai.get_all_models()
         frontend = ai.get_front_models()
         for legacy in ('gpt-5.3', 'gpt-5.4-chat-latest', 'chatgpt-latest', 'claude-sonnet-4-0', 'claude-sonnet-4-20250514', 'grok-3', 'grok-4', 'grok-4-3', 'gemini-3.1-pro'):
             self.assertIn(legacy, backend)
             self.assertNotIn(legacy, frontend)
+        for provider_alias in (
+            'grok-4.3-latest', 'grok-4.5-latest', 'grok-build-latest',
+            'grok-4.20-0309', 'grok-4.20-reasoning',
+            'grok-4.20-reasoning-latest', 'grok-4.20-non-reasoning',
+            'grok-4.20-non-reasoning-latest', 'grok-code-fast-1',
+            'grok-code-fast-1-0825',
+        ):
+            self.assertIn(provider_alias, backend)
+            self.assertNotIn(provider_alias, frontend)
         self.assertNotIn('claude-mythos-5', backend)
         self.assertNotIn('gemini-3-pro-preview', frontend)
         self.assertIn('gemini-3.1-pro-preview', backend)

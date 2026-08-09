@@ -1,0 +1,2275 @@
+{
+  "schema_version": 1,
+  "defaults": {
+    "openai": "gpt-5.6",
+    "anthropic": "claude-opus-5",
+    "grok": "grok-4.5",
+    "gemini": "gemini-3.6-flash"
+  },
+  "models": [
+    {
+      "id": "o1",
+      "provider": "openai",
+      "context_window": 200000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "o1-mini",
+      "provider": "openai",
+      "context_window": 128000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "o3",
+      "provider": "openai",
+      "context_window": 200000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "o3-pro",
+      "provider": "openai",
+      "context_window": 200000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "o3-mini",
+      "provider": "openai",
+      "context_window": 128000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "o4-mini",
+      "provider": "openai",
+      "context_window": 200000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gpt-4",
+      "provider": "openai",
+      "context_window": 8192,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gpt-5",
+      "provider": "openai",
+      "context_window": 400000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gpt-5.1",
+      "provider": "openai",
+      "context_window": 400000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gpt-5.2",
+      "provider": "openai",
+      "context_window": 400000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gpt-5.3",
+      "provider": "openai",
+      "context_window": 400000,
+      "frontend": false,
+      "alias_for": "gpt-5.4",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gpt-5.4",
+      "provider": "openai",
+      "context_window": 1050000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 1050000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ]
+      }
+    },
+    {
+      "id": "gpt-5.5",
+      "provider": "openai",
+      "context_window": 1050000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "context_window": 1050000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ]
+      }
+    },
+    {
+      "id": "gpt-5.4-mini",
+      "provider": "openai",
+      "context_window": 400000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 400000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ]
+      }
+    },
+    {
+      "id": "gpt-5.4-nano",
+      "provider": "openai",
+      "context_window": 400000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 400000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ]
+      }
+    },
+    {
+      "id": "gpt-5.6",
+      "provider": "openai",
+      "context_window": 1050000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "context_window": 1050000,
+        "max_input_tokens": 922000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ]
+      }
+    },
+    {
+      "id": "gpt-5.6-sol",
+      "provider": "openai",
+      "context_window": 1050000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "context_window": 1050000,
+        "max_input_tokens": 922000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ]
+      }
+    },
+    {
+      "id": "gpt-5.6-terra",
+      "provider": "openai",
+      "context_window": 1050000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "context_window": 1050000,
+        "max_input_tokens": 922000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ]
+      }
+    },
+    {
+      "id": "gpt-5.6-luna",
+      "provider": "openai",
+      "context_window": 1050000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "context_window": 1050000,
+        "max_input_tokens": 922000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ]
+      }
+    },
+    {
+      "id": "gpt-5-mini",
+      "provider": "openai",
+      "context_window": 400000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gpt-5-nano",
+      "provider": "openai",
+      "context_window": 400000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gpt-4o-mini",
+      "provider": "openai",
+      "context_window": 128000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gpt-4o",
+      "provider": "openai",
+      "context_window": 128000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gpt-4o-audio-preview",
+      "provider": "openai",
+      "context_window": 128000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "chatgpt-4o-latest",
+      "provider": "openai",
+      "context_window": 128000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gpt-5-chat-latest",
+      "provider": "openai",
+      "context_window": 400000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gpt-5.1-chat-latest",
+      "provider": "openai",
+      "context_window": 400000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gpt-5.2-chat-latest",
+      "provider": "openai",
+      "context_window": 400000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gpt-5.3-chat-latest",
+      "provider": "openai",
+      "context_window": 128000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 128000,
+        "max_output_tokens": 16384,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "endpoints": [
+          "chat_completions"
+        ],
+        "release_status": "deprecated"
+      }
+    },
+    {
+      "id": "gpt-5.4-chat-latest",
+      "provider": "openai",
+      "context_window": 400000,
+      "frontend": false,
+      "alias_for": "gpt-5.4",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gpt-5.5-chat-latest",
+      "provider": "openai",
+      "context_window": 400000,
+      "frontend": false,
+      "alias_for": "gpt-5.5",
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": [
+          "temperature"
+        ]
+      }
+    },
+    {
+      "id": "gpt-3.5-turbo",
+      "provider": "openai",
+      "context_window": 16385,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "chat-latest",
+      "provider": "openai",
+      "context_window": 400000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 400000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ]
+      }
+    },
+    {
+      "id": "chatgpt-latest",
+      "provider": "openai",
+      "context_window": 400000,
+      "frontend": false,
+      "alias_for": "chat-latest",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "claude-fable-5",
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "context_window": 1000000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "claude-opus-5",
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "context_window": 1000000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "claude-sonnet-5",
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "context_window": 1000000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "claude-opus-4-8",
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "context_window": 1000000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "claude-opus-4-7",
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "context_window": 1000000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "claude-opus-4-6",
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "context_window": 1000000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "claude-opus-4-5",
+      "provider": "anthropic",
+      "context_window": 200000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 200000,
+        "max_output_tokens": 64000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "claude-opus-4-1",
+      "provider": "anthropic",
+      "context_window": 200000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "claude-sonnet-4-6",
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "context_window": 1000000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "claude-sonnet-4-5",
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 1000000,
+        "max_output_tokens": 64000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "claude-sonnet-4-0",
+      "provider": "anthropic",
+      "context_window": 200000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "claude-sonnet-4-20250514",
+      "provider": "anthropic",
+      "context_window": 200000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "claude-haiku-4-5",
+      "provider": "anthropic",
+      "context_window": 200000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 200000,
+        "max_output_tokens": 64000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "claude-3-7-sonnet-latest",
+      "provider": "anthropic",
+      "context_window": 200000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "claude-3-5-sonnet-latest",
+      "provider": "anthropic",
+      "context_window": 200000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "claude-3-5-haiku-latest",
+      "provider": "anthropic",
+      "context_window": 200000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "claude-latest",
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": "claude-opus-5",
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "context_window": 1000000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "grok-build-0.1",
+      "provider": "grok",
+      "context_window": 256000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-code-fast",
+      "provider": "grok",
+      "context_window": 256000,
+      "frontend": false,
+      "alias_for": "grok-build-0.1",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-code-fast-1",
+      "provider": "grok",
+      "context_window": 256000,
+      "frontend": false,
+      "alias_for": "grok-build-0.1",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-code-fast-1-0825",
+      "provider": "grok",
+      "context_window": 256000,
+      "frontend": false,
+      "alias_for": "grok-build-0.1",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4.5",
+      "provider": "grok",
+      "context_window": 500000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "xai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4.5-latest",
+      "provider": "grok",
+      "context_window": 500000,
+      "frontend": false,
+      "alias_for": "grok-4.5",
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "xai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-build-latest",
+      "provider": "grok",
+      "context_window": 500000,
+      "frontend": false,
+      "alias_for": "grok-4.5",
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "xai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4.3",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4.3-latest",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": false,
+      "alias_for": "grok-4.3",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4.20",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": "grok-4.20-0309-reasoning",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4.20-0309",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": false,
+      "alias_for": "grok-4.20-0309-reasoning",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4.20-reasoning",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": false,
+      "alias_for": "grok-4.20-0309-reasoning",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4.20-reasoning-latest",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": false,
+      "alias_for": "grok-4.20-0309-reasoning",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4.20-0309-reasoning",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4.20-non-reasoning",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": false,
+      "alias_for": "grok-4.20-0309-non-reasoning",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4.20-non-reasoning-latest",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": false,
+      "alias_for": "grok-4.20-0309-non-reasoning",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4.20-0309-non-reasoning",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4-3",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": false,
+      "alias_for": "grok-4.3",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4",
+      "provider": "grok",
+      "context_window": 256000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4-fast-reasoning",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": false,
+      "alias_for": "grok-4.3",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4-fast-non-reasoning",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": false,
+      "alias_for": "grok-4.3",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4-1",
+      "provider": "grok",
+      "context_window": 256000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4-1-fast-reasoning",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": false,
+      "alias_for": "grok-4.3",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4-1-fast-non-reasoning",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": false,
+      "alias_for": "grok-4.3",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-4-2",
+      "provider": "grok",
+      "context_window": 256000,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-3",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": false,
+      "alias_for": "grok-4.3",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-3-mini",
+      "provider": "grok",
+      "context_window": 131072,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-2-vision-latest",
+      "provider": "grok",
+      "context_window": 32768,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "grok-latest",
+      "provider": "grok",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": "grok-4.3",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gemini-3.6-flash",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "minimal",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_level",
+          "parameter": "thinking_config.thinking_level"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 1048576,
+        "max_output_tokens": 65536,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "gemini-3.5-flash",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "minimal",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_level",
+          "parameter": "thinking_config.thinking_level"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 1048576,
+        "max_output_tokens": 65536,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "gemini-3.5-flash-lite",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "minimal",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "minimal",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_level",
+          "parameter": "thinking_config.thinking_level"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 1048576,
+        "max_output_tokens": 65536,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "gemini-3.1-flash-lite",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 1048576,
+        "max_output_tokens": 65536,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "gemini-3.1-pro-preview",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_level",
+          "parameter": "thinking_config.thinking_level"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 1048576,
+        "max_output_tokens": 65536,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "release_status": "preview"
+      }
+    },
+    {
+      "id": "gemini-3.1-pro",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": false,
+      "alias_for": "gemini-3.1-pro-preview",
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_level",
+          "parameter": "thinking_config.thinking_level"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gemini-3-pro-preview",
+      "provider": "gemini",
+      "context_window": 1000000,
+      "frontend": false,
+      "alias_for": "gemini-3.1-pro-preview",
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_level",
+          "parameter": "thinking_config.thinking_level"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gemini-3-pro-image",
+      "provider": "gemini",
+      "context_window": 131072,
+      "frontend": false,
+      "alias_for": null,
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 131072,
+        "max_output_tokens": 32768,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text",
+          "image"
+        ],
+        "release_status": "stable"
+      }
+    },
+    {
+      "id": "gemini-3-pro-image-preview",
+      "provider": "gemini",
+      "context_window": 131072,
+      "frontend": false,
+      "alias_for": "gemini-3-pro-image",
+      "thinking": {
+        "supported": false,
+        "levels": [],
+        "default": null,
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gemini-2.5-pro",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": null,
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_budget",
+          "parameter": "thinking_config.thinking_budget",
+          "values": {
+            "low": 1024,
+            "medium": 8192,
+            "high": 24576
+          }
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 1048576,
+        "max_output_tokens": 65536,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "gemini-2.5-flash",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": null,
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_budget",
+          "parameter": "thinking_config.thinking_budget",
+          "values": {
+            "low": 1024,
+            "medium": 8192,
+            "high": 24576
+          }
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 1048576,
+        "max_output_tokens": 65536,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "gemini-2.5-flash-lite",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": null,
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_budget",
+          "parameter": "thinking_config.thinking_budget",
+          "values": {
+            "low": 1024,
+            "medium": 8192,
+            "high": 24576
+          }
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 1048576,
+        "max_output_tokens": 65536,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "gemini-2.0-flash",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": false,
+      "alias_for": "gemini-3.6-flash",
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "minimal",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_level",
+          "parameter": "thinking_config.thinking_level"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
+      "id": "gemini-latest",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": true,
+      "alias_for": "gemini-3.6-flash",
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "minimal",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_level",
+          "parameter": "thinking_config.thinking_level"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    }
+  ],
+  "lists": {
+    "OPENAI_IMG_CAPABLE": [
+      "o1",
+      "gpt-4o",
+      "gpt-4o-mini",
+      "gpt-4o-audio-preview",
+      "chatgpt-4o-latest",
+      "gpt-5",
+      "gpt-5.1",
+      "gpt-5.2",
+      "gpt-5.3",
+      "gpt-5.4",
+      "gpt-5.5",
+      "gpt-5.6",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-5.6-luna",
+      "gpt-5.4-mini",
+      "gpt-5.4-nano",
+      "chat-latest",
+      "gpt-5-mini",
+      "gpt-5-nano",
+      "gpt-5.2-chat-latest",
+      "gpt-5.3-chat-latest",
+      "gpt-5.4-chat-latest",
+      "gpt-5.5-chat-latest"
+    ],
+    "OPENAI_NO_STREAM_LIST": [
+      "o1",
+      "o1-mini"
+    ],
+    "OPENAI_NO_TEMPERATURE_LIST": [
+      "o1",
+      "o1-mini",
+      "o3",
+      "o3-mini"
+    ],
+    "ANTHROPIC_NO_TEMPERATURE_LIST": [
+      "claude-fable-5",
+      "claude-opus-5",
+      "claude-sonnet-5",
+      "claude-opus-4-8",
+      "claude-opus-4-7",
+      "claude-opus-4-6"
+    ],
+    "GEMINI_MULTIMODAL_MODELS": [
+      "gemini-3.6-flash",
+      "gemini-3.5-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.1-flash-lite",
+      "gemini-3.1-pro-preview",
+      "gemini-3.1-pro",
+      "gemini-2.5-pro",
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-lite",
+      "gemini-2.0-flash",
+      "gemini-3-pro-preview",
+      "gemini-3-pro-image",
+      "gemini-3-pro-image-preview"
+    ],
+    "GEMINI_THINKING_MODELS": [
+      "gemini-3.6-flash",
+      "gemini-3.5-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.1-pro-preview",
+      "gemini-3.1-pro",
+      "gemini-3-pro-preview",
+      "gemini-2.5-pro",
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-lite",
+      "gemini-2.0-flash",
+      "gemini-latest"
+    ]
+  },
+  "references": {
+    "openai": {
+      "url": "https://developers.openai.com/api/docs/guides/reasoning",
+      "retrieved": "2026-08-09"
+    },
+    "openai_gpt_5_6": {
+      "url": "https://developers.openai.com/api/docs/guides/latest-model",
+      "retrieved": "2026-08-09"
+    },
+    "anthropic": {
+      "url": "https://platform.claude.com/docs/en/build-with-claude/effort",
+      "retrieved": "2026-08-09"
+    },
+    "anthropic_thinking": {
+      "url": "https://platform.claude.com/docs/en/build-with-claude/thinking",
+      "retrieved": "2026-08-09"
+    },
+    "gemini": {
+      "url": "https://ai.google.dev/gemini-api/docs/thinking",
+      "retrieved": "2026-08-09"
+    },
+    "xai": {
+      "url": "https://docs.x.ai/developers/model-capabilities/text/reasoning",
+      "retrieved": "2026-08-09"
+    }
+  },
+  "catalog_date": "2026-08-09",
+  "omitted_thinking_level_behavior": "Omit all provider thinking/reasoning fields and preserve historical provider defaults."
+}

@@ -1,0 +1,3 @@
+include LICENSE README.md
+include vectorvault/model_catalog.json
+recursive-exclude * __pycache__ *.py[cod]

@@ -1,25 +1,8 @@
-import importlib.util
-import sys
 import types
 import unittest
-from pathlib import Path
 
+from vectorvault import ai
 
-def load_ai_module():
-    """Import the catalog module without installing provider SDKs in this source-only repo."""
-    for name in ('openai', 'tiktoken', 'anthropic', 'httpx'):
-        sys.modules.setdefault(name, types.ModuleType(name))
-    google = sys.modules.setdefault('google', types.ModuleType('google'))
-    genai = sys.modules.setdefault('google.genai', types.ModuleType('google.genai'))
-    genai.types = types.SimpleNamespace()
-    google.genai = genai
-    spec = importlib.util.spec_from_file_location('vectorvault_catalog_under_test', Path(__file__).parents[1] / 'vectorvault' / 'ai.py')
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-ai = load_ai_module()
 
 EXPECTED_CURRENT_MODEL_IDS = frozenset({'chat-latest',
  'claude-fable-5',

@@ -9,7 +9,7 @@
   "node_id": "12345", "node_name": "Main Response", "run_id": "a1b2c3d4",
   "type": "node_start", "node_type": "respond", "start_time": 1703123456.789,
   "message": "Starting response generation with my_vault",
-  "params": {"vault_name": "my_vault", "model": "default", "prompt": "...", "static_response": "", "get_context": true, "n_context": 4, "temperature": 0.0}
+  "params": {"vault_name": "my_vault", "model": "gpt-4", "prompt": "...", "static_response": "", "get_context": true, "n_context": 4, "temperature": 0.0}
 }
 ```
 
@@ -45,7 +45,7 @@
   "node_id": "67890", "node_name": "Intent Check", "run_id": "e5f6g7h8",
   "type": "node_start", "node_type": "recognize", "start_time": 1703123456.789,
   "message": "Starting recognition with prompt: Is this a question about...",
-  "params": {"vault_name": "my_vault", "model": "default", "prompt": "...", "timeout": 45}
+  "params": {"vault_name": "my_vault", "model": "gpt-4", "prompt": "...", "timeout": 45}
 }
 ```
 
@@ -72,7 +72,7 @@
 {
   "node_id": "11111", "node_name": "Generate Summary", "run_id": "i9j0k1l2",
   "type": "node_start", "node_type": "generate", "start_time": 1703123456.789,
-  "params": {"vault_name": "my_vault", "model": "default", "prompt": "...", "get_context": false, "n_context": 4, "smart_history_search": false, "temperature": 0.0, "timeout": 45, "var_name": "summary"}
+  "params": {"vault_name": "my_vault", "model": "gpt-4", "prompt": "...", "get_context": false, "n_context": 4, "smart_history_search": false, "temperature": 0.0, "timeout": 45, "var_name": "summary"}
 }
 ```
 
@@ -131,7 +131,7 @@
   "node_id": "33333", "node_name": "Get Rating", "run_id": "q7r8s9t0",
   "type": "node_start", "node_type": "number", "start_time": 1703123456.789,
   "message": "Extracting number using prompt: What is the rating...",
-  "params": {"vault_name": "my_vault", "model": "default", "prompt": "...", "timeout": 45}
+  "params": {"vault_name": "my_vault", "model": "gpt-4", "prompt": "...", "timeout": 45}
 }
 ```
 
@@ -171,7 +171,7 @@
   "node_id": "55555", "node_name": "Choose Category", "run_id": "y5z6a7b8",
   "type": "node_start", "node_type": "list_match", "start_time": 1703123456.789,
   "message": "Matching from 4 options",
-  "params": {"vault_name": "my_vault", "model": "default", "prompt": "...", "options_count": 4, "options": ["Technical Support", "Billing", "Sales", "General"], "timeout": 45}
+  "params": {"vault_name": "my_vault", "model": "gpt-4", "prompt": "...", "options_count": 4, "options": ["Technical Support", "Billing", "Sales", "General"], "timeout": 45}
 }
 ```
 
@@ -190,7 +190,7 @@
 {
   "node_id": "66666", "node_name": "Extract Details", "run_id": "z9a8b7c6",
   "type": "node_start", "node_type": "capture", "start_time": 1703123456.789,
-  "params": {"vault_name": "my_vault", "model": "default", "instructions_count": 3, "labels_count": 3, "timeout": 45, "parallel_execution": true}
+  "params": {"vault_name": "my_vault", "model": "gpt-4", "instructions_count": 3, "labels_count": 3, "timeout": 45, "parallel_execution": true}
 }
 ```
 
@@ -469,7 +469,7 @@
 **Vault Operations:**
 ```json
 {"message": "Vault Change: old_vault → new_vault"}
-{"message": "Model Platform Change: default → gpt-5.6"}
+{"message": "Model Platform Change: gpt-3.5-turbo → gpt-4"}
 {"message": "get vault time: 0.15 seconds"}
 ```
 

@@ -1,8 +1,8 @@
 /build
 /dist
-/vectorvault/__pycache__
-/vectorvault/ask_any_website copy.ipynb 
-/vector_vault.egg-info
+/vectorvault/__pycache__/
+/vectorvault/ask_any_website copy.ipynb
+/vector_vault.egg-info/
 /agi
 examples/.DS_Store
 .DS_Store
@@ -11,10 +11,32 @@ package.json
 /my stuff
 /unit-testing
 /testing
-*.pyc
+*.py[cod]
+__pycache__/
+/.pytest_cache/
+/.mypy_cache/
+/.ruff_cache/
 /unit
 .clinerules
 /VectorVault-Testing
 /venv
 /venv312
+/.venv/
 /realtime-voice
+
+# Packaging build outputs and metadata.
+*.egg-info/
+
+# Local environments, credentials, and private key material.
+.env
+.env.*
+!.env.example
+credentials.json
+credentials-*.json
+service-account*.json
+*.pem
+*.key
+
+# Worktree metadata and local tool state must never enter an artifact.
+/.worktrees/
+/.git-worktree/

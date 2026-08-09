@@ -31,4 +31,4 @@ except ImportError:  # pragma: no cover
 try:
     __version__ = _pkg_version("vector-vault")
 except PackageNotFoundError:  # pragma: no cover
-    __version__ = "7.4.9.15"
+    __version__ = "7.4.9.16"

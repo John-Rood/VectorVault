@@ -85,9 +85,9 @@ def test_provider_translations_are_sdk_safe():
     assert translate_thinking_level("gemini-3.6-flash", "minimal") == {
         "thinking_config": {"thinking_level": "MINIMAL"},
     }
-    assert translate_thinking_level("gemini-2.5-pro", "low") == {
-        "thinking_config": {"thinking_budget": 1024},
-    }
+    assert list_thinking_levels("gemini-2.5-pro") == []
+    with pytest.raises(ModelCapabilityError, match="allowed values: none"):
+        translate_thinking_level("gemini-2.5-pro", "low")
 
 
 def test_invalid_combinations_fail_and_omission_remains_backward_compatible():

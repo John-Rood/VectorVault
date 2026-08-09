@@ -2011,23 +2011,11 @@
       "frontend": true,
       "alias_for": null,
       "thinking": {
-        "supported": true,
-        "levels": [
-          "low",
-          "medium",
-          "high"
-        ],
+        "supported": false,
+        "levels": [],
         "default": null,
-        "omitted_behavior": "provider_default",
-        "translation": {
-          "kind": "gemini_thinking_budget",
-          "parameter": "thinking_config.thinking_budget",
-          "values": {
-            "low": 1024,
-            "medium": 8192,
-            "high": 24576
-          }
-        },
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
         "adaptive_thinking": false,
         "omit_parameters": []
       },
@@ -2050,23 +2038,11 @@
       "frontend": true,
       "alias_for": null,
       "thinking": {
-        "supported": true,
-        "levels": [
-          "low",
-          "medium",
-          "high"
-        ],
+        "supported": false,
+        "levels": [],
         "default": null,
-        "omitted_behavior": "provider_default",
-        "translation": {
-          "kind": "gemini_thinking_budget",
-          "parameter": "thinking_config.thinking_budget",
-          "values": {
-            "low": 1024,
-            "medium": 8192,
-            "high": 24576
-          }
-        },
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
         "adaptive_thinking": false,
         "omit_parameters": []
       },
@@ -2089,23 +2065,11 @@
       "frontend": true,
       "alias_for": null,
       "thinking": {
-        "supported": true,
-        "levels": [
-          "low",
-          "medium",
-          "high"
-        ],
+        "supported": false,
+        "levels": [],
         "default": null,
-        "omitted_behavior": "provider_default",
-        "translation": {
-          "kind": "gemini_thinking_budget",
-          "parameter": "thinking_config.thinking_budget",
-          "values": {
-            "low": 1024,
-            "medium": 8192,
-            "high": 24576
-          }
-        },
+        "omitted_behavior": "no_provider_parameter",
+        "translation": null,
         "adaptive_thinking": false,
         "omit_parameters": []
       },

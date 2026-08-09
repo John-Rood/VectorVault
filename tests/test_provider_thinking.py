@@ -87,66 +87,116 @@ def _gemini_platform():
     return platform, recorder
 
 
-def test_openai_nonstream_and_stream_emit_reasoning_effort_and_omit_temperature():
+def _dump_gemini_call(call):
+    result = {"model": call["model"], "contents": call["contents"]}
+    if "config" in call:
+        result["config"] = call["config"].model_dump(exclude_none=True, mode="json")
+    return result
+
+
+def test_openai_nonstream_and_stream_emit_exact_reasoning_kwargs():
     platform, recorder = _openai_platform()
     assert platform.make_call([], "gpt-5.6", temperature=0.7, thinking_level="max") == "complete"
     assert list(platform.stream_call([], "gpt-5.6", temperature=0.7, thinking_level="low")) == ["streamed"]
-    assert recorder.calls[0]["reasoning_effort"] == "max"
-    assert recorder.calls[1]["reasoning_effort"] == "low"
-    assert "temperature" not in recorder.calls[0]
-    assert "temperature" not in recorder.calls[1]
+    assert recorder.calls == [
+        {"model": "gpt-5.6", "messages": [], "reasoning_effort": "max"},
+        {"model": "gpt-5.6", "messages": [], "stream": True, "reasoning_effort": "low"},
+    ]
 
 
-def test_xai_nonstream_and_stream_emit_reasoning_effort():
+def test_xai_nonstream_and_stream_emit_exact_reasoning_kwargs():
     platform, recorder = _grok_platform()
     assert platform.make_call([], "grok-4.5", thinking_level="medium") == "complete"
     assert list(platform.stream_call([], "grok-4.5", thinking_level="high")) == ["streamed"]
-    assert recorder.calls[0]["reasoning_effort"] == "medium"
-    assert recorder.calls[1]["reasoning_effort"] == "high"
+    assert recorder.calls == [
+        {"model": "grok-4.5", "messages": [], "reasoning_effort": "medium"},
+        {"model": "grok-4.5", "messages": [], "stream": True, "reasoning_effort": "high"},
+    ]
 
 
-def test_anthropic_nonstream_and_stream_emit_effort_adaptive_thinking_and_text_only():
+def test_anthropic_nonstream_and_stream_emit_exact_effort_and_adaptive_kwargs():
     platform, recorder = _anthropic_platform()
     assert platform.make_call([], "claude-opus-5", temperature=0.5, thinking_level="xhigh") == "complete"
     assert list(platform.stream_call([], "claude-opus-5", temperature=0.5, thinking_level="low")) == ["streamed"]
-    assert recorder.calls[0]["output_config"] == {"effort": "xhigh"}
-    assert recorder.calls[0]["thinking"] == {"type": "adaptive"}
-    assert recorder.calls[1]["output_config"] == {"effort": "low"}
-    assert "temperature" not in recorder.calls[0]
-    assert "temperature" not in recorder.calls[1]
+    assert recorder.calls == [
+        {
+            "model": "claude-opus-5",
+            "messages": [],
+            "max_tokens": 8192,
+            "output_config": {"effort": "xhigh"},
+            "thinking": {"type": "adaptive"},
+        },
+        {
+            "model": "claude-opus-5",
+            "messages": [],
+            "max_tokens": 8192,
+            "stream": True,
+            "output_config": {"effort": "low"},
+            "thinking": {"type": "adaptive"},
+        },
+    ]
 
 
-def test_gemini_nonstream_and_stream_construct_sdk_thinking_config():
+def test_gemini_nonstream_and_stream_emit_exact_sdk_thinking_config():
     platform, recorder = _gemini_platform()
     assert platform.make_call([], "gemini-3.6-flash", thinking_level="minimal") == "complete"
     assert list(platform.stream_call([], "gemini-3.6-flash", thinking_level="high")) == ["streamed"]
-    assert platform.make_call([], "gemini-2.5-pro", thinking_level="low") == "complete"
-    first = recorder.calls[0]["config"].model_dump(exclude_none=True)
-    second = recorder.calls[1]["config"].model_dump(exclude_none=True)
-    legacy = recorder.calls[2]["config"].model_dump(exclude_none=True)
-    assert str(first["thinking_config"]["thinking_level"]).lower().endswith("minimal")
-    assert str(second["thinking_config"]["thinking_level"]).lower().endswith("high")
-    assert legacy["thinking_config"]["thinking_budget"] == 1024
+    assert [_dump_gemini_call(call) for call in recorder.calls] == [
+        {
+            "model": "gemini-3.6-flash",
+            "contents": [],
+            "config": {"temperature": 0.0, "thinking_config": {"thinking_level": "MINIMAL"}},
+        },
+        {
+            "model": "gemini-3.6-flash",
+            "contents": [],
+            "config": {"temperature": 0.0, "thinking_config": {"thinking_level": "HIGH"}},
+        },
+    ]
 
 
-def test_omission_emits_no_provider_thinking_fields():
+def test_omission_preserves_exact_legacy_kwargs_for_sync_and_stream():
     openai_platform, openai_recorder = _openai_platform()
+    grok_platform, grok_recorder = _grok_platform()
     anthropic_platform, anthropic_recorder = _anthropic_platform()
     gemini_platform, gemini_recorder = _gemini_platform()
-    openai_platform.make_call([], "gpt-5.6")
-    anthropic_platform.make_call([], "claude-opus-5")
-    gemini_platform.make_call([], "gemini-3.6-flash")
-    assert "reasoning_effort" not in openai_recorder.calls[0]
-    assert "output_config" not in anthropic_recorder.calls[0]
-    assert "thinking" not in anthropic_recorder.calls[0]
-    gemini_dump = gemini_recorder.calls[0]["config"].model_dump(exclude_none=True)
-    assert "thinking_config" not in gemini_dump
+
+    openai_platform.make_call([], "gpt-5.6", temperature=0.4)
+    list(openai_platform.stream_call([], "gpt-5.6", temperature=0.4))
+    grok_platform.make_call([], "grok-4.5", temperature=0.4)
+    list(grok_platform.stream_call([], "grok-4.5", temperature=0.4))
+    anthropic_platform.make_call([], "claude-opus-5", temperature=0.4)
+    list(anthropic_platform.stream_call([], "claude-opus-5", temperature=0.4))
+    gemini_platform.make_call([], "gemini-3.6-flash", temperature=0.4)
+    list(gemini_platform.stream_call([], "gemini-3.6-flash", temperature=0.4))
+
+    assert openai_recorder.calls == [
+        {"model": "gpt-5.6", "messages": [], "temperature": 0.4},
+        {"model": "gpt-5.6", "messages": [], "stream": True, "temperature": 0.4},
+    ]
+    # Grok's historical streaming path intentionally does not send temperature.
+    assert grok_recorder.calls == [
+        {"model": "grok-4.5", "messages": [], "temperature": 0.4},
+        {"model": "grok-4.5", "messages": [], "stream": True},
+    ]
+    assert anthropic_recorder.calls == [
+        {"model": "claude-opus-5", "messages": [], "max_tokens": 8192, "temperature": 0.4},
+        {"model": "claude-opus-5", "messages": [], "max_tokens": 8192, "stream": True, "temperature": 0.4},
+    ]
+    assert [_dump_gemini_call(call) for call in gemini_recorder.calls] == [
+        {"model": "gemini-3.6-flash", "contents": [], "config": {"temperature": 0.4}},
+        {"model": "gemini-3.6-flash", "contents": [], "config": {"temperature": 0.4}},
+    ]
 
 
-def test_invalid_selection_fails_before_sdk_call_for_streaming_and_nonstreaming():
-    platform, recorder = _openai_platform()
-    with pytest.raises(ModelCapabilityError):
-        platform.make_call([], "gpt-4o", thinking_level="high")
-    with pytest.raises(ModelCapabilityError):
-        platform.stream_call([], "gpt-4o", thinking_level="high")
-    assert recorder.calls == []
+def test_non_thinking_and_unproven_generic_levels_fail_before_sdk_call():
+    openai_platform, openai_recorder = _openai_platform()
+    gemini_platform, gemini_recorder = _gemini_platform()
+    for method in (openai_platform.make_call, openai_platform.stream_call):
+        with pytest.raises(ModelCapabilityError):
+            method([], "gpt-4o", thinking_level="high")
+    for method in (gemini_platform.make_call, gemini_platform.stream_call):
+        with pytest.raises(ModelCapabilityError):
+            method([], "gemini-2.5-pro", thinking_level="low")
+    assert openai_recorder.calls == []
+    assert gemini_recorder.calls == []

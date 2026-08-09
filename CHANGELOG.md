@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.4.9.18 - 2026-08-09
+
+- Require Python 3.10 or newer and `google-genai>=1.56.0` so every advertised Gemini thinking level has SDK enum support.
+- Serialize the frontend `default` model row with the default model's integer context window as `token_limit`.
+- Add release metadata, serializer, and Gemini level regressions for the compatibility floors.
+
 ## 7.4.9.17 - 2026-08-09
 
 - Ship the canonical model/thinking compatibility JSON resource.

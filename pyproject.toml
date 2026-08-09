@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vector-vault"
-version = "7.4.9.17"
+version = "7.4.9.18"
 description = "Vector database and generative AI cloud storage"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {file = "LICENSE"}
 authors = [{name = "John Rood", email = "john@johnrood.com"}]
 dependencies = [
@@ -21,7 +21,7 @@ dependencies = [
   "tiktoken",
   "anthropic",
   "pymupdf",
-  "google-genai",
+  "google-genai>=1.56.0",
 ]
 
 [project.urls]

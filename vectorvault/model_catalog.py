@@ -264,10 +264,11 @@ def serialize_model_catalog(frontend: bool = True) -> Dict[str, Any]:
         })
     if frontend:
         default = catalog["defaults"]["openai"]
+        default_capability = get_model_capability(default)
         rows.insert(0, {
             "model": "default",
             "resolved_model": default,
-            "token_limit": default,
+            "token_limit": default_capability["context_window"],
             "provider": "openai",
             "thinking_levels": list_thinking_levels(default),
             "default_thinking_level": default_thinking_level(default),

@@ -105,7 +105,11 @@ def test_serialization_and_enrichment_expose_stable_api_ui_shapes():
     expected = sum(1 for entry in load_model_catalog()["models"] if entry["frontend"])
     assert payload["schema_version"] == 1
     assert len(payload["models"]) == expected + 1
-    assert payload["models"][0]["model"] == "default"
+    default_row = payload["models"][0]
+    assert default_row["model"] == "default"
+    default_capability = get_model_capability(default_row["resolved_model"])
+    assert isinstance(default_row["token_limit"], int)
+    assert default_row["token_limit"] == default_capability["context_window"] == 1_050_000
     row = next(row for row in payload["models"] if row["model"] == "gpt-5.6")
     assert row["thinking_levels"] == ["none", "low", "medium", "high", "xhigh", "max"]
     enriched = enrich_model_metadata([{"model": "gpt-5.6", "label": "GPT"}])

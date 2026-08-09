@@ -137,21 +137,31 @@ def test_anthropic_nonstream_and_stream_emit_exact_effort_and_adaptive_kwargs():
     ]
 
 
-def test_gemini_nonstream_and_stream_emit_exact_sdk_thinking_config():
+@pytest.mark.parametrize("level", ("minimal", "low", "medium", "high"))
+def test_gemini_all_declared_levels_emit_exact_sdk_thinking_config(level):
     platform, recorder = _gemini_platform()
-    assert platform.make_call([], "gemini-3.6-flash", thinking_level="minimal") == "complete"
+    assert platform.make_call([], "gemini-3.6-flash", thinking_level=level) == "complete"
+    assert [_dump_gemini_call(call) for call in recorder.calls] == [
+        {
+            "model": "gemini-3.6-flash",
+            "contents": [],
+            "config": {
+                "temperature": 0.0,
+                "thinking_config": {"thinking_level": level.upper()},
+            },
+        }
+    ]
+
+
+def test_gemini_stream_emits_exact_sdk_thinking_config():
+    platform, recorder = _gemini_platform()
     assert list(platform.stream_call([], "gemini-3.6-flash", thinking_level="high")) == ["streamed"]
     assert [_dump_gemini_call(call) for call in recorder.calls] == [
         {
             "model": "gemini-3.6-flash",
             "contents": [],
-            "config": {"temperature": 0.0, "thinking_config": {"thinking_level": "MINIMAL"}},
-        },
-        {
-            "model": "gemini-3.6-flash",
-            "contents": [],
             "config": {"temperature": 0.0, "thinking_config": {"thinking_level": "HIGH"}},
-        },
+        }
     ]
 
 

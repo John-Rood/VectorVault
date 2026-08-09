@@ -28,6 +28,12 @@ Gemini 2.5 exposes numeric thinking budgets, but the first-party documentation d
 - Both streaming and non-streaming call paths must use the same translator.
 - If first-party semantics for a provider/model cannot be proven, keep the model in the catalog with an explicit unsupported contract rather than inventing selectable levels or provider kwargs.
 
+## Corrective release compatibility decision
+
+The 7.4.9.17 artifact declared Python 3.9 support and left `google-genai` unbounded. On Python 3.9, dependency resolution selected `google-genai==1.47.0`. That SDK's `ThinkingConfig` does not define `thinking_level`, so every advertised Gemini level failed during model construction before request serialization. The same release also serialized the frontend `default` row's `token_limit` as the default model name instead of its integer context window.
+
+The root package now requires Python 3.10 or newer and `google-genai>=1.56.0`. Version 1.56.0 is the minimum verified SDK with enum support for `MINIMAL`, `LOW`, `MEDIUM`, and `HIGH`. The frontend default row must resolve its integer `context_window` from the canonical default model capability. Release tests must assert both metadata floors and exercise all four Gemini levels against the exact SDK floor before publication.
+
 ## Release checklist
 
 1. Update and validate `model_catalog.json` from the first-party sources above.

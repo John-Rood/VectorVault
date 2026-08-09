@@ -1,6 +1,6 @@
 # Changelog
 
-## 7.4.9.14 - 2026-08-09
+## 7.4.9.15 - 2026-08-09
 
 - Ship the canonical model/thinking compatibility JSON resource.
 - Export helpers for compatibility lookup, defaults, validation, aliases, API metadata, and provider translation.

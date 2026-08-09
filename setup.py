@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="vector-vault",
-    version="7.4.9.14",
+    version="7.4.9.15",
     packages=find_packages(),
     package_data={"vectorvault": ["model_catalog.json"]},
     include_package_data=True,

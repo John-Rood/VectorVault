@@ -69,7 +69,7 @@ class Vault:
         `rag_answer = vault.get_chat('some question', get_context=True)`
 
         >>> Change the model with the `model` param in get_chat:
-        `gpt4_rag_answer = vault.get_chat('some question', get_context=True, model='gpt-4')`
+        `rag_answer = vault.get_chat('some question', get_context=True, model='default')`
 
         Args:
             user: Email for VectorVault cloud (not required if local=True)

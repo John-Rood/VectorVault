@@ -298,14 +298,21 @@ MODEL_METADATA.update({
         'input_modalities': ('text', 'image'),
         'output_modalities': ('text',),
     }
-    for model in ('claude-fable-5', 'claude-opus-5')
+    for model in (
+        'claude-fable-5', 'claude-opus-5', 'claude-sonnet-5',
+        'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6',
+        'claude-sonnet-4-6', 'claude-latest',
+    )
 })
-MODEL_METADATA['claude-sonnet-5'] = {
-    'context_window': 1000000,
-    'max_output_tokens': 64000,
-    'input_modalities': ('text', 'image'),
-    'output_modalities': ('text',),
-}
+MODEL_METADATA.update({
+    model: {
+        'context_window': ANTHROPIC_FRONT_MODELS[model],
+        'max_output_tokens': 64000,
+        'input_modalities': ('text', 'image'),
+        'output_modalities': ('text',),
+    }
+    for model in ('claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5')
+})
 MODEL_METADATA.update({
     model: {
         'context_window': GEMINI_FRONT_MODELS[model],

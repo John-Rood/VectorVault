@@ -40,3 +40,6 @@ service-account*.json
 # Worktree metadata and local tool state must never enter an artifact.
 /.worktrees/
 /.git-worktree/
+
+# pyproject.toml is the canonical build manifest; obsolete setup.py stays absent.
+/setup.py

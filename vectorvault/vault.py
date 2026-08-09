@@ -1815,7 +1815,7 @@ class Vault:
         start_time = time.time()
         model = self.all_models['default'] if not model else model
         thinking_level = validate_thinking_level(model, thinking_level)
-        model = resolve_model_alias(model)
+        model = resolve_model_alias(model, allow_unknown=thinking_level is None)
         self.load_ai(model=model)
         
         if text: 
@@ -1971,7 +1971,7 @@ class Vault:
         start_time = time.time()
         model = self.all_models['default'] if not model else model
         thinking_level = validate_thinking_level(model, thinking_level)
-        model = resolve_model_alias(model)
+        model = resolve_model_alias(model, allow_unknown=thinking_level is None)
         self.load_ai(model=model)
 
         if text:

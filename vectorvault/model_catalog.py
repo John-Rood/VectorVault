@@ -26,8 +26,13 @@ def _validate_catalog(catalog: Dict[str, Any]) -> None:
         model = entry.get("id")
         if not model or model in index:
             raise ModelCapabilityError(f"Invalid or duplicate model id {model!r}")
-        if entry.get("provider") not in {"openai", "anthropic", "gemini", "grok"}:
+        provider = entry.get("provider")
+        if provider not in {"openai", "anthropic", "gemini", "grok"}:
             raise ModelCapabilityError(f"Invalid provider for model {model!r}")
+        if not isinstance(entry.get("context_window"), int) or entry["context_window"] <= 0:
+            raise ModelCapabilityError(f"Invalid context window for model {model!r}")
+        if not isinstance(entry.get("frontend"), bool):
+            raise ModelCapabilityError(f"Invalid frontend flag for model {model!r}")
         thinking = entry.get("thinking") or {}
         levels = thinking.get("levels")
         if not isinstance(levels, list) or len(levels) != len(set(levels)):
@@ -38,8 +43,13 @@ def _validate_catalog(catalog: Dict[str, Any]) -> None:
         default = thinking.get("default")
         if default is not None and default not in levels:
             raise ModelCapabilityError(f"Invalid thinking default for model {model!r}")
-        if supported and not thinking.get("translation"):
+        translation = thinking.get("translation")
+        if supported and not isinstance(translation, dict):
             raise ModelCapabilityError(f"Missing thinking translation for model {model!r}")
+        if not supported and translation is not None:
+            raise ModelCapabilityError(f"Unexpected thinking translation for model {model!r}")
+        if not isinstance(thinking.get("omit_parameters"), list):
+            raise ModelCapabilityError(f"Invalid omitted parameters for model {model!r}")
         index[model] = entry
     for provider, model in catalog.get("defaults", {}).items():
         if model not in index or index[model]["provider"] != provider:
@@ -48,12 +58,23 @@ def _validate_catalog(catalog: Dict[str, Any]) -> None:
         alias = entry.get("alias_for")
         if alias and alias not in index:
             raise ModelCapabilityError(f"Unknown alias target {alias!r} for model {model!r}")
+        if alias and index[alias]["provider"] != entry["provider"]:
+            raise ModelCapabilityError(f"Cross-provider alias target {alias!r} for model {model!r}")
         seen = set()
         while alias:
             if alias in seen:
                 raise ModelCapabilityError(f"Model alias cycle detected at {alias!r}")
             seen.add(alias)
             alias = index[alias].get("alias_for")
+    lists = catalog.get("lists")
+    if not isinstance(lists, dict):
+        raise ModelCapabilityError("Invalid packaged model catalog lists")
+    for name, models in lists.items():
+        if not isinstance(models, list) or len(models) != len(set(models)):
+            raise ModelCapabilityError(f"Invalid model list {name!r}")
+        unknown = set(models) - set(index)
+        if unknown:
+            raise ModelCapabilityError(f"Unknown models in list {name!r}: {sorted(unknown)!r}")
 
 
 def load_model_catalog() -> Dict[str, Any]:
@@ -77,8 +98,12 @@ def _index() -> Dict[str, Dict[str, Any]]:
     return {entry["id"]: entry for entry in load_model_catalog()["models"]}
 
 
-def resolve_model_alias(model: Optional[str]) -> str:
-    """Resolve a catalog alias (and ``default``) to its concrete model ID."""
+def resolve_model_alias(model: Optional[str], *, allow_unknown: bool = False) -> str:
+    """Resolve a catalog alias (and ``default``) to its concrete model ID.
+
+    ``allow_unknown`` exists for legacy request paths that accept private or
+    fine-tuned provider model IDs. Catalog/UI callers remain strict by default.
+    """
     catalog = load_model_catalog()
     current = model or "default"
     if current == "Default":
@@ -87,6 +112,8 @@ def resolve_model_alias(model: Optional[str]) -> str:
         current = catalog["defaults"]["openai"]
     index = {entry["id"]: entry for entry in catalog["models"]}
     if current not in index:
+        if allow_unknown:
+            return current
         raise ModelCapabilityError(f"Unknown model {current!r}")
     seen = set()
     while index[current].get("alias_for"):
@@ -172,13 +199,6 @@ def translate_thinking_level(model: Optional[str], thinking_level: Optional[str]
         return translated
     if kind == "gemini_thinking_level":
         return {"thinking_config": {"thinking_level": level.upper()}}
-    if kind == "gemini_thinking_budget":
-        values = thinking["translation"].get("values", {})
-        if level not in values:
-            raise ModelCapabilityError(
-                f"No Gemini thinking budget is defined for {model!r} at level {level!r}"
-            )
-        return {"thinking_config": {"thinking_budget": values[level]}}
     raise ModelCapabilityError(
         f"No provider translation is defined for thinking-capable model {model!r}"
     )

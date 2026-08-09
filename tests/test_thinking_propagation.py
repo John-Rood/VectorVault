@@ -70,7 +70,8 @@ def _bare_vault():
     vault = object.__new__(Vault)
     vault._all_models = {"default": "gpt-5.6"}
     vault._ai = FakeVaultAI()
-    vault.load_ai = lambda model=None: None
+    vault.loaded_models = []
+    vault.load_ai = lambda model=None: vault.loaded_models.append(model)
     vault.rate_limiter = FakeRateLimiter()
     vault.verbose = False
     return vault
@@ -88,3 +89,22 @@ def test_vault_get_chat_stream_validates_resolves_and_propagates():
         "streamed", "!END"
     ]
     assert vault._ai.calls == [("llm_stream", "max")]
+
+
+def test_vault_resolves_aliases_but_preserves_unknown_models_when_level_is_omitted():
+    alias_vault = _bare_vault()
+    assert alias_vault.get_chat("hello", model="grok-4.5-latest") == "complete"
+    assert alias_vault.loaded_models == ["grok-4.5"]
+    assert alias_vault._ai.calls == [("llm", None)]
+
+    private_vault = _bare_vault()
+    assert private_vault.get_chat("hello", model="ft:gpt-4o:private") == "complete"
+    assert private_vault.loaded_models == ["ft:gpt-4o:private"]
+    assert private_vault._ai.calls == [("llm", None)]
+
+    private_stream_vault = _bare_vault()
+    assert list(private_stream_vault.get_chat_stream("hello", model="private-model")) == [
+        "streamed", "!END"
+    ]
+    assert private_stream_vault.loaded_models == ["private-model"]
+    assert private_stream_vault._ai.calls == [("llm_stream", None)]

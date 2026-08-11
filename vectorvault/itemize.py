@@ -14,6 +14,7 @@
 # from Vector Vault. See license for consent.import datetime 
 
 from .cloud_api import CloudAPI
+from annoy import AnnoyIndex
 import faiss
 import numpy as np
 from copy import deepcopy
@@ -113,27 +114,70 @@ class FAISSIndex:
             shutil.copy(save_path, filename)
     
     def load(self, filename):
-        """Load index from file."""
+        """Load a current NumPy archive or a historical Annoy index.
+
+        Cloud downloads use extensionless temporary files, so the bytes—not the
+        temporary filename—are authoritative. Pickled NumPy payloads are never
+        enabled. Historical Annoy indexes are converted in memory to the current
+        FAISS representation.
+        """
         filename = str(filename)
-        # Try loading as npz first, then try with .npz extension added
-        try:
-            data = np.load(filename)
-        except:
-            data = np.load(filename + '.npz')
-        
-        self.dims = int(data['dims'])
-        ids = data['ids']
-        vectors = data['vectors']
-        
-        self._vectors = {}
-        for i, vec in zip(ids, vectors):
-            self._vectors[int(i)] = vec
-        
-        # Rebuild the FAISS index
+        with open(filename, 'rb') as vector_file:
+            magic = vector_file.read(6)
+
+        if magic.startswith(b'PK'):
+            self._load_numpy_archive(filename)
+        elif magic == b'\x93NUMPY':
+            raise ValueError(
+                'Unsupported NumPy vector index format; expected an NPZ archive'
+            )
+        else:
+            self._load_legacy_annoy_index(filename)
+
         self.index = faiss.IndexIDMap(faiss.IndexFlatIP(self.dims))
-        if len(self._vectors) > 0:
+        if self._vectors:
             self.build(10)
         self._built = True
+
+    def _load_numpy_archive(self, filename):
+        try:
+            with np.load(filename, allow_pickle=False) as data:
+                required = {'dims', 'ids', 'vectors'}
+                missing = required.difference(data.files)
+                if missing:
+                    raise ValueError(
+                        'Vector index archive is missing required arrays: '
+                        + ', '.join(sorted(missing))
+                    )
+                dims = int(data['dims'])
+                ids = np.asarray(data['ids'], dtype=np.int64).copy()
+                vectors = np.asarray(data['vectors'], dtype=np.float32).copy()
+        except ValueError:
+            raise
+        except Exception as exc:
+            raise ValueError('Invalid NumPy vector index archive') from exc
+
+        if dims <= 0 or ids.ndim != 1 or vectors.ndim != 2:
+            raise ValueError('Invalid vector index archive dimensions')
+        if len(ids) != len(vectors) or (len(vectors) and vectors.shape[1] != dims):
+            raise ValueError('Vector index archive IDs and vectors do not align')
+
+        self.dims = dims
+        self._vectors = {int(item_id): vector for item_id, vector in zip(ids, vectors)}
+
+    def _load_legacy_annoy_index(self, filename):
+        legacy_index = AnnoyIndex(self.dims, self.metric)
+        try:
+            loaded = legacy_index.load(filename)
+        except Exception as exc:
+            raise ValueError('Unsupported or corrupt vector index format') from exc
+        if not loaded:
+            raise ValueError('Unsupported or corrupt vector index format')
+
+        self._vectors = {
+            item_id: np.asarray(legacy_index.get_item_vector(item_id), dtype=np.float32)
+            for item_id in range(legacy_index.get_n_items())
+        }
 
 def itemize(vault, x, meta=None, text=None, name=None):
     meta = deepcopy(meta) if meta else {}

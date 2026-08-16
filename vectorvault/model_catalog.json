@@ -3,8 +3,8 @@
   "defaults": {
     "openai": "gpt-5.6",
     "anthropic": "claude-opus-5",
-    "grok": "grok-4.5",
-    "gemini": "gemini-3.6-flash"
+    "grok": "grok-4.6",
+    "gemini": "gemini-3.7-flash"
   },
   "models": [
     {
@@ -1326,6 +1326,71 @@
       }
     },
     {
+      "id": "grok-4.6",
+      "provider": "grok",
+      "context_window": 500000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "xai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 500000,
+        "max_output_tokens": null,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "tools": [
+          "function_calling",
+          "web_search",
+          "x_search",
+          "code_execution"
+        ]
+      }
+    },
+    {
+      "id": "grok-4.6-latest",
+      "provider": "grok",
+      "context_window": 500000,
+      "frontend": false,
+      "alias_for": "grok-4.6",
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "xai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      }
+    },
+    {
       "id": "grok-4.5",
       "provider": "grok",
       "context_window": 500000,
@@ -1747,6 +1812,50 @@
       }
     },
     {
+      "id": "gemini-3.7-flash",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_level",
+          "parameter": "thinking_config.thinking_level"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 1048576,
+        "max_output_tokens": 65536,
+        "input_modalities": [
+          "text",
+          "image",
+          "video",
+          "audio",
+          "pdf"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "tools": [
+          "function_calling",
+          "code_execution",
+          "search_grounding",
+          "url_context",
+          "computer_use"
+        ]
+      }
+    },
+    {
       "id": "gemini-3.6-flash",
       "provider": "gemini",
       "context_window": 1048576,
@@ -2114,16 +2223,15 @@
       "provider": "gemini",
       "context_window": 1048576,
       "frontend": true,
-      "alias_for": "gemini-3.6-flash",
+      "alias_for": "gemini-3.7-flash",
       "thinking": {
         "supported": true,
         "levels": [
-          "minimal",
           "low",
           "medium",
           "high"
         ],
-        "default": "medium",
+        "default": "high",
         "omitted_behavior": "provider_default",
         "translation": {
           "kind": "gemini_thinking_level",
@@ -2180,6 +2288,7 @@
       "claude-opus-4-6"
     ],
     "GEMINI_MULTIMODAL_MODELS": [
+      "gemini-3.7-flash",
       "gemini-3.6-flash",
       "gemini-3.5-flash",
       "gemini-3.5-flash-lite",
@@ -2195,6 +2304,7 @@
       "gemini-3-pro-image-preview"
     ],
     "GEMINI_THINKING_MODELS": [
+      "gemini-3.7-flash",
       "gemini-3.6-flash",
       "gemini-3.5-flash",
       "gemini-3.5-flash-lite",

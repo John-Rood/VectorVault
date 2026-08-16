@@ -27,10 +27,10 @@ def test_packaged_resource_is_readable_complete_and_defensive():
     raw = json.loads(resource.read_text(encoding="utf-8"))
     assert raw == load_model_catalog()
     assert raw["schema_version"] == 1
-    assert len(raw["models"]) == 94
+    assert len(raw["models"]) == 97
     copied = get_model_thinking_catalog()
     copied["models"].clear()
-    assert len(load_model_catalog()["models"]) == 94
+    assert len(load_model_catalog()["models"]) == 97
 
 
 def test_every_catalog_entry_has_explicit_coherent_thinking_contract():
@@ -62,18 +62,23 @@ def test_first_party_verified_provider_capabilities_and_aliases():
     assert list_thinking_levels("gpt-5.5") == ["none", "low", "medium", "high", "xhigh"]
     assert list_thinking_levels("claude-opus-5") == ["low", "medium", "high", "xhigh", "max"]
     assert default_thinking_level("claude-opus-5") == "high"
+    assert list_thinking_levels("grok-4.6") == ["low", "medium", "high", "xhigh"]
+    assert default_thinking_level("grok-4.6") == "high"
     assert list_thinking_levels("grok-4.5") == ["low", "medium", "high"]
     assert default_thinking_level("grok-4.5") == "high"
+    assert list_thinking_levels("gemini-3.7-flash") == ["low", "medium", "high"]
+    assert default_thinking_level("gemini-3.7-flash") == "high"
     assert list_thinking_levels("gemini-3.6-flash") == ["minimal", "low", "medium", "high"]
     assert default_thinking_level("gemini-3.6-flash") == "medium"
     assert default_thinking_level("gemini-2.5-pro") is None
     assert resolve_model_alias("grok-latest") == "grok-4.3"
     assert list_thinking_levels("grok-4.5-latest") == list_thinking_levels("grok-4.5")
-    assert resolve_model_alias("gemini-latest") == "gemini-3.6-flash"
+    assert resolve_model_alias("gemini-latest") == "gemini-3.7-flash"
 
 
 def test_provider_translations_are_sdk_safe():
     assert translate_thinking_level("gpt-5.6", "max") == {"reasoning_effort": "max"}
+    assert translate_thinking_level("grok-4.6", "xhigh") == {"reasoning_effort": "xhigh"}
     assert translate_thinking_level("grok-4.5", "medium") == {"reasoning_effort": "medium"}
     assert translate_thinking_level("claude-opus-5", "xhigh") == {
         "output_config": {"effort": "xhigh"},
@@ -81,6 +86,9 @@ def test_provider_translations_are_sdk_safe():
     }
     assert translate_thinking_level("claude-opus-4-5", "low") == {
         "output_config": {"effort": "low"},
+    }
+    assert translate_thinking_level("gemini-3.7-flash", "high") == {
+        "thinking_config": {"thinking_level": "HIGH"},
     }
     assert translate_thinking_level("gemini-3.6-flash", "minimal") == {
         "thinking_config": {"thinking_level": "MINIMAL"},

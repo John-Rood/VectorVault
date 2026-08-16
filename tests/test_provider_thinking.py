@@ -210,3 +210,23 @@ def test_non_thinking_and_unproven_generic_levels_fail_before_sdk_call():
             method([], "gemini-2.5-pro", thinking_level="low")
     assert openai_recorder.calls == []
     assert gemini_recorder.calls == []
+
+
+def test_august_2026_provider_translation_reaches_exact_sdk_parameters():
+    grok_platform, grok_recorder = _grok_platform()
+    gemini_platform, gemini_recorder = _gemini_platform()
+    assert grok_platform.make_call([], "grok-4.6", thinking_level="xhigh") == "complete"
+    assert grok_recorder.calls == [
+        {"model": "grok-4.6", "messages": [], "reasoning_effort": "xhigh"}
+    ]
+    assert gemini_platform.make_call([], "gemini-3.7-flash", thinking_level="low") == "complete"
+    assert [_dump_gemini_call(call) for call in gemini_recorder.calls] == [
+        {
+            "model": "gemini-3.7-flash",
+            "contents": [],
+            "config": {
+                "temperature": 0.0,
+                "thinking_config": {"thinking_level": "LOW"},
+            },
+        }
+    ]

@@ -24,6 +24,7 @@ EXPECTED_CURRENT_MODEL_IDS = frozenset({'chat-latest',
  'gemini-3.5-flash',
  'gemini-3.5-flash-lite',
  'gemini-3.6-flash',
+ 'gemini-3.7-flash',
  'gemini-latest',
  'gpt-4o',
  'gpt-5-mini',
@@ -41,6 +42,7 @@ EXPECTED_CURRENT_MODEL_IDS = frozenset({'chat-latest',
  'grok-4.20-0309-reasoning',
  'grok-4.3',
  'grok-4.5',
+ 'grok-4.6',
  'grok-build-0.1',
  'grok-latest',
  'o3',
@@ -80,6 +82,7 @@ EXPECTED_COMPATIBILITY_MODEL_IDS = frozenset({'chat-latest',
  'gemini-3.5-flash',
  'gemini-3.5-flash-lite',
  'gemini-3.6-flash',
+ 'gemini-3.7-flash',
  'gemini-latest',
  'gpt-3.5-turbo',
  'gpt-4',
@@ -129,6 +132,8 @@ EXPECTED_COMPATIBILITY_MODEL_IDS = frozenset({'chat-latest',
  'grok-4.3-latest',
  'grok-4.5',
  'grok-4.5-latest',
+ 'grok-4.6',
+ 'grok-4.6-latest',
  'grok-build-0.1',
  'grok-build-latest',
  'grok-code-fast',
@@ -163,7 +168,7 @@ class ModelCatalogTests(unittest.TestCase):
             self.assertEqual(ai.MODEL_METADATA[model]['max_output_tokens'], 128_000)
         for model in ('claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'):
             self.assertEqual(ai.MODEL_METADATA[model]['max_output_tokens'], 64_000)
-        for model in ('grok-4.5', 'grok-4.5-latest', 'grok-build-latest'):
+        for model in ('grok-4.6', 'grok-4.6-latest', 'grok-4.5', 'grok-4.5-latest', 'grok-build-latest'):
             self.assertEqual(ai.GROK_MODELS[model], 500_000)
         for model in ('grok-4.3', 'grok-4.3-latest'):
             self.assertEqual(ai.GROK_MODELS[model], 1_000_000)
@@ -182,6 +187,8 @@ class ModelCatalogTests(unittest.TestCase):
         for model in ('gpt-5.4-mini', 'gpt-5.4-nano', 'chat-latest'):
             self.assertEqual(ai.OPENAI_MODELS[model], 400_000)
             self.assertEqual(ai.MODEL_METADATA[model]['max_output_tokens'], 128_000)
+        self.assertEqual(ai.GEMINI_MODELS['gemini-3.7-flash'], 1_048_576)
+        self.assertEqual(ai.MODEL_METADATA['gemini-3.7-flash']['max_output_tokens'], 65_536)
         self.assertEqual(ai.GEMINI_MODELS['gemini-3.6-flash'], 1_048_576)
         self.assertEqual(ai.GEMINI_MODELS['gemini-2.5-pro'], 1_048_576)
         self.assertEqual(ai.MODEL_METADATA['gemini-2.5-pro']['max_output_tokens'], 65_536)
@@ -205,6 +212,7 @@ class ModelCatalogTests(unittest.TestCase):
             'grok-latest': 'grok-4.3',
             'grok-4.3-latest': 'grok-4.3',
             'grok-4.5-latest': 'grok-4.5',
+            'grok-4.6-latest': 'grok-4.6',
             'grok-build-latest': 'grok-4.5',
             'grok-4.20': 'grok-4.20-0309-reasoning',
             'grok-4.20-0309': 'grok-4.20-0309-reasoning',
@@ -217,7 +225,7 @@ class ModelCatalogTests(unittest.TestCase):
             'grok-code-fast-1': 'grok-build-0.1',
             'grok-code-fast-1-0825': 'grok-build-0.1',
             'grok-3': 'grok-4.3',
-            'gemini-latest': 'gemini-3.6-flash',
+            'gemini-latest': 'gemini-3.7-flash',
             'gemini-3.1-pro': 'gemini-3.1-pro-preview',
             'gemini-3-pro-preview': 'gemini-3.1-pro-preview',
             'gemini-3-pro-image-preview': 'gemini-3-pro-image',
@@ -229,8 +237,8 @@ class ModelCatalogTests(unittest.TestCase):
         self.assertEqual(ai.MODEL_METADATA['gpt-5.3-chat-latest']['max_output_tokens'], 16_384)
         self.assertEqual(ai.OPENAI_MODELS['default'], 'gpt-5.6')
         self.assertEqual(ai.ANTHROPIC_MODELS['default'], 'claude-opus-5')
-        self.assertEqual(ai.GROK_MODELS['default'], 'grok-4.5')
-        self.assertEqual(ai.GEMINI_MODELS['default'], 'gemini-3.6-flash')
+        self.assertEqual(ai.GROK_MODELS['default'], 'grok-4.6')
+        self.assertEqual(ai.GEMINI_MODELS['default'], 'gemini-3.7-flash')
 
     def test_compatibility_aliases_are_resolved_before_openai_call(self):
         captured = []
@@ -268,6 +276,7 @@ class ModelCatalogTests(unittest.TestCase):
             chat=types.SimpleNamespace(completions=types.SimpleNamespace(create=create))
         )
         for alias, upstream in (
+            ('grok-4.6-latest', 'grok-4.6'),
             ('grok-4.5-latest', 'grok-4.5'),
             ('grok-build-latest', 'grok-4.5'),
             ('grok-code-fast', 'grok-build-0.1'),
@@ -285,7 +294,7 @@ class ModelCatalogTests(unittest.TestCase):
             self.assertIn(legacy, backend)
             self.assertNotIn(legacy, frontend)
         for provider_alias in (
-            'grok-4.3-latest', 'grok-4.5-latest', 'grok-build-latest',
+            'grok-4.3-latest', 'grok-4.5-latest', 'grok-4.6-latest', 'grok-build-latest',
             'grok-4.20-0309', 'grok-4.20-reasoning',
             'grok-4.20-reasoning-latest', 'grok-4.20-non-reasoning',
             'grok-4.20-non-reasoning-latest', 'grok-code-fast-1',
@@ -303,7 +312,7 @@ class ModelCatalogTests(unittest.TestCase):
             self.assertIn(model, ai.OPENAI_IMG_CAPABLE)
         for model in ('claude-fable-5', 'claude-opus-5', 'claude-sonnet-5'):
             self.assertIn(model, ai.ANTHROPIC_NO_TEMPERATURE_LIST)
-        for model in ('gemini-3.6-flash', 'gemini-3.5-flash-lite'):
+        for model in ('gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite'):
             self.assertIn(model, ai.GEMINI_MULTIMODAL_MODELS)
             self.assertIn(model, ai.GEMINI_THINKING_MODELS)
 

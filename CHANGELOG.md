@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.4.9.19 - 2026-08-16
+
+- Add xAI `grok-4.6` with its 500k context, multimodal/tool metadata, and `low`/`medium`/`high`/`xhigh` reasoning contract.
+- Add Google `gemini-3.7-flash` with its 1,048,576-token input limit, 65,536-token output limit, multimodal/tool metadata, and `low`/`medium`/`high` thinking contract.
+- Make Grok 4.6 and Gemini 3.7 Flash the provider defaults while preserving older stable and legacy model IDs.
+- Integrate the package-owned model/thinking catalog with the latest historical vector-index compatibility fix on `main`.
+
 ## 7.4.9.18 - 2026-08-09
 
 - Require Python 3.10 or newer and `google-genai>=1.56.0` so every advertised Gemini thinking level has SDK enum support.

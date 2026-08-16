@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vector-vault"
+version = "7.4.9.18"
+description = "Vector database and generative AI cloud storage"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [{name = "John Rood", email = "john@johnrood.com"}]
+dependencies = [
+  "numpy",
+  "requests",
+  "bs4",
+  "google-cloud-storage",
+  "annoy",
+  "faiss-cpu",
+  "openai",
+  "tiktoken",
+  "anthropic",
+  "pymupdf",
+  "google-genai>=1.56.0",
+]
+
+[project.urls]
+Homepage = "https://vectorvault.io"
+Repository = "https://github.com/John-Rood/VectorVault"
+
+[tool.setuptools.packages.find]
+include = ["vectorvault*"]
+
+[tool.setuptools.package-data]
+vectorvault = ["model_catalog.json"]

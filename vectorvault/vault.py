@@ -26,6 +26,7 @@ import random
 from datetime import datetime
 from typing import List, Union, Dict
 from .ai import OpenAIPlatform, AnthropicPlatform, GrokPlatform, GeminiPlatform, LLMClient, get_all_models
+from .model_catalog import resolve_model_alias, validate_thinking_level
 from .cloudmanager import CloudManager, VaultStorageManager, as_completed, ThreadPoolExecutor, Thread, Event
 from .itemize import itemize, name_vecs, get_item, get_vectors, build_return, cloud_name, load_json
 from .local_storage import LocalStorageManager, LocalVaultStorageManager
@@ -1777,6 +1778,7 @@ class Vault:
             image_path: str = None, # The path to an image to send to the LLM
             image_url: str = None, # The url of an image to send to the LLM
             vaults: Union[None, str, List[str], Dict] = None, # A vault name, list of vaults, or dict of vaults to search for context in
+            thinking_level: str = None, # Optional model-compatible thinking/reasoning level
             ):
         '''
             Chat get response from OpenAI's ChatGPT. 
@@ -1812,6 +1814,8 @@ class Vault:
         '''
         start_time = time.time()
         model = self.all_models['default'] if not model else model
+        thinking_level = validate_thinking_level(model, thinking_level)
+        model = resolve_model_alias(model, allow_unknown=thinking_level is None)
         self.load_ai(model=model)
         
         if text: 
@@ -1835,7 +1839,8 @@ class Vault:
                 user_text=text,
                 model=model,
                 temperature=temperature,
-                timeout=timeout
+                timeout=timeout,
+                thinking_level=thinking_level
             )
             
         else: 
@@ -1856,13 +1861,13 @@ class Vault:
                                 # Extract the current chunk from the segment
                                 current_chunk = segment[start_index:end_index]
                                 # Process the current chunk and concatenate the response
-                                response += ' ' + self._ai.summarize(current_chunk, model=model, custom_prompt=custom_prompt, temperature=temperature)
+                                response += ' ' + self._ai.summarize(current_chunk, model=model, custom_prompt=custom_prompt, temperature=temperature, thinking_level=thinking_level)
                                 self.rate_limiter.on_success()
 
                         elif text and get_context and not summary:
                             if smart_history_search:
                                 custom_entry = f"Using the current message, with the message history, what subject is the user is focused on. \nCurrent message: {text}. \n\nPrevious messages: {history}."
-                                search_input = self._ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
+                                search_input = self._ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout, thinking_level=thinking_level)
                             else:
                                 search_input = segment + history if history_search else segment
                                 
@@ -1875,12 +1880,12 @@ class Vault:
                                 if text['data']:
                                     input_ += text['data']
 
-                            response = self._ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
+                            response = self._ai.llm_w_context(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout, thinking_level=thinking_level)
                         else: # Custom prompt only
                             if inputs[0] == 0:
-                                response = self._ai.llm(model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
+                                response = self._ai.llm(model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout, thinking_level=thinking_level)
                             else:
-                                response = self._ai.llm(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout)
+                                response = self._ai.llm(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature, timeout=timeout, thinking_level=thinking_level)
                                 
                         # If the call is successful, reset the backoff
                         self.rate_limiter.on_success()
@@ -1920,6 +1925,7 @@ class Vault:
             image_path: str = None, # The path to an image to send to the LLM
             image_url: str = None, # The url of an image to send to the LLM
             vaults: Union[None, str, List[str], Dict] = None, # A vault name, list of vaults, or dict of vaults to search for context in
+            thinking_level: str = None, # Optional model-compatible thinking/reasoning level
             ):
         '''
             Always use this get_chat_stream() wrapped by either print_stream(), or cloud_stream()
@@ -1964,6 +1970,8 @@ class Vault:
         '''
         start_time = time.time()
         model = self.all_models['default'] if not model else model
+        thinking_level = validate_thinking_level(model, thinking_level)
+        model = resolve_model_alias(model, allow_unknown=thinking_level is None)
         self.load_ai(model=model)
 
         if text:
@@ -1987,7 +1995,8 @@ class Vault:
                 user_text=text,
                 model=model,
                 temperature=temperature,
-                timeout=timeout
+                timeout=timeout,
+                thinking_level=thinking_level
             ):
                 yield i
             yield '!END'
@@ -2011,7 +2020,7 @@ class Vault:
                                     # Extract the current chunk from the segment
                                     current_chunk = segment[start_index:end_index]
                                     # Process the current chunk and concatenate the response
-                                    for word in self._ai.summarize_stream(current_chunk, model=model, custom_prompt=custom_prompt, temperature=temperature):
+                                    for word in self._ai.summarize_stream(current_chunk, model=model, custom_prompt=custom_prompt, temperature=temperature, thinking_level=thinking_level):
                                         full_response += word
                                         yield word
                                     yield ' '
@@ -2026,7 +2035,7 @@ class Vault:
                         elif text and get_context and not summary:
                             if smart_history_search:
                                 custom_entry = f"Using the current message, with the message history, what is the user is focused on. \nCurrent message: {text}. \n\nPrevious messages: {history}."
-                                search_input = self._ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout)
+                                search_input = self._ai.llm(custom_prompt=custom_entry, model=model, temperature=temperature, timeout=timeout, thinking_level=thinking_level)
                             else:
                                 search_input = segment + history if history_search else segment
                             
@@ -2040,7 +2049,7 @@ class Vault:
                                     input_ += text['data']
 
                             try:
-                                for word in self._ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature):
+                                for word in self._ai.llm_w_context_stream(segment, input_, history, model=model, custom_prompt=custom_prompt, temperature=temperature, thinking_level=thinking_level):
                                     full_response += word
                                     yield word
                                 self.rate_limiter.on_success()
@@ -2070,7 +2079,7 @@ class Vault:
 
                         else:
                             try:
-                                for word in self._ai.llm_stream(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature):
+                                for word in self._ai.llm_stream(segment, history, model=model, custom_prompt=custom_prompt, temperature=temperature, thinking_level=thinking_level):
                                     full_response += word
                                     yield word
                                 self.rate_limiter.on_success()

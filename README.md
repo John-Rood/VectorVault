@@ -191,7 +191,7 @@ Local mode stores everything in `~/.vectorvault/`. Cloud mode syncs to our manag
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.9+
 - OpenAI API key (for embeddings)
 
 ## Resources
@@ -222,3 +222,19 @@ MIT License
 ---
 
 **Start free. Scale infinitely.** [vectorvault.io](https://vectorvault.io)
+
+## Model-compatible thinking levels
+
+VectorVault ships a canonical model capability table and validates each selection before a
+provider call. Existing callers can omit the setting to preserve provider defaults.
+
+```python
+from vectorvault import Vault, get_allowed_thinking_levels
+
+print(get_allowed_thinking_levels("gpt-5.6"))
+response = vault.get_chat(
+    "Compare these options carefully",
+    model="gpt-5.6",
+    thinking_level="high",
+)
+```

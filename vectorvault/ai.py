@@ -11,335 +11,27 @@ from google import genai
 from google.genai import types
 
 
-# ============================================================================
-# MODEL DEFINITIONS - Single Source of Truth
-# ============================================================================
-
-OPENAI_MODELS = {
-    'o1': 200000,
-    'o1-mini': 128000,
-    'o3': 200000,
-    'o3-pro': 200000,
-    'o3-mini': 128000,
-    'o4-mini': 200000,
-    'gpt-4': 8192,
-    'gpt-5': 400000,
-    'gpt-5.1': 400000,
-    'gpt-5.2': 400000,
-    'gpt-5.3': 400000,
-    'gpt-5.4': 1050000,
-    'gpt-5.5': 1050000,
-    'gpt-5.4-mini': 400000,
-    'gpt-5.4-nano': 400000,
-    'gpt-5.6': 1050000,
-    'gpt-5.6-sol': 1050000,
-    'gpt-5.6-terra': 1050000,
-    'gpt-5.6-luna': 1050000,
-    'gpt-5-mini': 400000,
-    'gpt-5-nano': 400000,
-    'gpt-4o-mini': 128000,
-    'gpt-4o': 128000,
-    'gpt-4o-audio-preview': 128000,
-    'chatgpt-4o-latest': 128000,
-    'gpt-5-chat-latest': 400000,
-    'gpt-5.1-chat-latest': 400000,
-    'gpt-5.2-chat-latest': 400000,
-    'gpt-5.3-chat-latest': 128000,
-    'gpt-5.4-chat-latest': 400000,
-    'gpt-5.5-chat-latest': 400000,
-    'gpt-3.5-turbo': 16385,
-    'chat-latest': 400000,
-    'chatgpt-latest': 400000,
-    'default': 'gpt-5.6',
-}
-
-OPENAI_FRONT_MODELS = {
-    'gpt-5.6': 1050000,
-    'gpt-5.6-sol': 1050000,
-    'gpt-5.6-terra': 1050000,
-    'gpt-5.6-luna': 1050000,
-    'gpt-5.5': 1050000,
-    'gpt-5.4': 1050000,
-    'gpt-5.4-mini': 400000,
-    'gpt-5.4-nano': 400000,
-    'gpt-5-mini': 400000,
-    'gpt-5-nano': 400000,
-    'o3': 200000,
-    'o3-pro': 200000,
-    'o4-mini': 200000,
-    'gpt-4o': 128000,
-    'chat-latest': 400000,
-    'default': 'gpt-5.6',
-}
-
-OPENAI_IMG_CAPABLE = [
-    'o1', 'gpt-4o', 'gpt-4o-mini', 'gpt-4o-audio-preview',
-    'chatgpt-4o-latest',
-    'gpt-5', 'gpt-5.1', 'gpt-5.2', 'gpt-5.3', 'gpt-5.4', 'gpt-5.5',
-    'gpt-5.6', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna',
-    'gpt-5.4-mini', 'gpt-5.4-nano', 'chat-latest',
-    'gpt-5-mini', 'gpt-5-nano', 'gpt-5.2-chat-latest', 'gpt-5.3-chat-latest',
-    'gpt-5.4-chat-latest', 'gpt-5.5-chat-latest'
-]
-
-OPENAI_NO_STREAM_LIST = ['o1', 'o1-mini']
-OPENAI_NO_TEMPERATURE_LIST = ['o1', 'o1-mini', 'o3', 'o3-mini']
-
-# Models with adaptive/default thinking reject non-default sampling parameters.
-ANTHROPIC_NO_TEMPERATURE_LIST = [
-    'claude-fable-5', 'claude-opus-5', 'claude-sonnet-5',
-    'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6',
-]
-
-GROK_MODELS = {
-    'grok-build-0.1': 256000,
-    'grok-code-fast': 256000,
-    'grok-code-fast-1': 256000,
-    'grok-code-fast-1-0825': 256000,
-    'grok-4.5': 500000,
-    'grok-4.5-latest': 500000,
-    'grok-build-latest': 500000,
-    'grok-4.3': 1000000,
-    'grok-4.3-latest': 1000000,
-    'grok-4.20': 1000000,
-    'grok-4.20-0309': 1000000,
-    'grok-4.20-reasoning': 1000000,
-    'grok-4.20-reasoning-latest': 1000000,
-    'grok-4.20-0309-reasoning': 1000000,
-    'grok-4.20-non-reasoning': 1000000,
-    'grok-4.20-non-reasoning-latest': 1000000,
-    'grok-4.20-0309-non-reasoning': 1000000,
-    # Legacy/redirected IDs retained for saved flows. xAI redirects these to 4.3.
-    'grok-4-3': 1000000,
-    'grok-4': 256000,
-    'grok-4-fast-reasoning': 1000000,
-    'grok-4-fast-non-reasoning': 1000000,
-    'grok-4-1': 256000,
-    'grok-4-1-fast-reasoning': 1000000,
-    'grok-4-1-fast-non-reasoning': 1000000,
-    'grok-4-2': 256000,
-    'grok-3': 1000000,
-    'grok-3-mini': 131072,
-    'grok-2-vision-latest': 32768,
-    'grok-latest': 1000000,
-    'default': 'grok-4.5',
-}
-
-GROK_FRONT_MODELS = {
-    'grok-4.5': 500000,
-    'grok-4.3': 1000000,
-    'grok-4.20': 1000000,
-    'grok-4.20-0309-reasoning': 1000000,
-    'grok-4.20-0309-non-reasoning': 1000000,
-    'grok-build-0.1': 256000,
-    'grok-latest': 1000000,
-    'default': 'grok-4.5',
-}
-
-ANTHROPIC_MODELS = {
-    'claude-fable-5': 1000000,
-    'claude-opus-5': 1000000,
-    'claude-sonnet-5': 1000000,
-    'claude-opus-4-8': 1000000,
-    'claude-opus-4-7': 1000000,
-    'claude-opus-4-6': 1000000,
-    'claude-opus-4-5': 200000,
-    'claude-opus-4-1': 200000,
-    'claude-sonnet-4-6': 1000000,
-    'claude-sonnet-4-5': 1000000,
-    # Retired Sonnet 4 IDs are backend-only for saved-flow compatibility.
-    'claude-sonnet-4-0': 200000,
-    'claude-sonnet-4-20250514': 200000,
-    'claude-haiku-4-5': 200000,
-    'claude-3-7-sonnet-latest': 200000,
-    'claude-3-5-sonnet-latest': 200000,
-    'claude-3-5-haiku-latest': 200000,
-    'claude-latest': 1000000,
-    'default': 'claude-opus-5',
-}
-
-ANTHROPIC_FRONT_MODELS = {
-    'claude-fable-5': 1000000,
-    'claude-opus-5': 1000000,
-    'claude-sonnet-5': 1000000,
-    'claude-opus-4-8': 1000000,
-    'claude-opus-4-7': 1000000,
-    'claude-opus-4-6': 1000000,
-    'claude-opus-4-5': 200000,
-    'claude-sonnet-4-6': 1000000,
-    'claude-sonnet-4-5': 1000000,
-    'claude-haiku-4-5': 200000,
-    'claude-latest': 1000000,
-    'default': 'claude-opus-5',
-}
-
-GEMINI_MODELS = {
-    'gemini-3.6-flash': 1048576,
-    'gemini-3.5-flash': 1048576,
-    'gemini-3.5-flash-lite': 1048576,
-    'gemini-3.1-flash-lite': 1048576,
-    # Preview is backend-only; the old shorthand resolves to this exact ID.
-    'gemini-3.1-pro-preview': 1048576,
-    'gemini-3.1-pro': 1048576,
-    'gemini-3-pro-preview': 1000000,
-    'gemini-3-pro-image': 131072,
-    'gemini-3-pro-image-preview': 131072,
-    'gemini-2.5-pro': 1048576,
-    'gemini-2.5-flash': 1048576,
-    'gemini-2.5-flash-lite': 1048576,
-    'gemini-2.0-flash': 1048576,
-    'gemini-latest': 1048576,
-    'default': 'gemini-3.6-flash',
-}
-
-GEMINI_FRONT_MODELS = {
-    'gemini-3.6-flash': 1048576,
-    'gemini-3.5-flash': 1048576,
-    'gemini-3.5-flash-lite': 1048576,
-    'gemini-3.1-flash-lite': 1048576,
-    'gemini-2.5-pro': 1048576,
-    'gemini-2.5-flash': 1048576,
-    'gemini-2.5-flash-lite': 1048576,
-    'gemini-latest': 1048576,
-    'default': 'gemini-3.6-flash',
-}
-
-GEMINI_MULTIMODAL_MODELS = [
-    'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite',
-    'gemini-3.1-flash-lite', 'gemini-3.1-pro-preview', 'gemini-3.1-pro',
-    'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash',
-    'gemini-3-pro-preview', 'gemini-3-pro-image', 'gemini-3-pro-image-preview'
-]
-
-GEMINI_THINKING_MODELS = [
-    'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite',
-    'gemini-3.1-flash-lite', 'gemini-3.1-pro-preview', 'gemini-3.1-pro',
-    'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite',
-    'gemini-3-pro-preview'
-]
-
-LATEST_MODELS_MAP = {
-    'chatgpt-latest': 'chat-latest',
-    'gpt-5.3': 'gpt-5.4',
-    # The documented deprecated chat snapshot remains a pass-through ID.
-    'gpt-5.4-chat-latest': 'gpt-5.4',
-    'gpt-5.5-chat-latest': 'gpt-5.5',
-    'claude-latest': 'claude-opus-5',
-    'grok-latest': 'grok-4.3',
-    'grok-4.3-latest': 'grok-4.3',
-    'grok-4.5-latest': 'grok-4.5',
-    'grok-build-latest': 'grok-4.5',
-    'grok-4.20': 'grok-4.20-0309-reasoning',
-    'grok-4.20-0309': 'grok-4.20-0309-reasoning',
-    'grok-4.20-reasoning': 'grok-4.20-0309-reasoning',
-    'grok-4.20-reasoning-latest': 'grok-4.20-0309-reasoning',
-    'grok-4.20-non-reasoning': 'grok-4.20-0309-non-reasoning',
-    'grok-4.20-non-reasoning-latest': 'grok-4.20-0309-non-reasoning',
-    'grok-4-3': 'grok-4.3',
-    'grok-code-fast': 'grok-build-0.1',
-    'grok-code-fast-1': 'grok-build-0.1',
-    'grok-code-fast-1-0825': 'grok-build-0.1',
-    'grok-4-fast-reasoning': 'grok-4.3',
-    'grok-4-fast-non-reasoning': 'grok-4.3',
-    'grok-4-1-fast-reasoning': 'grok-4.3',
-    'grok-4-1-fast-non-reasoning': 'grok-4.3',
-    'grok-3': 'grok-4.3',
-    'gemini-latest': 'gemini-3.6-flash',
-    'gemini-3.1-pro': 'gemini-3.1-pro-preview',
-    'gemini-3-pro-preview': 'gemini-3.1-pro-preview',
-    'gemini-3-pro-image-preview': 'gemini-3-pro-image',
-    'gemini-2.0-flash': 'gemini-3.6-flash',
-}
-
-# Published API capabilities that are not represented by the context-limit maps.
-MODEL_METADATA = {
-    model: {
-        'context_window': 1050000,
-        'max_input_tokens': 922000,
-        'max_output_tokens': 128000,
-        'input_modalities': ('text', 'image'),
-        'output_modalities': ('text',),
-        'endpoints': ('chat_completions', 'responses'),
-    }
-    for model in ('gpt-5.6', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna')
-}
-MODEL_METADATA.update({
-    model: {
-        'context_window': 1050000,
-        'max_output_tokens': 128000,
-        'input_modalities': ('text', 'image'),
-        'output_modalities': ('text',),
-        'endpoints': ('chat_completions', 'responses'),
-    }
-    for model in ('gpt-5.4', 'gpt-5.5')
-})
-MODEL_METADATA.update({
-    model: {
-        'context_window': 400000,
-        'max_output_tokens': 128000,
-        'input_modalities': ('text', 'image'),
-        'output_modalities': ('text',),
-        'endpoints': ('chat_completions', 'responses'),
-    }
-    for model in ('gpt-5.4-mini', 'gpt-5.4-nano', 'chat-latest')
-})
-MODEL_METADATA['gpt-5.3-chat-latest'] = {
-    'context_window': 128000,
-    'max_output_tokens': 16384,
-    'input_modalities': ('text', 'image'),
-    'output_modalities': ('text',),
-    'endpoints': ('chat_completions',),
-    'release_status': 'deprecated',
-}
-MODEL_METADATA.update({
-    model: {
-        'context_window': 1000000,
-        'max_output_tokens': 128000,
-        'input_modalities': ('text', 'image'),
-        'output_modalities': ('text',),
-    }
-    for model in (
-        'claude-fable-5', 'claude-opus-5', 'claude-sonnet-5',
-        'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6',
-        'claude-sonnet-4-6', 'claude-latest',
-    )
-})
-MODEL_METADATA.update({
-    model: {
-        'context_window': ANTHROPIC_FRONT_MODELS[model],
-        'max_output_tokens': 64000,
-        'input_modalities': ('text', 'image'),
-        'output_modalities': ('text',),
-    }
-    for model in ('claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5')
-})
-MODEL_METADATA.update({
-    model: {
-        'context_window': GEMINI_FRONT_MODELS[model],
-        'max_output_tokens': 65536,
-        'input_modalities': ('text', 'image'),
-        'output_modalities': ('text',),
-    }
-    for model in (
-        'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite',
-        'gemini-3.1-flash-lite', 'gemini-2.5-pro', 'gemini-2.5-flash',
-        'gemini-2.5-flash-lite',
-    )
-})
-MODEL_METADATA['gemini-3.1-pro-preview'] = {
-    'context_window': 1048576,
-    'max_output_tokens': 65536,
-    'input_modalities': ('text', 'image'),
-    'output_modalities': ('text',),
-    'release_status': 'preview',
-}
-MODEL_METADATA['gemini-3-pro-image'] = {
-    'context_window': 131072,
-    'max_output_tokens': 32768,
-    'input_modalities': ('text', 'image'),
-    'output_modalities': ('text', 'image'),
-    'release_status': 'stable',
-}
+from .model_catalog import (
+    ANTHROPIC_MODELS,
+    ANTHROPIC_FRONT_MODELS,
+    ANTHROPIC_NO_TEMPERATURE_LIST,
+    GEMINI_MODELS,
+    GEMINI_FRONT_MODELS,
+    GEMINI_MULTIMODAL_MODELS,
+    GEMINI_THINKING_MODELS,
+    GROK_MODELS,
+    GROK_FRONT_MODELS,
+    LATEST_MODELS_MAP,
+    MODEL_METADATA,
+    OPENAI_MODELS,
+    OPENAI_FRONT_MODELS,
+    OPENAI_IMG_CAPABLE,
+    OPENAI_NO_STREAM_LIST,
+    OPENAI_NO_TEMPERATURE_LIST,
+    resolve_model_alias,
+    should_omit_parameter,
+    translate_thinking_level,
+)
 
 
 # ============================================================================
@@ -412,7 +104,7 @@ class LLMPlatform(ABC):
         return [m for m in self.model_token_limits.keys() if m != "default"]
 
     @abstractmethod
-    def make_call(self, messages, model, temperature=None, timeout=None):
+    def make_call(self, messages, model, temperature=None, timeout=None, thinking_level=None, **kwargs):
         """
         Make a request to the language model with a list of messages and receiv
         a single text-based response
@@ -431,7 +123,7 @@ class LLMPlatform(ABC):
         pass
 
     @abstractmethod
-    def stream_call(self, messages, model, temperature=None, timeout=None):
+    def stream_call(self, messages, model, temperature=None, timeout=None, thinking_level=None, **kwargs):
         """
         Make a streaming request to the language model. Yields tokens or chunks
         of text over time rather than waiting for a single completed response.
@@ -573,11 +265,14 @@ class OpenAIPlatform(LLMPlatform):
             pass
         return super().list_models()
 
-    def make_call(self, messages, model, temperature=None, timeout=None):
+    def make_call(self, messages, model, temperature=None, timeout=None, thinking_level=None, **kwargs):
         timeout = timeout
         
         if model in LATEST_MODELS_MAP:
             model = LATEST_MODELS_MAP[model]
+
+        # Validate before entering provider exception/retry wrappers or invoking an SDK.
+        thinking_kwargs = translate_thinking_level(model, thinking_level)
 
         def call_api(response_queue):
             try:
@@ -586,8 +281,9 @@ class OpenAIPlatform(LLMPlatform):
                     "model": model,
                     "messages": messages
                 }
+                params.update(thinking_kwargs)
                 # Include temperature only if the model actually supports it
-                if temperature is not None and temperature != 0 and model not in self.no_temperature_list:
+                if temperature is not None and temperature != 0 and model not in self.no_temperature_list and not should_omit_parameter(model, thinking_level, "temperature"):
                     params["temperature"] = temperature
                 response = self.client.chat.completions.create(**params)
                 response_queue.put(response.choices[0].message.content)
@@ -603,11 +299,14 @@ class OpenAIPlatform(LLMPlatform):
             print("Request timed out")
             return None
             
-    def stream_call(self, messages, model, temperature=None, timeout=None):
+    def stream_call(self, messages, model, temperature=None, timeout=None, thinking_level=None, **kwargs):
         timeout = timeout
         
         if model in LATEST_MODELS_MAP:
             model = LATEST_MODELS_MAP[model]
+
+        # Validate before entering provider exception/retry wrappers or invoking an SDK.
+        thinking_kwargs = translate_thinking_level(model, thinking_level)
 
         def call_api():
             try:
@@ -616,9 +315,10 @@ class OpenAIPlatform(LLMPlatform):
                     "model": model,
                     "messages": messages
                 }
+                params.update(thinking_kwargs)
 
                 # Conditionally add temperature if the model supports it
-                if temperature is not None and temperature != 0 and model not in self.no_temperature_list:
+                if temperature is not None and temperature != 0 and model not in self.no_temperature_list and not should_omit_parameter(model, thinking_level, "temperature"):
                     params["temperature"] = temperature if temperature else 0
 
                 # If streaming is allowed for this model
@@ -692,7 +392,7 @@ class OpenAIPlatform(LLMPlatform):
                     # If no suitable models found, return the default model
                     return self.model_token_limits['default']
 
-    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None):
+    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None, **kwargs):
         """
         Demonstration implementation of an image inference method for OpenAIPlatform.
         For GPT-4o or other multimodal-capable model, you can build the messages 
@@ -733,7 +433,7 @@ class OpenAIPlatform(LLMPlatform):
                 "content": content
             }
         ]
-        return self.make_call(messages, model, temperature=None, timeout=timeout) if not stream else self.stream_call(messages, model, temperature=None, timeout=timeout)
+        return self.make_call(messages, model, temperature=None, timeout=timeout, **kwargs) if not stream else self.stream_call(messages, model, temperature=None, timeout=timeout, **kwargs)
     
     def create_embeddings(self, texts, model=None):
         """
@@ -807,7 +507,7 @@ class GrokPlatform(LLMPlatform):
 
         return super().list_models()
 
-    def make_call(self, messages, model, temperature=None, timeout=None):
+    def make_call(self, messages, model, temperature=None, timeout=None, thinking_level=None, **kwargs):
         """
         Non-streaming call to xAI /v1/chat/completions 
         using the `OpenAI` client set to base_url="https://api.x.ai/v1".
@@ -818,12 +518,16 @@ class GrokPlatform(LLMPlatform):
         if model in LATEST_MODELS_MAP:
             model = LATEST_MODELS_MAP[model]
 
+        # Validate before entering provider exception/retry wrappers or invoking an SDK.
+        thinking_kwargs = translate_thinking_level(model, thinking_level)
+
         def call_api(response_queue):
             try:
                 params = {
                     "model": model,
                     "messages": messages,
                 }
+                params.update(thinking_kwargs)
                 # If you need temperature:
                 if temperature is not None:
                     params["temperature"] = temperature
@@ -844,7 +548,7 @@ class GrokPlatform(LLMPlatform):
             print("Request timed out")
             return None
 
-    def stream_call(self, messages, model, temperature=None, timeout=None):
+    def stream_call(self, messages, model, temperature=None, timeout=None, thinking_level=None, **kwargs):
         """
         Streaming call to xAI /v1/chat/completions 
         with "stream": True.
@@ -855,6 +559,9 @@ class GrokPlatform(LLMPlatform):
         if model in LATEST_MODELS_MAP:
             model = LATEST_MODELS_MAP[model]
 
+        # Validate before entering provider exception/retry wrappers or invoking an SDK.
+        thinking_kwargs = translate_thinking_level(model, thinking_level)
+
         def call_api():
             try:
                 params = {
@@ -862,6 +569,7 @@ class GrokPlatform(LLMPlatform):
                     "messages": messages,
                     "stream": True,  # enable streaming
                 }
+                params.update(thinking_kwargs)
                 
                 response = self.client.chat.completions.create(**params)
                 for chunk in response:
@@ -907,7 +615,7 @@ class GrokPlatform(LLMPlatform):
             else:
                 return self.model_token_limits['default']
 
-    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None):
+    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None, **kwargs):
         """
         For vision-capable models like "grok-2-vision-latest", we can send:
         messages = [
@@ -965,9 +673,9 @@ class GrokPlatform(LLMPlatform):
         temp = temperature if temperature is not None else 0
         
         if stream:
-            return self.stream_call(messages, model=model, temperature=temp, timeout=timeout)
+            return self.stream_call(messages, model=model, temperature=temp, timeout=timeout, **kwargs)
         else:
-            return self.make_call(messages, model=model, temperature=temp, timeout=timeout)
+            return self.make_call(messages, model=model, temperature=temp, timeout=timeout, **kwargs)
     
     def create_embeddings(self, texts, model=None):
         """
@@ -1032,12 +740,15 @@ class AnthropicPlatform(LLMPlatform):
 
         return super().list_models()
 
-    def make_call(self, messages, model, temperature, timeout=None):
+    def make_call(self, messages, model, temperature=None, timeout=None, thinking_level=None, **kwargs):
         if self.client is None:
             raise ValueError("Anthropic client not initialized. Please provide a valid API key or set ANTHROPIC_API_KEY environment variable.")
             
         if model in LATEST_MODELS_MAP:
             model = LATEST_MODELS_MAP[model]
+
+        # Validate before entering provider exception/retry wrappers or invoking an SDK.
+        thinking_kwargs = translate_thinking_level(model, thinking_level)
 
         def call_api(response_queue):
             try:
@@ -1046,11 +757,12 @@ class AnthropicPlatform(LLMPlatform):
                     "messages": messages,  # Already in the correct format
                     "max_tokens": 8192,
                 }
+                params.update(thinking_kwargs)
                 # Newer Anthropic models reject `temperature`; only send it when supported.
-                if model not in self.no_temperature_list:
+                if model not in self.no_temperature_list and not should_omit_parameter(model, thinking_level, "temperature"):
                     params["temperature"] = temperature if temperature else 0
                 response = self.client.messages.create(**params)
-                response_queue.put(response.content[0].text)
+                response_queue.put(next((block.text for block in response.content if getattr(block, "type", None) == "text"), ""))
             except Exception as e:
                 response_queue.put(e)
 
@@ -1063,12 +775,15 @@ class AnthropicPlatform(LLMPlatform):
             print("Request timed out")
             return None
 
-    def stream_call(self, messages, model, temperature, timeout=None):
+    def stream_call(self, messages, model, temperature=None, timeout=None, thinking_level=None, **kwargs):
         if self.client is None:
             raise ValueError("Anthropic client not initialized. Please provide a valid API key or set ANTHROPIC_API_KEY environment variable.")
             
         if model in LATEST_MODELS_MAP:
             model = LATEST_MODELS_MAP[model]
+
+        # Validate before entering provider exception/retry wrappers or invoking an SDK.
+        thinking_kwargs = translate_thinking_level(model, thinking_level)
 
         def call_api():
             try:
@@ -1078,14 +793,15 @@ class AnthropicPlatform(LLMPlatform):
                     "max_tokens": 8192,
                     "stream": True,
                 }
+                params.update(thinking_kwargs)
                 # Newer Anthropic models reject `temperature`; only send it when supported.
-                if model not in self.no_temperature_list:
+                if model not in self.no_temperature_list and not should_omit_parameter(model, thinking_level, "temperature"):
                     params["temperature"] = temperature if temperature else 0
                 response = self.client.messages.create(**params)
 
 
                 for chunk in response:
-                    if chunk.type == 'content_block_delta':
+                    if chunk.type == 'content_block_delta' and getattr(chunk.delta, 'type', None) == 'text_delta':
                         yield chunk.delta.text
                     elif chunk.type == 'message_stop':
                         break
@@ -1131,7 +847,7 @@ class AnthropicPlatform(LLMPlatform):
                     # If no suitable models found, return the default model
                     return self.model_token_limits['default']
 
-    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None):
+    def image_inference(self, image_path=None, image_url=None, user_text=None, model=None, stream=False, temperature=None, timeout=None, **kwargs):
         model = model if model else self.default_model
 
         if image_path is None and image_url is None:
@@ -1180,9 +896,9 @@ class AnthropicPlatform(LLMPlatform):
         ]
 
         if stream:
-            return self.stream_call(messages, model, temperature, timeout=timeout)
+            return self.stream_call(messages, model, temperature, timeout=timeout, **kwargs)
         else:
-            return self.make_call(messages, model, temperature, timeout=timeout)
+            return self.make_call(messages, model, temperature, timeout=timeout, **kwargs)
     
     def create_embeddings(self, texts, model=None):
         """
@@ -1284,9 +1000,12 @@ class GeminiPlatform(LLMPlatform):
         """
         self.close()
 
-    def make_call(self, messages, model, temperature=None, timeout=None, **kwargs):
+    def make_call(self, messages, model, temperature=None, timeout=None, thinking_level=None, **kwargs):
         if model in LATEST_MODELS_MAP:
             model = LATEST_MODELS_MAP[model]
+
+        # Validate before entering provider exception/retry wrappers or invoking an SDK.
+        thinking_kwargs = translate_thinking_level(model, thinking_level)
 
         def call_api(response_queue):
             try:
@@ -1307,7 +1026,8 @@ class GeminiPlatform(LLMPlatform):
                     if temperature is None or temperature == 0:
                         config_params['temperature'] = 0
                 
-                # Merge user-provided kwargs
+                # Merge validated provider thinking configuration, then SDK options.
+                config_params.update(thinking_kwargs)
                 config_params.update(kwargs)
                 
                 # Create config object if we have parameters
@@ -1337,9 +1057,12 @@ class GeminiPlatform(LLMPlatform):
             print("Request timed out")
             return None
 
-    def stream_call(self, messages, model, temperature=None, timeout=None, **kwargs):
+    def stream_call(self, messages, model, temperature=None, timeout=None, thinking_level=None, **kwargs):
         if model in LATEST_MODELS_MAP:
             model = LATEST_MODELS_MAP[model]
+
+        # Validate before entering provider exception/retry wrappers or invoking an SDK.
+        thinking_kwargs = translate_thinking_level(model, thinking_level)
 
         def call_api():
             try:
@@ -1360,7 +1083,8 @@ class GeminiPlatform(LLMPlatform):
                     if temperature is None or temperature == 0:
                         config_params['temperature'] = 0
                 
-                # Merge user-provided kwargs
+                # Merge validated provider thinking configuration, then SDK options.
+                config_params.update(thinking_kwargs)
                 config_params.update(kwargs)
                 
                 # Create config object if we have parameters
@@ -1556,7 +1280,9 @@ class GeminiPlatform(LLMPlatform):
             if temperature is None or temperature == 0:
                 config_params['temperature'] = 0
         
-        # Merge user-provided kwargs (e.g., aspect_ratio, etc.)
+        # Merge validated provider thinking configuration, then SDK options.
+        thinking_level = kwargs.pop("thinking_level", None)
+        config_params.update(translate_thinking_level(model, thinking_level))
         config_params.update(kwargs)
         
         config = types.GenerateContentConfig(**config_params) if config_params else None
@@ -1700,7 +1426,7 @@ class LLMClient:
 
         return {'text': text, 'history': history, 'context': context}
 
-    def text_llm(self, user_input: str = '', history: str = '', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5, **kwargs):
+    def text_llm(self, user_input: str = '', history: str = '', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5, thinking_level=None, **kwargs):
         timeout = self.timeout if not timeout else timeout
         prompt_template = custom_prompt if custom_prompt else self.prompt
 
@@ -1726,14 +1452,14 @@ class LLMClient:
         messages.append({"role": "user", "content": prompt})
 
         for _ in range(max_retries):
-            response = self.platform.make_call(messages, model, temperature, timeout, **kwargs)
+            response = self.platform.make_call(messages, model, temperature, timeout, thinking_level=thinking_level, **kwargs)
             if response is not None:
                 return response
             print("Retrying...")
 
         raise Exception("Failed to receive response within the timeout period.")
 
-    def smart_llm(self, user_input: str = '', history: str = '', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5, image_path=None, image_url=None):
+    def smart_llm(self, user_input: str = '', history: str = '', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5, image_path=None, image_url=None, thinking_level=None):
         """
         Smart LLM method that automatically switches between text-only LLM and image inference
         based on whether image parameters are provided.
@@ -1747,7 +1473,8 @@ class LLMClient:
                 model=model,
                 stream=False,
                 temperature=temperature,
-                timeout=timeout
+                timeout=timeout,
+                thinking_level=thinking_level
             )
         else:
             # Otherwise use regular text LLM
@@ -1758,10 +1485,11 @@ class LLMClient:
                 custom_prompt=custom_prompt,
                 temperature=temperature,
                 timeout=timeout,
-                max_retries=max_retries
+                max_retries=max_retries,
+                thinking_level=thinking_level
             )
         
-    def llm(self, user_input: str = '', history: str = '', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5, image_path=None, image_url=None, **kwargs):
+    def llm(self, user_input: str = '', history: str = '', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5, image_path=None, image_url=None, thinking_level=None, **kwargs):
         """
         Smart LLM method that automatically switches between text-only LLM and image inference
         based on whether image parameters are provided.
@@ -1776,6 +1504,7 @@ class LLMClient:
                 stream=False,
                 temperature=temperature,
                 timeout=timeout,
+                thinking_level=thinking_level,
                 **kwargs
             )
         else:
@@ -1788,10 +1517,11 @@ class LLMClient:
                 temperature=temperature,
                 timeout=timeout,
                 max_retries=max_retries,
+                thinking_level=thinking_level,
                 **kwargs
             )
 
-    def llm_sys(self, content=None, system_message="You are an AI assistant that excels at following instructions exactly.", model=None, temperature=0):
+    def llm_sys(self, content=None, system_message="You are an AI assistant that excels at following instructions exactly.", model=None, temperature=0, thinking_level=None):
         tokens = self.platform.get_tokens(f"{content} {system_message}")
         model = model if model else self.default_model
         model = self.platform.model_check(tokens, model)
@@ -1804,10 +1534,10 @@ class LLMClient:
             {"role": "system", "content": system_message},
             {"role": "user", "content": content}
         ]
-        response = self.platform.make_call(messages, model, temperature)
+        response = self.platform.make_call(messages, model, temperature, thinking_level=thinking_level)
         return response
 
-    def llm_instruct(self, content: str, instructions: str, system_message="You are an AI assistant that excels at following instructions exactly.", model=None, temperature=0):
+    def llm_instruct(self, content: str, instructions: str, system_message="You are an AI assistant that excels at following instructions exactly.", model=None, temperature=0, thinking_level=None):
         tokens = self.platform.get_tokens(f"{content} {instructions} {system_message}")
         model = model if model else self.default_model
         model = self.platform.model_check(tokens, model)
@@ -1822,10 +1552,10 @@ class LLMClient:
 Content: {content}
 Instructions: {instructions}"""}
         ]
-        response = self.platform.make_call(messages, model, temperature)
+        response = self.platform.make_call(messages, model, temperature, thinking_level=thinking_level)
         return response
 
-    def llm_w_context(self, user_input='', context='', history='', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5):
+    def llm_w_context(self, user_input='', context='', history='', model=None, custom_prompt=False, temperature=0, timeout=None, max_retries=5, thinking_level=None, **kwargs):
         timeout = self.timeout if not timeout else timeout
         prompt_template = custom_prompt if custom_prompt else self.context_prompt
         model = model if model else self.default_model
@@ -1845,14 +1575,14 @@ Instructions: {instructions}"""}
         messages.append({"role": "user", "content": prompt})
 
         for _ in range(max_retries):
-            response = self.platform.make_call(messages, model, temperature, timeout)
+            response = self.platform.make_call(messages, model, temperature, timeout, thinking_level=thinking_level, **kwargs)
             if response is not None:
                 return response
             print("Retrying...")
 
         raise Exception("Failed to receive response within the timeout period.")
 
-    def llm_stream(self, user_input='', history='', model=None, custom_prompt=False, temperature=0, image_path=None, image_url=None, **kwargs):
+    def llm_stream(self, user_input='', history='', model=None, custom_prompt=False, temperature=0, image_path=None, image_url=None, thinking_level=None, **kwargs):
         """
         Smart LLM streaming method that automatically switches between text-only streaming and image inference streaming
         based on whether image parameters are provided.
@@ -1866,6 +1596,7 @@ Instructions: {instructions}"""}
                 model=model,
                 stream=True,
                 temperature=temperature,
+                thinking_level=thinking_level,
                 **kwargs
             )
         else:
@@ -1876,10 +1607,11 @@ Instructions: {instructions}"""}
                 model=model,
                 custom_prompt=custom_prompt,
                 temperature=temperature,
+                thinking_level=thinking_level,
                 **kwargs
             )
 
-    def llm_stream_internal(self, user_input='', history='', model=None, custom_prompt=False, temperature=0, **kwargs):
+    def llm_stream_internal(self, user_input='', history='', model=None, custom_prompt=False, temperature=0, thinking_level=None, **kwargs):
         prompt_template = custom_prompt if custom_prompt else self.prompt
 
         model = model if model else self.default_model
@@ -1899,11 +1631,11 @@ Instructions: {instructions}"""}
         messages = [{"role": "user", "content": history}] if history else []
         messages.append({"role": "user", "content": prompt})
 
-        for message in self.platform.stream_call(messages, model, temperature, **kwargs):
+        for message in self.platform.stream_call(messages, model, temperature, thinking_level=thinking_level, **kwargs):
             if message:
                 yield message
 
-    def smart_llm_stream(self, user_input='', history='', model=None, custom_prompt=False, temperature=0, image_path=None, image_url=None):
+    def smart_llm_stream(self, user_input='', history='', model=None, custom_prompt=False, temperature=0, image_path=None, image_url=None, thinking_level=None):
         """
         Smart LLM streaming method that automatically switches between text-only streaming and image inference streaming
         based on whether image parameters are provided.
@@ -1916,7 +1648,8 @@ Instructions: {instructions}"""}
                 user_text=user_input,
                 model=model,
                 stream=True,
-                temperature=temperature
+                temperature=temperature,
+                thinking_level=thinking_level
             )
         else:
             # Otherwise use regular text LLM streaming
@@ -1925,10 +1658,11 @@ Instructions: {instructions}"""}
                 history=history,
                 model=model,
                 custom_prompt=custom_prompt,
-                temperature=temperature
+                temperature=temperature,
+                thinking_level=thinking_level
             )
 
-    def llm_w_context_stream(self, user_input='', context='', history='', model=None, custom_prompt=False, temperature=0):
+    def llm_w_context_stream(self, user_input='', context='', history='', model=None, custom_prompt=False, temperature=0, thinking_level=None, **kwargs):
         prompt_template = custom_prompt if custom_prompt else self.context_prompt
         model = model if model else self.default_model
         token_count = self.platform.get_tokens(str(history) + str(user_input) + str(prompt_template) + str(context))
@@ -1946,34 +1680,34 @@ Instructions: {instructions}"""}
         messages = [{"role": "user", "content": history}] if history else []
         messages.append({"role": "user", "content": prompt})
 
-        for message in self.platform.stream_call(messages, model, temperature):
+        for message in self.platform.stream_call(messages, model, temperature, thinking_level=thinking_level, **kwargs):
             if message:
                 yield message
 
-    def summarize(self, user_input, model=None, custom_prompt=False, temperature=0):
+    def summarize(self, user_input, model=None, custom_prompt=False, temperature=0, thinking_level=None, **kwargs):
         prompt_template = custom_prompt if custom_prompt else """Summarize the following: {content}"""
         prompt = self._format_prompt(prompt_template, content=user_input)
         model = model if model else self.default_model
         messages = [{"role": "user", "content": f"{prompt}"}]
-        response = self.platform.make_call(messages, model, temperature)
+        response = self.platform.make_call(messages, model, temperature, thinking_level=thinking_level, **kwargs)
         return response
 
-    def summarize_stream(self, user_input, model=None, custom_prompt=False, temperature=0):
+    def summarize_stream(self, user_input, model=None, custom_prompt=False, temperature=0, thinking_level=None, **kwargs):
         prompt_template = custom_prompt if custom_prompt else """Summarize the following: {content}"""
         prompt = self._format_prompt(prompt_template, content=user_input)
         model = model if model else self.default_model
         messages = [{"role": "user", "content": f"{prompt}"}]
-        for message in self.platform.stream_call(messages, model, temperature):
+        for message in self.platform.stream_call(messages, model, temperature, thinking_level=thinking_level, **kwargs):
             if message:
                 yield message
 
-    def smart_summary(self, text, previous_summary, model=None, custom_prompt=False, temperature=0):
+    def smart_summary(self, text, previous_summary, model=None, custom_prompt=False, temperature=0, thinking_level=None):
         prompt_template = custom_prompt if custom_prompt else """Given the previous summary: {previous_summary}
 Continue from where it leaves off by summarizing the next segment content: {content}"""
         prompt = self._format_prompt(prompt_template, previous_summary=previous_summary, content=text)
         model = model if model else self.default_model
         messages = [{"role": "user", "content": f"{prompt}"}]
-        response = self.platform.make_call(messages, model, temperature)
+        response = self.platform.make_call(messages, model, temperature, thinking_level=thinking_level)
         return response
 
     def text_to_speech(self, text, model="tts-1", voice="onyx"):

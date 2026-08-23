@@ -810,6 +810,14 @@
         ],
         "output_modalities": [
           "text"
+        ],
+        "tools": [
+          "function_calling",
+          "web_search",
+          "web_fetch",
+          "code_execution",
+          "browser_use",
+          "computer_use"
         ]
       }
     },
@@ -848,6 +856,14 @@
         ],
         "output_modalities": [
           "text"
+        ],
+        "tools": [
+          "function_calling",
+          "web_search",
+          "web_fetch",
+          "code_execution",
+          "browser_use",
+          "computer_use"
         ]
       }
     },
@@ -886,6 +902,14 @@
         ],
         "output_modalities": [
           "text"
+        ],
+        "tools": [
+          "function_calling",
+          "web_search",
+          "web_fetch",
+          "code_execution",
+          "browser_use",
+          "computer_use"
         ]
       }
     },
@@ -924,6 +948,14 @@
         ],
         "output_modalities": [
           "text"
+        ],
+        "tools": [
+          "function_calling",
+          "web_search",
+          "web_fetch",
+          "code_execution",
+          "browser_use",
+          "computer_use"
         ]
       }
     },
@@ -1258,6 +1290,14 @@
         ],
         "output_modalities": [
           "text"
+        ],
+        "tools": [
+          "function_calling",
+          "web_search",
+          "web_fetch",
+          "code_execution",
+          "browser_use",
+          "computer_use"
         ]
       }
     },

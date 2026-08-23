@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.4.9.20 - 2026-08-23
+
+- Record Anthropic's current browser and computer-use tool compatibility for Claude Fable 5, Opus 5, Sonnet 5, Opus 4.8, and the `claude-latest` alias.
+- Preserve invitation-only Mythos 5 exclusion and older Claude legacy-tool behavior.
+- Refresh supported-model documentation to the verified public package and live catalog state.
+
 ## 7.4.9.19 - 2026-08-16
 
 - Add xAI `grok-4.6` with its 500k context, multimodal/tool metadata, and `low`/`medium`/`high`/`xhigh` reasoning contract.

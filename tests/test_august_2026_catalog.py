@@ -46,3 +46,18 @@ def test_august_2026_official_metadata():
     assert gemini["max_output_tokens"] == 65_536
     assert "video" in gemini["input_modalities"]
     assert "computer_use" in gemini["tools"]
+
+
+def test_august_2026_anthropic_browser_and_computer_tool_compatibility():
+    current_toolset_models = {
+        "claude-fable-5", "claude-opus-5", "claude-sonnet-5", "claude-opus-4-8",
+    }
+    expected_tools = {
+        "function_calling", "web_search", "web_fetch", "code_execution",
+        "browser_use", "computer_use",
+    }
+    for model in current_toolset_models:
+        assert set(MODEL_METADATA[model]["tools"]) == expected_tools
+    assert set(MODEL_METADATA["claude-latest"]["tools"]) == expected_tools
+    assert "browser_use" not in MODEL_METADATA["claude-opus-4-7"].get("tools", [])
+    assert "computer_use" not in MODEL_METADATA["claude-opus-4-7"].get("tools", [])

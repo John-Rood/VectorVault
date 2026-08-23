@@ -261,6 +261,7 @@ def serialize_model_catalog(frontend: bool = True) -> Dict[str, Any]:
             "default_thinking_level": thinking["default"],
             "supports_thinking": thinking["supported"],
             "alias_for": entry.get("alias_for"),
+            "metadata": copy.deepcopy(capability.get("metadata", {})),
         })
     if frontend:
         default = catalog["defaults"]["openai"]
@@ -274,6 +275,7 @@ def serialize_model_catalog(frontend: bool = True) -> Dict[str, Any]:
             "default_thinking_level": default_thinking_level(default),
             "supports_thinking": supports_thinking(default),
             "alias_for": default,
+            "metadata": copy.deepcopy(default_capability.get("metadata", {})),
         })
     return {"schema_version": catalog["schema_version"], "models": rows}
 

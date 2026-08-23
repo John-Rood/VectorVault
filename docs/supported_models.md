@@ -1,6 +1,6 @@
 # Supported AI Models
 
-Vector Vault routes model IDs to OpenAI, Anthropic, xAI, or Google by catalog membership. The aliases below are the recommended VectorVault Cloud/runtime defaults as of **August 9, 2026**; explicit stable IDs are also supported. The SDK source on `main` mirrors this catalog, while the current PyPI package remains `vector-vault==7.4.9.11` until its documented release pipeline is restored; portable SDK examples therefore use `model="default"`.
+Vector Vault routes model IDs to OpenAI, Anthropic, xAI, or Google by catalog membership. The aliases below are the recommended VectorVault Cloud/runtime defaults as of **August 23, 2026**; explicit stable IDs are also supported. The SDK source on `main`, the published `vector-vault==7.4.9.20` package, and VectorVault Cloud share this package-owned catalog.
 
 | Provider | Recommended default | Current stable IDs | Context window | Max output |
 | --- | --- | --- | ---: | ---: |
@@ -11,7 +11,7 @@ Vector Vault routes model IDs to OpenAI, Anthropic, xAI, or Google by catalog me
 
 OpenAI GPT-5.6 accepts text and image input and returns text through Chat Completions or Responses. Its 1,050,000-token context allows up to 922,000 input tokens and 128,000 output tokens. The `gpt-5.6` alias routes to GPT-5.6 Sol. The official `chat-latest` model has a 400,000-token context and 128,000-token output limit; the legacy `chatgpt-latest` spelling is translated locally and is never sent upstream.
 
-Anthropic's `claude-opus-5` is the default because Anthropic recommends Opus 5 for complex work; Fable 5 remains available as the highest-capability GA model, and Sonnet 5 is the speed/intelligence option. Anthropic's Models API reports 128,000 maximum output tokens for the current Claude 5 family and supported Claude 4.6–4.8 models; Claude 4.5 models remain capped at 64,000. Invitation-only `claude-mythos-5` is not listed.
+Anthropic's `claude-opus-5` is the default because Anthropic recommends Opus 5 for complex work; Fable 5 remains available as the highest-capability GA model, and Sonnet 5 is the speed/intelligence option. Anthropic's Models API reports 128,000 maximum output tokens for the current Claude 5 family and supported Claude 4.6–4.8 models; Claude 4.5 models remain capped at 64,000. The current browser and computer-use toolsets support Claude Fable 5, Opus 5, Sonnet 5, and Opus 4.8; older Claude models require a legacy computer-use tool version. Invitation-only `claude-mythos-5` is not listed.
 
 Gemini image generation uses the stable backend-only `gemini-3-pro-image` model with the Models API's 131,072-token input and 32,768-token output limits. It is not shown in text-chat selectors; the retired `gemini-3-pro-image-preview` ID is translated locally for saved integrations.
 
@@ -25,6 +25,7 @@ Use an explicit compatibility ID only while migrating an existing workload. New 
 
 ## August 2026 additions
 
+- **Anthropic browser/computer tools**: the current hosted browser and computer-use toolsets are available for Claude Fable 5, Opus 5, Sonnet 5, and Opus 4.8. The package metadata also records their function calling, web search/fetch, and code execution support.
 - **Grok 4.6**: 500,000-token context; text and image input; text output with no documented text-output cap; function calling, web/X search, and code execution; reasoning levels `low`, `medium`, `high` (default), and `xhigh`.
 - **Gemini 3.7 Flash**: 1,048,576-token input limit and 65,536-token output limit; text, image, video, audio, and PDF input; function calling, code execution, search grounding, URL context, and computer use; thinking levels `low`, `medium`, and `high` (default).
 

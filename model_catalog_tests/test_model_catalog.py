@@ -312,6 +312,10 @@ class ModelCatalogTests(unittest.TestCase):
             self.assertIn(model, ai.OPENAI_IMG_CAPABLE)
         for model in ('claude-fable-5', 'claude-opus-5', 'claude-sonnet-5'):
             self.assertIn(model, ai.ANTHROPIC_NO_TEMPERATURE_LIST)
+        for model in ('claude-fable-5', 'claude-opus-5', 'claude-sonnet-5', 'claude-opus-4-8', 'claude-latest'):
+            self.assertIn('browser_use', ai.MODEL_METADATA[model]['tools'])
+            self.assertIn('computer_use', ai.MODEL_METADATA[model]['tools'])
+        self.assertNotIn('browser_use', ai.MODEL_METADATA['claude-opus-4-7'].get('tools', []))
         for model in ('gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite'):
             self.assertIn(model, ai.GEMINI_MULTIMODAL_MODELS)
             self.assertIn(model, ai.GEMINI_THINKING_MODELS)

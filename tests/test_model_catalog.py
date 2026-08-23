@@ -120,6 +120,11 @@ def test_serialization_and_enrichment_expose_stable_api_ui_shapes():
     assert default_row["token_limit"] == default_capability["context_window"] == 1_050_000
     row = next(row for row in payload["models"] if row["model"] == "gpt-5.6")
     assert row["thinking_levels"] == ["none", "low", "medium", "high", "xhigh", "max"]
+    claude = next(row for row in payload["models"] if row["model"] == "claude-opus-5")
+    assert claude["metadata"]["tools"] == [
+        "function_calling", "web_search", "web_fetch", "code_execution",
+        "browser_use", "computer_use",
+    ]
     enriched = enrich_model_metadata([{"model": "gpt-5.6", "label": "GPT"}])
     assert enriched == [{
         "model": "gpt-5.6",

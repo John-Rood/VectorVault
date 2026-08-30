@@ -66,8 +66,10 @@ def test_first_party_verified_provider_capabilities_and_aliases():
     assert default_thinking_level("grok-4.6") == "high"
     assert list_thinking_levels("grok-4.5") == ["low", "medium", "high"]
     assert default_thinking_level("grok-4.5") == "high"
+    assert list_thinking_levels("grok-4.3") == ["none", "low", "medium", "high"]
+    assert default_thinking_level("grok-4.3") is None
     assert list_thinking_levels("gemini-3.7-flash") == ["low", "medium", "high"]
-    assert default_thinking_level("gemini-3.7-flash") == "high"
+    assert default_thinking_level("gemini-3.7-flash") == "medium"
     assert list_thinking_levels("gemini-3.6-flash") == ["minimal", "low", "medium", "high"]
     assert default_thinking_level("gemini-3.6-flash") == "medium"
     assert default_thinking_level("gemini-2.5-pro") is None

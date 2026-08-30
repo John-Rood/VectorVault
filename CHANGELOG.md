@@ -1,5 +1,11 @@
 # Changelog
 
+## 7.4.9.21 - 2026-08-30
+
+- Correct xAI Grok 4.3 to expose its official `none`/`low`/`medium`/`high` reasoning-effort contract and current text+image, function-calling, and structured-output metadata.
+- Correct Gemini 3.7 Flash's documented provider default thinking level from `high` to `medium` while preserving omission as a provider-default no-op.
+- Refresh first-party catalog provenance after the August 30 provider audit.
+
 ## 7.4.9.20 - 2026-08-23
 
 - Record Anthropic's current browser and computer-use tool compatibility for Claude Fable 5, Opus 5, Sonnet 5, Opus 4.8, and the `claude-latest` alias.

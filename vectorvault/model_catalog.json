@@ -1506,13 +1506,36 @@
       "frontend": true,
       "alias_for": null,
       "thinking": {
-        "supported": false,
-        "levels": [],
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high"
+        ],
         "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "xai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
         "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 1000000,
+        "max_output_tokens": null,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "tools": [
+          "function_calling",
+          "structured_outputs"
+        ]
       }
     },
     {
@@ -1864,7 +1887,7 @@
           "medium",
           "high"
         ],
-        "default": "high",
+        "default": "medium",
         "omitted_behavior": "provider_default",
         "translation": {
           "kind": "gemini_thinking_level",
@@ -2361,29 +2384,41 @@
   "references": {
     "openai": {
       "url": "https://developers.openai.com/api/docs/guides/reasoning",
-      "retrieved": "2026-08-09"
+      "retrieved": "2026-08-30"
     },
     "openai_gpt_5_6": {
-      "url": "https://developers.openai.com/api/docs/guides/latest-model",
-      "retrieved": "2026-08-09"
+      "url": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+      "retrieved": "2026-08-30"
     },
     "anthropic": {
       "url": "https://platform.claude.com/docs/en/build-with-claude/effort",
-      "retrieved": "2026-08-09"
+      "retrieved": "2026-08-30"
     },
     "anthropic_thinking": {
       "url": "https://platform.claude.com/docs/en/build-with-claude/thinking",
-      "retrieved": "2026-08-09"
+      "retrieved": "2026-08-30"
     },
     "gemini": {
-      "url": "https://ai.google.dev/gemini-api/docs/thinking",
-      "retrieved": "2026-08-09"
+      "url": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/thinking",
+      "retrieved": "2026-08-30"
     },
     "xai": {
       "url": "https://docs.x.ai/developers/model-capabilities/text/reasoning",
-      "retrieved": "2026-08-09"
+      "retrieved": "2026-08-30"
+    },
+    "anthropic_models": {
+      "url": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "retrieved": "2026-08-30"
+    },
+    "gemini_models_api": {
+      "url": "https://generativelanguage.googleapis.com/v1beta/models",
+      "retrieved": "2026-08-30"
+    },
+    "xai_grok_4_3": {
+      "url": "https://docs.x.ai/developers/models/grok-4.3",
+      "retrieved": "2026-08-30"
     }
   },
-  "catalog_date": "2026-08-09",
+  "catalog_date": "2026-08-30",
   "omitted_thinking_level_behavior": "Omit all provider thinking/reasoning fields and preserve historical provider defaults."
 }

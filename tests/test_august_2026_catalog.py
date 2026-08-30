@@ -28,7 +28,7 @@ def test_august_2026_thinking_and_alias_contracts():
     assert translate_thinking_level("grok-4.6", "xhigh") == {"reasoning_effort": "xhigh"}
     assert resolve_model_alias("grok-4.6-latest") == "grok-4.6"
     assert list_thinking_levels("gemini-3.7-flash") == ["low", "medium", "high"]
-    assert default_thinking_level("gemini-3.7-flash") == "high"
+    assert default_thinking_level("gemini-3.7-flash") == "medium"
     assert translate_thinking_level("gemini-3.7-flash", "low") == {
         "thinking_config": {"thinking_level": "LOW"}
     }

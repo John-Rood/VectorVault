@@ -212,6 +212,17 @@ def test_non_thinking_and_unproven_generic_levels_fail_before_sdk_call():
     assert gemini_recorder.calls == []
 
 
+def test_xai_grok_4_3_reasoning_none_translates_without_sampling_churn():
+    platform, recorder = _grok_platform()
+    assert platform.make_call([], "grok-4.3", temperature=0.4, thinking_level="none") == "complete"
+    assert recorder.calls == [{
+        "model": "grok-4.3",
+        "messages": [],
+        "temperature": 0.4,
+        "reasoning_effort": "none",
+    }]
+
+
 def test_august_2026_provider_translation_reaches_exact_sdk_parameters():
     grok_platform, grok_recorder = _grok_platform()
     gemini_platform, gemini_recorder = _gemini_platform()

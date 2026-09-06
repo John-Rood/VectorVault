@@ -15,6 +15,7 @@ from vectorvault.model_catalog import (
     list_thinking_levels,
     load_model_catalog,
     resolve_model_alias,
+    model_rejects_parameter,
     serialize_model_catalog,
     translate_thinking_level,
     validate_thinking_level,
@@ -72,7 +73,7 @@ def test_first_party_verified_provider_capabilities_and_aliases():
     assert default_thinking_level("grok-4.3") is None
     assert list_thinking_levels("claude-fable-5-1") == ["low", "medium", "high", "xhigh", "max"]
     assert default_thinking_level("claude-fable-5-1") == "high"
-    assert list_thinking_levels("gemini-3.8-flash") == ["minimal", "low", "medium", "high"]
+    assert list_thinking_levels("gemini-3.8-flash") == ["low", "medium", "high"]
     assert default_thinking_level("gemini-3.8-flash") == "medium"
     assert list_thinking_levels("gemini-3.7-flash") == ["low", "medium", "high"]
     assert default_thinking_level("gemini-3.7-flash") == "medium"
@@ -90,9 +91,13 @@ def test_provider_translations_are_sdk_safe():
         "output_config": {"effort": "xhigh"},
         "thinking": {"type": "adaptive"},
     }
-    assert translate_thinking_level("gemini-3.8-flash", "minimal") == {
-        "thinking_config": {"thinking_level": "MINIMAL"},
+    assert translate_thinking_level("gemini-3.8-flash", "low") == {
+        "thinking_config": {"thinking_level": "LOW"},
     }
+    assert model_rejects_parameter("gemini-3.8-flash", "temperature")
+    assert model_rejects_parameter("gemini-3.8-flash", "top_p")
+    with pytest.raises(ModelCapabilityError):
+        translate_thinking_level("gemini-3.8-flash", "minimal")
     assert translate_thinking_level("gpt-5.6", "max") == {"reasoning_effort": "max"}
     assert translate_thinking_level("grok-4.6", "xhigh") == {"reasoning_effort": "xhigh"}
     assert translate_thinking_level("grok-4.5", "medium") == {"reasoning_effort": "medium"}

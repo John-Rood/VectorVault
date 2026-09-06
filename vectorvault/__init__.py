@@ -11,6 +11,7 @@ from .model_catalog import (
     get_model_thinking_catalog,
     get_provider_thinking_kwargs,
     list_thinking_levels,
+    model_rejects_parameter,
     load_model_catalog,
     resolve_model_alias,
     serialize_model_catalog,
@@ -31,4 +32,4 @@ except ImportError:  # pragma: no cover
 try:
     __version__ = _pkg_version("vector-vault")
 except PackageNotFoundError:  # pragma: no cover
-    __version__ = "7.4.9.22"
+    __version__ = "7.4.9.23"

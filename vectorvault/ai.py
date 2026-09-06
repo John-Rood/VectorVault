@@ -30,6 +30,7 @@ from .model_catalog import (
     OPENAI_NO_TEMPERATURE_LIST,
     resolve_model_alias,
     should_omit_parameter,
+    model_rejects_parameter,
     translate_thinking_level,
 )
 
@@ -1018,17 +1019,21 @@ class GeminiPlatform(LLMPlatform):
                 
                 # Build config
                 config_params = {}
-                if temperature is not None:
+                if temperature is not None and not model_rejects_parameter(model, "temperature"):
                     config_params['temperature'] = temperature
                 
-                # For Gemini 3, set defaults as per guide
-                if model and 'gemini-3' in model:
+                # Older Gemini 3 models use the existing explicit zero default.
+                if model and 'gemini-3' in model and not model_rejects_parameter(model, "temperature"):
                     if temperature is None or temperature == 0:
                         config_params['temperature'] = 0
                 
-                # Merge validated provider thinking configuration, then SDK options.
+                # Merge validated provider thinking configuration and only SDK
+                # options supported by this exact model.
                 config_params.update(thinking_kwargs)
-                config_params.update(kwargs)
+                config_params.update({
+                    key: value for key, value in kwargs.items()
+                    if not model_rejects_parameter(model, key)
+                })
                 
                 # Create config object if we have parameters
                 config = types.GenerateContentConfig(**config_params) if config_params else None
@@ -1075,17 +1080,21 @@ class GeminiPlatform(LLMPlatform):
                 
                 # Build config
                 config_params = {}
-                if temperature is not None:
+                if temperature is not None and not model_rejects_parameter(model, "temperature"):
                     config_params['temperature'] = temperature
                 
-                # For Gemini 3, set defaults as per guide
-                if model and 'gemini-3' in model:
+                # Older Gemini 3 models use the existing explicit zero default.
+                if model and 'gemini-3' in model and not model_rejects_parameter(model, "temperature"):
                     if temperature is None or temperature == 0:
                         config_params['temperature'] = 0
                 
-                # Merge validated provider thinking configuration, then SDK options.
+                # Merge validated provider thinking configuration and only SDK
+                # options supported by this exact model.
                 config_params.update(thinking_kwargs)
-                config_params.update(kwargs)
+                config_params.update({
+                    key: value for key, value in kwargs.items()
+                    if not model_rejects_parameter(model, key)
+                })
                 
                 # Create config object if we have parameters
                 config = types.GenerateContentConfig(**config_params) if config_params else None
@@ -1272,18 +1281,22 @@ class GeminiPlatform(LLMPlatform):
         
         # Build config
         config_params = {}
-        if temperature is not None:
+        thinking_level = kwargs.pop("thinking_level", None)
+        if temperature is not None and not model_rejects_parameter(model, "temperature"):
             config_params['temperature'] = temperature
         
-        # For Gemini 3, set defaults
-        if model and 'gemini-3' in model:
+        # Older Gemini 3 models use the existing explicit zero default.
+        if model and 'gemini-3' in model and not model_rejects_parameter(model, "temperature"):
             if temperature is None or temperature == 0:
                 config_params['temperature'] = 0
         
-        # Merge validated provider thinking configuration, then SDK options.
-        thinking_level = kwargs.pop("thinking_level", None)
+        # Merge validated provider thinking configuration and only SDK options
+        # supported by this exact model.
         config_params.update(translate_thinking_level(model, thinking_level))
-        config_params.update(kwargs)
+        config_params.update({
+            key: value for key, value in kwargs.items()
+            if not model_rejects_parameter(model, key)
+        })
         
         config = types.GenerateContentConfig(**config_params) if config_params else None
 

@@ -1,6 +1,6 @@
 # Supported AI Models
 
-Vector Vault routes model IDs to OpenAI, Anthropic, xAI, or Google by catalog membership. The aliases below are the recommended VectorVault Cloud/runtime defaults as of **September 6, 2026**; explicit stable IDs are also supported. The SDK source on `main`, the published `vector-vault==7.4.9.22` package, and VectorVault Cloud share this package-owned catalog.
+Vector Vault routes model IDs to OpenAI, Anthropic, xAI, or Google by catalog membership. The aliases below are the recommended VectorVault Cloud/runtime defaults as of **September 6, 2026**; explicit stable IDs are also supported. The SDK source on `main`, the published `vector-vault==7.4.9.23` package, and VectorVault Cloud share this package-owned catalog.
 
 | Provider | Recommended default | Current stable IDs | Context window | Max output |
 | --- | --- | --- | ---: | ---: |
@@ -13,7 +13,7 @@ OpenAI GPT-6 Astra accepts text and image input and returns text through Chat Co
 
 Anthropic's `claude-opus-5` remains the default because Anthropic recommends Opus 5 for complex work. Claude Fable 5.1 is now the highest-capability public Claude API model; Fable 5 and Sonnet 5 remain stable options. Fable 5.1 supports adaptive thinking and all five effort levels (`low`, `medium`, `high`, `xhigh`, and `max`), with `high` as the provider default. Anthropic's Models API reports 128,000 maximum output tokens for the current Claude 5 family and supported Claude 4.6–4.8 models; Claude 4.5 models remain capped at 64,000. The current browser and computer-use toolsets support Claude Fable 5.1, Fable 5, Opus 5, Sonnet 5, and Opus 4.8; older Claude models require a legacy computer-use tool version. Invitation-only `claude-mythos-5-1` remains Glasswing-only and is not listed.
 
-Gemini 3.8 Flash is GA and replaces 3.7 Flash as the Google product default and the local `gemini-latest` target. It accepts text, image, video, audio, and PDF input with a 1,048,576-token context and 65,536-token maximum output. Its thinking levels are `minimal`, `low`, `medium`, and `high`, with `medium` as the provider default. Gemini 3.7 Flash remains an explicit stable option for existing workloads. Gemini image generation uses the stable backend-only `gemini-3-pro-image` model with the Models API's 131,072-token input and 32,768-token output limits; it is not shown in text-chat selectors, and the retired `gemini-3-pro-image-preview` ID is translated locally for saved integrations.
+Gemini 3.8 Flash is GA and replaces 3.7 Flash as the Google product default and the local `gemini-latest` target. It accepts text, image, video, audio, and PDF input with a 1,048,576-token context and 65,536-token maximum output. Its thinking levels are `low`, `medium`, and `high`, with `medium` as the provider default; `minimal` is explicitly unsupported. The Gemini API also requires sampling parameters such as `temperature`, `top_p`, and `top_k` to be omitted. Gemini 3.7 Flash remains an explicit stable option for existing workloads. Gemini image generation uses the stable backend-only `gemini-3-pro-image` model with the Models API's 131,072-token input and 32,768-token output limits; it is not shown in text-chat selectors, and the retired `gemini-3-pro-image-preview` ID is translated locally for saved integrations.
 
 ## Compatibility IDs
 
@@ -27,6 +27,6 @@ Use an explicit compatibility ID only while migrating an existing workload. New 
 
 - **GPT-6 Astra**: public stable default snapshot; 1,050,000-token context, 922,000 maximum input, 128,000 maximum output; `none` through `max` reasoning effort; Chat Completions and Responses support.
 - **Claude Fable 5.1**: public Claude API model with 1,000,000-token context and 128,000-token output; adaptive `low` through `max` effort; current hosted browser/computer-use support.
-- **Gemini 3.8 Flash**: GA September 2, 2026; 1,048,576-token context and 65,536-token output; `minimal`, `low`, `medium`, and `high` thinking with `medium` default.
+- **Gemini 3.8 Flash**: GA September 2, 2026; 1,048,576-token context and 65,536-token output; `low`, `medium`, and `high` thinking with `medium` default; `minimal` and deprecated sampling parameters are rejected.
 
 Older stable entries remain accepted for saved-flow and API compatibility. Private/invitation-only models, including Claude Mythos 5.1, are intentionally excluded.

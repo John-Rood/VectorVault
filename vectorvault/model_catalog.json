@@ -1982,7 +1982,6 @@
       "thinking": {
         "supported": true,
         "levels": [
-          "minimal",
           "low",
           "medium",
           "high"
@@ -2024,8 +2023,14 @@
           "computer_use"
         ],
         "release_stage": "ga",
-        "source": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-8-flash",
-        "retrieved": "2026-09-06"
+        "source": "https://ai.google.dev/gemini-api/docs/latest-model",
+        "retrieved": "2026-09-06",
+        "unsupported_parameters": [
+          "temperature",
+          "top_p",
+          "top_k",
+          "candidate_count"
+        ]
       }
     },
     {
@@ -2444,7 +2449,6 @@
       "thinking": {
         "supported": true,
         "levels": [
-          "minimal",
           "low",
           "medium",
           "high"
@@ -2486,8 +2490,14 @@
           "computer_use"
         ],
         "release_stage": "ga",
-        "source": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-8-flash",
-        "retrieved": "2026-09-06"
+        "source": "https://ai.google.dev/gemini-api/docs/latest-model",
+        "retrieved": "2026-09-06",
+        "unsupported_parameters": [
+          "temperature",
+          "top_p",
+          "top_k",
+          "candidate_count"
+        ]
       }
     }
   ],
@@ -2617,7 +2627,7 @@
       "retrieved": "2026-09-06"
     },
     "gemini_3_8_flash": {
-      "url": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-8-flash",
+      "url": "https://ai.google.dev/gemini-api/docs/latest-model",
       "retrieved": "2026-09-06"
     },
     "xai_models": {

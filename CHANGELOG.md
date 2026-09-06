@@ -1,10 +1,11 @@
 # Changelog
 
-## 7.4.9.22 - 2026-09-06
+## 7.4.9.23 - 2026-09-06
 
 - Add stable OpenAI `gpt-6-astra` with its 1.05M context, 128k output, multimodal/tool metadata, and `none` through `max` reasoning-effort contract; make it the OpenAI default.
 - Add public Anthropic `claude-fable-5-1` with 1M context, 128k output, adaptive thinking, hosted browser/computer tools, and `low` through `max` effort.
-- Add GA Google `gemini-3.8-flash` with 1,048,576-token context, 65,536-token output, multimodal/tool metadata, and `minimal`/`low`/`medium`/`high` thinking; make it the Google default and `gemini-latest` target.
+- Add GA Google `gemini-3.8-flash` with 1,048,576-token context, 65,536-token output, multimodal/tool metadata, and `low`/`medium`/`high` thinking; make it the Google default and `gemini-latest` target.
+- Omit sampling parameters rejected by Gemini 3.8 Flash and explicitly reject its unsupported `minimal` thinking level.
 - Preserve provider-default omission behavior and all prior stable/legacy IDs while refreshing first-party catalog provenance.
 
 ## 7.4.9.21 - 2026-08-30

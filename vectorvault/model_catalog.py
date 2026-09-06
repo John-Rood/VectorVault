@@ -217,6 +217,11 @@ def should_omit_parameter(model: Optional[str], thinking_level: Optional[str], p
     return parameter in get_model_capability(model)["thinking"].get("omit_parameters", [])
 
 
+def model_rejects_parameter(model: Optional[str], parameter: str) -> bool:
+    """Return whether a model rejects a configuration field at every level."""
+    return parameter in get_model_capability(model)["metadata"].get("unsupported_parameters", [])
+
+
 def provider_for_model(model: Optional[str]) -> str:
     return get_model_capability(model)["provider"]
 

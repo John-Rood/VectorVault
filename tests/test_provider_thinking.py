@@ -122,13 +122,12 @@ def test_september_2026_new_models_emit_provider_safe_kwargs():
     }]
 
     gemini_platform, gemini_recorder = _gemini_platform()
-    assert gemini_platform.make_call([], "gemini-3.8-flash", thinking_level="minimal") == "complete"
+    assert gemini_platform.make_call([], "gemini-3.8-flash", thinking_level="low") == "complete"
     assert [_dump_gemini_call(call) for call in gemini_recorder.calls] == [{
         "model": "gemini-3.8-flash",
         "contents": [],
         "config": {
-            "temperature": 0.0,
-            "thinking_config": {"thinking_level": "MINIMAL"},
+            "thinking_config": {"thinking_level": "LOW"},
         },
     }]
 

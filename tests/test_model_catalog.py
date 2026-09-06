@@ -27,10 +27,10 @@ def test_packaged_resource_is_readable_complete_and_defensive():
     raw = json.loads(resource.read_text(encoding="utf-8"))
     assert raw == load_model_catalog()
     assert raw["schema_version"] == 1
-    assert len(raw["models"]) == 97
+    assert len(raw["models"]) == 100
     copied = get_model_thinking_catalog()
     copied["models"].clear()
-    assert len(load_model_catalog()["models"]) == 97
+    assert len(load_model_catalog()["models"]) == 100
 
 
 def test_every_catalog_entry_has_explicit_coherent_thinking_contract():
@@ -57,6 +57,8 @@ def test_every_catalog_entry_has_explicit_coherent_thinking_contract():
 
 
 def test_first_party_verified_provider_capabilities_and_aliases():
+    assert list_thinking_levels("gpt-6-astra") == ["none", "low", "medium", "high", "xhigh", "max"]
+    assert default_thinking_level("gpt-6-astra") == "medium"
     assert list_thinking_levels("gpt-5.6") == ["none", "low", "medium", "high", "xhigh", "max"]
     assert default_thinking_level("gpt-5.6") == "medium"
     assert list_thinking_levels("gpt-5.5") == ["none", "low", "medium", "high", "xhigh"]
@@ -68,6 +70,10 @@ def test_first_party_verified_provider_capabilities_and_aliases():
     assert default_thinking_level("grok-4.5") == "high"
     assert list_thinking_levels("grok-4.3") == ["none", "low", "medium", "high"]
     assert default_thinking_level("grok-4.3") is None
+    assert list_thinking_levels("claude-fable-5-1") == ["low", "medium", "high", "xhigh", "max"]
+    assert default_thinking_level("claude-fable-5-1") == "high"
+    assert list_thinking_levels("gemini-3.8-flash") == ["minimal", "low", "medium", "high"]
+    assert default_thinking_level("gemini-3.8-flash") == "medium"
     assert list_thinking_levels("gemini-3.7-flash") == ["low", "medium", "high"]
     assert default_thinking_level("gemini-3.7-flash") == "medium"
     assert list_thinking_levels("gemini-3.6-flash") == ["minimal", "low", "medium", "high"]
@@ -75,10 +81,18 @@ def test_first_party_verified_provider_capabilities_and_aliases():
     assert default_thinking_level("gemini-2.5-pro") is None
     assert resolve_model_alias("grok-latest") == "grok-4.3"
     assert list_thinking_levels("grok-4.5-latest") == list_thinking_levels("grok-4.5")
-    assert resolve_model_alias("gemini-latest") == "gemini-3.7-flash"
+    assert resolve_model_alias("gemini-latest") == "gemini-3.8-flash"
 
 
 def test_provider_translations_are_sdk_safe():
+    assert translate_thinking_level("gpt-6-astra", "max") == {"reasoning_effort": "max"}
+    assert translate_thinking_level("claude-fable-5-1", "xhigh") == {
+        "output_config": {"effort": "xhigh"},
+        "thinking": {"type": "adaptive"},
+    }
+    assert translate_thinking_level("gemini-3.8-flash", "minimal") == {
+        "thinking_config": {"thinking_level": "MINIMAL"},
+    }
     assert translate_thinking_level("gpt-5.6", "max") == {"reasoning_effort": "max"}
     assert translate_thinking_level("grok-4.6", "xhigh") == {"reasoning_effort": "xhigh"}
     assert translate_thinking_level("grok-4.5", "medium") == {"reasoning_effort": "medium"}
@@ -120,7 +134,7 @@ def test_serialization_and_enrichment_expose_stable_api_ui_shapes():
     default_capability = get_model_capability(default_row["resolved_model"])
     assert isinstance(default_row["token_limit"], int)
     assert default_row["token_limit"] == default_capability["context_window"] == 1_050_000
-    row = next(row for row in payload["models"] if row["model"] == "gpt-5.6")
+    row = next(row for row in payload["models"] if row["model"] == "gpt-6-astra")
     assert row["thinking_levels"] == ["none", "low", "medium", "high", "xhigh", "max"]
     claude = next(row for row in payload["models"] if row["model"] == "claude-opus-5")
     assert claude["metadata"]["tools"] == [

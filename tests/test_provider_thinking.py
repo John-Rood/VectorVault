@@ -104,6 +104,35 @@ def test_openai_nonstream_and_stream_emit_exact_reasoning_kwargs():
     ]
 
 
+def test_september_2026_new_models_emit_provider_safe_kwargs():
+    openai_platform, openai_recorder = _openai_platform()
+    assert openai_platform.make_call([], "gpt-6-astra", thinking_level="max") == "complete"
+    assert openai_recorder.calls == [{
+        "model": "gpt-6-astra", "messages": [], "reasoning_effort": "max"
+    }]
+
+    anthropic_platform, anthropic_recorder = _anthropic_platform()
+    assert anthropic_platform.make_call([], "claude-fable-5-1", thinking_level="xhigh") == "complete"
+    assert anthropic_recorder.calls == [{
+        "model": "claude-fable-5-1",
+        "messages": [],
+        "max_tokens": 8192,
+        "output_config": {"effort": "xhigh"},
+        "thinking": {"type": "adaptive"},
+    }]
+
+    gemini_platform, gemini_recorder = _gemini_platform()
+    assert gemini_platform.make_call([], "gemini-3.8-flash", thinking_level="minimal") == "complete"
+    assert [_dump_gemini_call(call) for call in gemini_recorder.calls] == [{
+        "model": "gemini-3.8-flash",
+        "contents": [],
+        "config": {
+            "temperature": 0.0,
+            "thinking_config": {"thinking_level": "MINIMAL"},
+        },
+    }]
+
+
 def test_xai_nonstream_and_stream_emit_exact_reasoning_kwargs():
     platform, recorder = _grok_platform()
     assert platform.make_call([], "grok-4.5", thinking_level="medium") == "complete"

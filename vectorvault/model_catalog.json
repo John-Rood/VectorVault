@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "defaults": {
-    "openai": "gpt-5.6",
+    "openai": "gpt-6-astra",
     "anthropic": "claude-opus-5",
     "grok": "grok-4.6",
-    "gemini": "gemini-3.7-flash"
+    "gemini": "gemini-3.8-flash"
   },
   "models": [
     {
@@ -316,6 +316,53 @@
           "chat_completions",
           "responses"
         ]
+      }
+    },
+    {
+      "id": "gpt-6-astra",
+      "provider": "openai",
+      "context_window": 1050000,
+      "frontend": true,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "max_input_tokens": 922000,
+        "max_output_tokens": 128000,
+        "modalities": {
+          "input": [
+            "text",
+            "image"
+          ],
+          "output": [
+            "text"
+          ]
+        },
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ],
+        "release_stage": "stable",
+        "source": "https://developers.openai.com/api/docs/models/gpt-6-astra",
+        "retrieved": "2026-09-06"
       }
     },
     {
@@ -773,6 +820,59 @@
         "translation": null,
         "adaptive_thinking": false,
         "omit_parameters": []
+      }
+    },
+    {
+      "id": "claude-fable-5-1",
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "frontend": true,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "max_input_tokens": 1000000,
+        "max_output_tokens": 128000,
+        "modalities": {
+          "input": [
+            "text",
+            "image"
+          ],
+          "output": [
+            "text"
+          ]
+        },
+        "endpoints": [
+          "messages"
+        ],
+        "tools": [
+          "function_calling",
+          "web_search",
+          "web_fetch",
+          "code_execution",
+          "browser_use",
+          "computer_use"
+        ],
+        "release_stage": "stable",
+        "source": "https://platform.claude.com/docs/en/models/fable-5-1/overview",
+        "retrieved": "2026-09-06"
       }
     },
     {
@@ -1875,6 +1975,60 @@
       }
     },
     {
+      "id": "gemini-3.8-flash",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": true,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "minimal",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_level",
+          "parameter": "thinking_config.thinking_level"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "max_input_tokens": 1048576,
+        "max_output_tokens": 65536,
+        "modalities": {
+          "input": [
+            "text",
+            "image",
+            "video",
+            "audio",
+            "pdf"
+          ],
+          "output": [
+            "text"
+          ]
+        },
+        "endpoints": [
+          "generate_content",
+          "stream_generate_content"
+        ],
+        "tools": [
+          "function_calling",
+          "structured_outputs",
+          "search_grounding",
+          "url_context",
+          "code_execution",
+          "computer_use"
+        ],
+        "release_stage": "ga",
+        "source": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-8-flash",
+        "retrieved": "2026-09-06"
+      }
+    },
+    {
       "id": "gemini-3.7-flash",
       "provider": "gemini",
       "context_window": 1048576,
@@ -2286,22 +2440,54 @@
       "provider": "gemini",
       "context_window": 1048576,
       "frontend": true,
-      "alias_for": "gemini-3.7-flash",
+      "alias_for": "gemini-3.8-flash",
       "thinking": {
         "supported": true,
         "levels": [
+          "minimal",
           "low",
           "medium",
           "high"
         ],
-        "default": "high",
+        "default": "medium",
         "omitted_behavior": "provider_default",
         "translation": {
           "kind": "gemini_thinking_level",
           "parameter": "thinking_config.thinking_level"
         },
-        "adaptive_thinking": false,
+        "adaptive_thinking": true,
         "omit_parameters": []
+      },
+      "metadata": {
+        "max_input_tokens": 1048576,
+        "max_output_tokens": 65536,
+        "modalities": {
+          "input": [
+            "text",
+            "image",
+            "video",
+            "audio",
+            "pdf"
+          ],
+          "output": [
+            "text"
+          ]
+        },
+        "endpoints": [
+          "generate_content",
+          "stream_generate_content"
+        ],
+        "tools": [
+          "function_calling",
+          "structured_outputs",
+          "search_grounding",
+          "url_context",
+          "code_execution",
+          "computer_use"
+        ],
+        "release_stage": "ga",
+        "source": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-8-flash",
+        "retrieved": "2026-09-06"
       }
     }
   ],
@@ -2318,6 +2504,7 @@
       "gpt-5.3",
       "gpt-5.4",
       "gpt-5.5",
+      "gpt-6-astra",
       "gpt-5.6",
       "gpt-5.6-sol",
       "gpt-5.6-terra",
@@ -2343,6 +2530,7 @@
       "o3-mini"
     ],
     "ANTHROPIC_NO_TEMPERATURE_LIST": [
+      "claude-fable-5-1",
       "claude-fable-5",
       "claude-opus-5",
       "claude-sonnet-5",
@@ -2351,6 +2539,7 @@
       "claude-opus-4-6"
     ],
     "GEMINI_MULTIMODAL_MODELS": [
+      "gemini-3.8-flash",
       "gemini-3.7-flash",
       "gemini-3.6-flash",
       "gemini-3.5-flash",
@@ -2367,6 +2556,7 @@
       "gemini-3-pro-image-preview"
     ],
     "GEMINI_THINKING_MODELS": [
+      "gemini-3.8-flash",
       "gemini-3.7-flash",
       "gemini-3.6-flash",
       "gemini-3.5-flash",
@@ -2384,41 +2574,57 @@
   "references": {
     "openai": {
       "url": "https://developers.openai.com/api/docs/guides/reasoning",
-      "retrieved": "2026-08-30"
+      "retrieved": "2026-09-06"
     },
     "openai_gpt_5_6": {
       "url": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
-      "retrieved": "2026-08-30"
+      "retrieved": "2026-09-06"
     },
     "anthropic": {
       "url": "https://platform.claude.com/docs/en/build-with-claude/effort",
-      "retrieved": "2026-08-30"
+      "retrieved": "2026-09-06"
     },
     "anthropic_thinking": {
       "url": "https://platform.claude.com/docs/en/build-with-claude/thinking",
-      "retrieved": "2026-08-30"
+      "retrieved": "2026-09-06"
     },
     "gemini": {
       "url": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/thinking",
-      "retrieved": "2026-08-30"
+      "retrieved": "2026-09-06"
     },
     "xai": {
       "url": "https://docs.x.ai/developers/model-capabilities/text/reasoning",
-      "retrieved": "2026-08-30"
+      "retrieved": "2026-09-06"
     },
     "anthropic_models": {
       "url": "https://platform.claude.com/docs/en/about-claude/models/overview",
-      "retrieved": "2026-08-30"
+      "retrieved": "2026-09-06"
     },
     "gemini_models_api": {
       "url": "https://generativelanguage.googleapis.com/v1beta/models",
-      "retrieved": "2026-08-30"
+      "retrieved": "2026-09-06"
     },
     "xai_grok_4_3": {
       "url": "https://docs.x.ai/developers/models/grok-4.3",
-      "retrieved": "2026-08-30"
+      "retrieved": "2026-09-06"
+    },
+    "openai_gpt_6_astra": {
+      "url": "https://developers.openai.com/api/docs/models/gpt-6-astra",
+      "retrieved": "2026-09-06"
+    },
+    "anthropic_fable_5_1": {
+      "url": "https://platform.claude.com/docs/en/models/fable-5-1/overview",
+      "retrieved": "2026-09-06"
+    },
+    "gemini_3_8_flash": {
+      "url": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-8-flash",
+      "retrieved": "2026-09-06"
+    },
+    "xai_models": {
+      "url": "https://docs.x.ai/developers/models",
+      "retrieved": "2026-09-06"
     }
   },
-  "catalog_date": "2026-08-30",
+  "catalog_date": "2026-09-06",
   "omitted_thinking_level_behavior": "Omit all provider thinking/reasoning fields and preserve historical provider defaults."
 }

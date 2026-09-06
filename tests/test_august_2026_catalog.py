@@ -13,7 +13,7 @@ def test_august_2026_models_are_complete_and_frontend_visible():
     catalog = load_model_catalog()
     rows = {row["id"]: row for row in catalog["models"]}
     assert catalog["defaults"]["grok"] == "grok-4.6"
-    assert catalog["defaults"]["gemini"] == "gemini-3.7-flash"
+    assert catalog["defaults"]["gemini"] == "gemini-3.8-flash"
     assert rows["grok-4.6"]["frontend"] is True
     assert rows["grok-4.6"]["context_window"] == 500_000
     assert rows["gemini-3.7-flash"]["frontend"] is True
@@ -32,7 +32,7 @@ def test_august_2026_thinking_and_alias_contracts():
     assert translate_thinking_level("gemini-3.7-flash", "low") == {
         "thinking_config": {"thinking_level": "LOW"}
     }
-    assert resolve_model_alias("gemini-latest") == "gemini-3.7-flash"
+    assert resolve_model_alias("gemini-latest") == "gemini-3.8-flash"
 
 
 def test_august_2026_official_metadata():

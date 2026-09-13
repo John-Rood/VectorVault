@@ -58,7 +58,7 @@ def test_every_catalog_entry_has_explicit_coherent_thinking_contract():
 
 
 def test_first_party_verified_provider_capabilities_and_aliases():
-    assert list_thinking_levels("gpt-6-astra") == ["none", "low", "medium", "high", "xhigh", "max"]
+    assert list_thinking_levels("gpt-6-astra") == ["low", "medium", "high", "xhigh"]
     assert default_thinking_level("gpt-6-astra") == "medium"
     assert list_thinking_levels("gpt-5.6") == ["none", "low", "medium", "high", "xhigh", "max"]
     assert default_thinking_level("gpt-5.6") == "medium"
@@ -86,7 +86,11 @@ def test_first_party_verified_provider_capabilities_and_aliases():
 
 
 def test_provider_translations_are_sdk_safe():
-    assert translate_thinking_level("gpt-6-astra", "max") == {"reasoning_effort": "max"}
+    assert translate_thinking_level("gpt-6-astra", "xhigh") == {"reasoning_effort": "xhigh"}
+    with pytest.raises(ModelCapabilityError):
+        translate_thinking_level("gpt-6-astra", "none")
+    with pytest.raises(ModelCapabilityError):
+        translate_thinking_level("gpt-6-astra", "max")
     assert translate_thinking_level("claude-fable-5-1", "xhigh") == {
         "output_config": {"effort": "xhigh"},
         "thinking": {"type": "adaptive"},
@@ -140,7 +144,7 @@ def test_serialization_and_enrichment_expose_stable_api_ui_shapes():
     assert isinstance(default_row["token_limit"], int)
     assert default_row["token_limit"] == default_capability["context_window"] == 1_050_000
     row = next(row for row in payload["models"] if row["model"] == "gpt-6-astra")
-    assert row["thinking_levels"] == ["none", "low", "medium", "high", "xhigh", "max"]
+    assert row["thinking_levels"] == ["low", "medium", "high", "xhigh"]
     claude = next(row for row in payload["models"] if row["model"] == "claude-opus-5")
     assert claude["metadata"]["tools"] == [
         "function_calling", "web_search", "web_fetch", "code_execution",

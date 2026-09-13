@@ -1,6 +1,6 @@
 # Supported AI Models
 
-Vector Vault routes model IDs to OpenAI, Anthropic, xAI, or Google by catalog membership. The aliases below are the recommended VectorVault Cloud/runtime defaults as of **September 6, 2026**; explicit stable IDs are also supported. The SDK source on `main`, the published `vector-vault==7.4.9.23` package, and VectorVault Cloud share this package-owned catalog.
+Vector Vault routes model IDs to OpenAI, Anthropic, xAI, or Google by catalog membership. The aliases below are the recommended VectorVault Cloud/runtime defaults as of **September 13, 2026**; explicit stable IDs are also supported. The SDK source on `main`, the published `vector-vault==7.4.9.24` package, and VectorVault Cloud share this package-owned catalog.
 
 | Provider | Recommended default | Current stable IDs | Context window | Max output |
 | --- | --- | --- | ---: | ---: |
@@ -9,7 +9,7 @@ Vector Vault routes model IDs to OpenAI, Anthropic, xAI, or Google by catalog me
 | xAI | `grok-4.6` (product default) | `grok-4.6` (500k), `grok-4.5` (500k), `grok-4.3` (1M), `grok-4.20`, `grok-4.20-0309-reasoning`, `grok-4.20-0309-non-reasoning` (1M), `grok-build-0.1` (256k), `grok-latest` | up to 1,000,000 | model-dependent |
 | Google | `gemini-3.8-flash` (`gemini-latest`) | `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-flash-lite`, `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite` | up to 1,048,576 | up to 65,536 |
 
-OpenAI GPT-6 Astra accepts text and image input and returns text through Chat Completions or Responses. Its 1,050,000-token context allows up to 922,000 input tokens and 128,000 output tokens. It supports `none`, `low`, `medium`, `high`, `xhigh`, and `max` reasoning effort, with `medium` as the documented default. GPT-5.6 remains a stable explicit option; its `gpt-5.6` alias routes to GPT-5.6 Sol. The official `chat-latest` model has a 400,000-token context and 128,000-token output limit; the legacy `chatgpt-latest` spelling is translated locally and is never sent upstream.
+OpenAI GPT-6 Astra accepts text and image input and returns text through Chat Completions or Responses. Its 1,050,000-token context allows up to 922,000 input tokens and 128,000 output tokens. The public Chat Completions route supports `low`, `medium`, `high`, and `xhigh` reasoning effort, with `medium` as the documented default. Although the model page currently also names `max`, live API validation rejects both `none` and `max`; VectorVault exposes only the wire-verified set. GPT-5.6 remains a stable explicit option; its `gpt-5.6` alias routes to GPT-5.6 Sol. The official `chat-latest` model has a 400,000-token context and 128,000-token output limit; the legacy `chatgpt-latest` spelling is translated locally and is never sent upstream.
 
 Anthropic's `claude-opus-5` remains the default because Anthropic recommends Opus 5 for complex work. Claude Fable 5.1 is now the highest-capability public Claude API model; Fable 5 and Sonnet 5 remain stable options. Fable 5.1 supports adaptive thinking and all five effort levels (`low`, `medium`, `high`, `xhigh`, and `max`), with `high` as the provider default. Anthropic's Models API reports 128,000 maximum output tokens for the current Claude 5 family and supported Claude 4.6–4.8 models; Claude 4.5 models remain capped at 64,000. The current browser and computer-use toolsets support Claude Fable 5.1, Fable 5, Opus 5, Sonnet 5, and Opus 4.8; older Claude models require a legacy computer-use tool version. Invitation-only `claude-mythos-5-1` remains Glasswing-only and is not listed.
 
@@ -25,7 +25,7 @@ Use an explicit compatibility ID only while migrating an existing workload. New 
 
 ## September 2026 additions
 
-- **GPT-6 Astra**: public stable default snapshot; 1,050,000-token context, 922,000 maximum input, 128,000 maximum output; `none` through `max` reasoning effort; Chat Completions and Responses support.
+- **GPT-6 Astra**: public stable default snapshot; 1,050,000-token context, 922,000 maximum input, 128,000 maximum output; wire-verified `low`, `medium`, `high`, and `xhigh` reasoning effort; Chat Completions and Responses support.
 - **Claude Fable 5.1**: public Claude API model with 1,000,000-token context and 128,000-token output; adaptive `low` through `max` effort; current hosted browser/computer-use support.
 - **Gemini 3.8 Flash**: GA September 2, 2026; 1,048,576-token context and 65,536-token output; `low`, `medium`, and `high` thinking with `medium` default; `minimal` and deprecated sampling parameters are rejected.
 

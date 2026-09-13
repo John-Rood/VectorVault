@@ -106,10 +106,14 @@ def test_openai_nonstream_and_stream_emit_exact_reasoning_kwargs():
 
 def test_september_2026_new_models_emit_provider_safe_kwargs():
     openai_platform, openai_recorder = _openai_platform()
-    assert openai_platform.make_call([], "gpt-6-astra", thinking_level="max") == "complete"
+    assert openai_platform.make_call([], "gpt-6-astra", thinking_level="xhigh") == "complete"
     assert openai_recorder.calls == [{
-        "model": "gpt-6-astra", "messages": [], "reasoning_effort": "max"
+        "model": "gpt-6-astra", "messages": [], "reasoning_effort": "xhigh"
     }]
+    for invalid in ("none", "max"):
+        with pytest.raises(ModelCapabilityError):
+            openai_platform.make_call([], "gpt-6-astra", thinking_level=invalid)
+    assert len(openai_recorder.calls) == 1
 
     anthropic_platform, anthropic_recorder = _anthropic_platform()
     assert anthropic_platform.make_call([], "claude-fable-5-1", thinking_level="xhigh") == "complete"

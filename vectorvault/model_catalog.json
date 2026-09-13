@@ -326,12 +326,10 @@
       "thinking": {
         "supported": true,
         "levels": [
-          "none",
           "low",
           "medium",
           "high",
-          "xhigh",
-          "max"
+          "xhigh"
         ],
         "default": "medium",
         "omitted_behavior": "provider_default",
@@ -362,7 +360,8 @@
         ],
         "release_stage": "stable",
         "source": "https://developers.openai.com/api/docs/models/gpt-6-astra",
-        "retrieved": "2026-09-06"
+        "retrieved": "2026-09-13",
+        "wire_verified": "2026-09-13: Chat Completions accepted low/xhigh and rejected none/max; provider error enumerated low, medium, high, xhigh."
       }
     },
     {
@@ -2635,6 +2634,6 @@
       "retrieved": "2026-09-06"
     }
   },
-  "catalog_date": "2026-09-06",
+  "catalog_date": "2026-09-13",
   "omitted_thinking_level_behavior": "Omit all provider thinking/reasoning fields and preserve historical provider defaults."
 }

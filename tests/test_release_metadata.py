@@ -17,7 +17,7 @@ def _numeric_version(value):
 
 def test_canonical_release_metadata_and_dependency_floors():
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    assert re.search(r'^version = "7\.4\.9\.23"$', pyproject, re.MULTILINE)
+    assert re.search(r'^version = "7\.4\.9\.24"$', pyproject, re.MULTILINE)
     assert re.search(r'^requires-python = ">=3\.10"$', pyproject, re.MULTILINE)
     assert '"google-genai>=1.56.0"' in pyproject
     assert not (ROOT / "setup.py").exists()
@@ -27,7 +27,7 @@ def test_canonical_release_metadata_and_dependency_floors():
         lockfile = lock_path.read_text(encoding="utf-8")
         assert re.search(r'^requires-python = ">=3\.10"$', lockfile, re.MULTILINE)
         assert re.search(
-            r'^name = "vector-vault"\nversion = "7\.4\.9\.23"$',
+            r'^name = "vector-vault"\nversion = "7\.4\.9\.24"$',
             lockfile,
             re.MULTILINE,
         )

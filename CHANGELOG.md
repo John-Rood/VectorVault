@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.4.9.24 - 2026-09-13
+
+- Correct GPT-6 Astra's Chat Completions reasoning contract to the wire-verified `low`, `medium`, `high`, and `xhigh` set. Provider-default behavior remains unchanged when reasoning is omitted; `none` and `max` are excluded because the active Chat Completions route rejects them.
+
 ## 7.4.9.23 - 2026-09-06
 
 - Add stable OpenAI `gpt-6-astra` with its 1.05M context, 128k output, multimodal/tool metadata, and `none` through `max` reasoning-effort contract; make it the OpenAI default.

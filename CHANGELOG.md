@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.4.9.25 - 2026-09-20
+
+- Restore `temperature`, `top_p`, and `top_k` for Gemini 3.8 Flash after authenticated GenerateContent tests confirmed that the current GA route accepts each sampling control alongside explicit thinking levels. `candidate_count` remains omitted, and unsupported `minimal` thinking remains rejected.
+
 ## 7.4.9.24 - 2026-09-13
 
 - Correct GPT-6 Astra's Chat Completions reasoning contract to the wire-verified `low`, `medium`, `high`, and `xhigh` set. Provider-default behavior remains unchanged when reasoning is omitted; `none` and `max` are excluded because the active Chat Completions route rejects them.

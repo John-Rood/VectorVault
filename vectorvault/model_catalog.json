@@ -2022,12 +2022,10 @@
           "computer_use"
         ],
         "release_stage": "ga",
-        "source": "https://ai.google.dev/gemini-api/docs/latest-model",
-        "retrieved": "2026-09-06",
+        "source": "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash",
+        "retrieved": "2026-09-20",
+        "wire_verified": "2026-09-20: GenerateContent accepted temperature, topP, and topK alongside HIGH thinking; minimal thinking remained rejected.",
         "unsupported_parameters": [
-          "temperature",
-          "top_p",
-          "top_k",
           "candidate_count"
         ]
       }
@@ -2489,12 +2487,10 @@
           "computer_use"
         ],
         "release_stage": "ga",
-        "source": "https://ai.google.dev/gemini-api/docs/latest-model",
-        "retrieved": "2026-09-06",
+        "source": "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash",
+        "retrieved": "2026-09-20",
+        "wire_verified": "2026-09-20: GenerateContent accepted temperature, topP, and topK alongside HIGH thinking; minimal thinking remained rejected.",
         "unsupported_parameters": [
-          "temperature",
-          "top_p",
-          "top_k",
           "candidate_count"
         ]
       }

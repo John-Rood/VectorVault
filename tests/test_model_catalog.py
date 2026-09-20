@@ -98,8 +98,10 @@ def test_provider_translations_are_sdk_safe():
     assert translate_thinking_level("gemini-3.8-flash", "low") == {
         "thinking_config": {"thinking_level": "LOW"},
     }
-    assert model_rejects_parameter("gemini-3.8-flash", "temperature")
-    assert model_rejects_parameter("gemini-3.8-flash", "top_p")
+    assert not model_rejects_parameter("gemini-3.8-flash", "temperature")
+    assert not model_rejects_parameter("gemini-3.8-flash", "top_p")
+    assert not model_rejects_parameter("gemini-3.8-flash", "top_k")
+    assert model_rejects_parameter("gemini-3.8-flash", "candidate_count")
     with pytest.raises(ModelCapabilityError):
         translate_thinking_level("gemini-3.8-flash", "minimal")
     assert translate_thinking_level("gpt-5.6", "max") == {"reasoning_effort": "max"}

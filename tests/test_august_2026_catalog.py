@@ -12,7 +12,7 @@ from vectorvault.model_catalog import (
 def test_august_2026_models_are_complete_and_frontend_visible():
     catalog = load_model_catalog()
     rows = {row["id"]: row for row in catalog["models"]}
-    assert catalog["defaults"]["grok"] == "grok-4.6"
+    assert catalog["defaults"]["grok"] == "grok-4.7"
     assert catalog["defaults"]["gemini"] == "gemini-3.8-flash"
     assert rows["grok-4.6"]["frontend"] is True
     assert rows["grok-4.6"]["context_window"] == 500_000

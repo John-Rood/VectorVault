@@ -2,8 +2,8 @@
   "schema_version": 1,
   "defaults": {
     "openai": "gpt-6-astra",
-    "anthropic": "claude-opus-5",
-    "grok": "grok-4.6",
+    "anthropic": "claude-opus-5-5",
+    "grok": "grok-4.7",
     "gemini": "gemini-3.8-flash"
   },
   "models": [
@@ -362,6 +362,118 @@
         "source": "https://developers.openai.com/api/docs/models/gpt-6-astra",
         "retrieved": "2026-09-13",
         "wire_verified": "2026-09-13: Chat Completions accepted low/xhigh and rejected none/max; provider error enumerated low, medium, high, xhigh."
+      }
+    },
+    {
+      "id": "gpt-6-sol",
+      "provider": "openai",
+      "context_window": 1050000,
+      "frontend": true,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "max_input_tokens": 922000,
+        "max_output_tokens": 128000,
+        "modalities": {
+          "input": [
+            "text",
+            "image"
+          ],
+          "output": [
+            "text"
+          ]
+        },
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ],
+        "release_stage": "stable",
+        "source": "https://developers.openai.com/api/docs/models/gpt-6-sol",
+        "retrieved": "2026-09-27",
+        "wire_verified": "2026-09-27: Chat Completions accepted none and low, rejected max with provider enumerating none, low, medium, high, xhigh.",
+        "chat_completions_tool_note": "Function calling on Chat Completions is supported only with reasoning_effort none; use Responses for tools with reasoning.",
+        "tools": [
+          "function_calling",
+          "web_search",
+          "file_search",
+          "code_interpreter",
+          "computer_use",
+          "mcp"
+        ]
+      }
+    },
+    {
+      "id": "gpt-6-luna",
+      "provider": "openai",
+      "context_window": 1050000,
+      "frontend": true,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "max_input_tokens": 922000,
+        "max_output_tokens": 128000,
+        "modalities": {
+          "input": [
+            "text",
+            "image"
+          ],
+          "output": [
+            "text"
+          ]
+        },
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ],
+        "release_stage": "stable",
+        "source": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+        "retrieved": "2026-09-27",
+        "wire_verified": "2026-09-27: Chat Completions accepted none and low, rejected max with provider enumerating none, low, medium, high, xhigh.",
+        "chat_completions_tool_note": "Function calling on Chat Completions is supported only with reasoning_effort none; use Responses for tools with reasoning.",
+        "tools": [
+          "function_calling",
+          "web_search",
+          "file_search",
+          "code_interpreter",
+          "computer_use",
+          "mcp"
+        ]
       }
     },
     {
@@ -967,6 +1079,59 @@
       }
     },
     {
+      "id": "claude-opus-5-5",
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "context_window": 1000000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "tools": [
+          "function_calling",
+          "web_search",
+          "web_fetch",
+          "code_execution",
+          "browser_use",
+          "computer_use"
+        ],
+        "source": "https://platform.claude.com/docs/en/models/opus-5-5/overview",
+        "retrieved": "2026-09-27",
+        "release_stage": "stable",
+        "max_input_tokens": 1000000,
+        "thinking_always_on": true,
+        "computer_use_tool_version": "computer_20260922",
+        "tool_choice_note": "Forced tool use is unsupported."
+      }
+    },
+    {
       "id": "claude-sonnet-5",
       "provider": "anthropic",
       "context_window": 1000000,
@@ -1359,7 +1524,7 @@
       "provider": "anthropic",
       "context_window": 1000000,
       "frontend": true,
-      "alias_for": "claude-opus-5",
+      "alias_for": "claude-opus-5-5",
       "thinking": {
         "supported": true,
         "levels": [
@@ -1369,7 +1534,7 @@
           "xhigh",
           "max"
         ],
-        "default": "high",
+        "default": "medium",
         "omitted_behavior": "provider_default",
         "translation": {
           "kind": "anthropic_effort",
@@ -1397,7 +1562,9 @@
           "code_execution",
           "browser_use",
           "computer_use"
-        ]
+        ],
+        "source": "https://platform.claude.com/docs/en/models/opus-5-5/overview",
+        "retrieved": "2026-09-27"
       }
     },
     {
@@ -1503,6 +1670,51 @@
           "x_search",
           "code_execution"
         ]
+      }
+    },
+    {
+      "id": "grok-4.7",
+      "provider": "grok",
+      "context_window": 500000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "xai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": []
+      },
+      "metadata": {
+        "context_window": 500000,
+        "max_output_tokens": null,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "tools": [
+          "function_calling",
+          "web_search",
+          "x_search",
+          "code_execution"
+        ],
+        "source": "https://docs.x.ai/developers/models/grok-4.7",
+        "retrieved": "2026-09-27",
+        "release_stage": "stable",
+        "reasoning_default": "high"
       }
     },
     {
@@ -2522,7 +2734,9 @@
       "gpt-5.2-chat-latest",
       "gpt-5.3-chat-latest",
       "gpt-5.4-chat-latest",
-      "gpt-5.5-chat-latest"
+      "gpt-5.5-chat-latest",
+      "gpt-6-sol",
+      "gpt-6-luna"
     ],
     "OPENAI_NO_STREAM_LIST": [
       "o1",
@@ -2535,6 +2749,7 @@
       "o3-mini"
     ],
     "ANTHROPIC_NO_TEMPERATURE_LIST": [
+      "claude-opus-5-5",
       "claude-fable-5-1",
       "claude-fable-5",
       "claude-opus-5",
@@ -2628,8 +2843,24 @@
     "xai_models": {
       "url": "https://docs.x.ai/developers/models",
       "retrieved": "2026-09-06"
+    },
+    "openai_gpt_6_sol": {
+      "url": "https://developers.openai.com/api/docs/models/gpt-6-sol",
+      "retrieved": "2026-09-27"
+    },
+    "openai_gpt_6_luna": {
+      "url": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+      "retrieved": "2026-09-27"
+    },
+    "anthropic_opus_5_5": {
+      "url": "https://platform.claude.com/docs/en/models/opus-5-5/overview",
+      "retrieved": "2026-09-27"
+    },
+    "xai_grok_4_7": {
+      "url": "https://docs.x.ai/developers/models/grok-4.7",
+      "retrieved": "2026-09-27"
     }
   },
-  "catalog_date": "2026-09-13",
+  "catalog_date": "2026-09-27",
   "omitted_thinking_level_behavior": "Omit all provider thinking/reasoning fields and preserve historical provider defaults."
 }

@@ -278,3 +278,36 @@ def test_august_2026_provider_translation_reaches_exact_sdk_parameters():
             },
         }
     ]
+
+
+def test_september_27_new_models_reach_provider_calls_and_omission_is_noop():
+    openai, ocalls = _openai_platform()
+    assert openai.make_call([], "gpt-6-sol", thinking_level="none") == "complete"
+    assert list(openai.stream_call([], "gpt-6-luna", thinking_level="low")) == ["streamed"]
+    assert openai.make_call([], "gpt-6-sol") == "complete"
+    assert ocalls.calls == [
+        {"model": "gpt-6-sol", "messages": [], "reasoning_effort": "none"},
+        {"model": "gpt-6-luna", "messages": [], "stream": True, "reasoning_effort": "low"},
+        {"model": "gpt-6-sol", "messages": []},
+    ]
+    with pytest.raises(ModelCapabilityError):
+        openai.make_call([], "gpt-6-luna", thinking_level="max")
+    assert len(ocalls.calls) == 3
+
+    claude, ccalls = _anthropic_platform()
+    claude.no_temperature_list = ["claude-opus-5-5"]  # Canonical always-adaptive temperature exclusion.
+    assert claude.make_call([], "claude-latest", thinking_level="max", temperature=0.4) == "complete"
+    assert claude.make_call([], "claude-opus-5-5") == "complete"
+    assert ccalls.calls == [
+        {"model": "claude-opus-5-5", "messages": [], "max_tokens": 8192,
+         "output_config": {"effort": "max"}, "thinking": {"type": "adaptive"}},
+        {"model": "claude-opus-5-5", "messages": [], "max_tokens": 8192},
+    ]
+
+    grok, gcalls = _grok_platform()
+    assert grok.make_call([], "grok-4.7", thinking_level="xhigh") == "complete"
+    assert grok.make_call([], "grok-4.7") == "complete"
+    assert gcalls.calls == [
+        {"model": "grok-4.7", "messages": [], "reasoning_effort": "xhigh"},
+        {"model": "grok-4.7", "messages": []},
+    ]

@@ -28,10 +28,10 @@ def test_packaged_resource_is_readable_complete_and_defensive():
     raw = json.loads(resource.read_text(encoding="utf-8"))
     assert raw == load_model_catalog()
     assert raw["schema_version"] == 1
-    assert len(raw["models"]) == 100
+    assert len(raw["models"]) == 104
     copied = get_model_thinking_catalog()
     copied["models"].clear()
-    assert len(load_model_catalog()["models"]) == 100
+    assert len(load_model_catalog()["models"]) == 104
 
 
 def test_every_catalog_entry_has_explicit_coherent_thinking_contract():
@@ -83,6 +83,33 @@ def test_first_party_verified_provider_capabilities_and_aliases():
     assert resolve_model_alias("grok-latest") == "grok-4.3"
     assert list_thinking_levels("grok-4.5-latest") == list_thinking_levels("grok-4.5")
     assert resolve_model_alias("gemini-latest") == "gemini-3.8-flash"
+
+
+def test_september_27_new_stable_models_and_defaults():
+    assert resolve_model_alias("claude-latest") == "claude-opus-5-5"
+    assert resolve_model_alias("grok-latest") == "grok-4.3"  # Provider legacy alias.
+    assert get_model_capability("claude-opus-5-5")["context_window"] == 1_000_000
+    assert default_thinking_level("claude-opus-5-5") == "medium"
+    assert translate_thinking_level("claude-opus-5-5", "max") == {
+        "output_config": {"effort": "max"}, "thinking": {"type": "adaptive"},
+    }
+    assert list_thinking_levels("gpt-6-sol") == ["none", "low", "medium", "high", "xhigh"]
+    assert list_thinking_levels("gpt-6-luna") == ["none", "low", "medium", "high", "xhigh"]
+    for model in ("gpt-6-sol", "gpt-6-luna"):
+        assert translate_thinking_level(model, "none") == {"reasoning_effort": "none"}
+        with pytest.raises(ModelCapabilityError):
+            translate_thinking_level(model, "max")
+        assert translate_thinking_level(model, None) == {}
+    assert list_thinking_levels("grok-4.7") == ["low", "medium", "high", "xhigh"]
+    assert translate_thinking_level("grok-4.7", "xhigh") == {"reasoning_effort": "xhigh"}
+    assert translate_thinking_level("grok-4.7", None) == {}
+    assert load_model_catalog()["defaults"] == {
+        "openai": "gpt-6-astra", "anthropic": "claude-opus-5-5",
+        "grok": "grok-4.7", "gemini": "gemini-3.8-flash",
+    }
+    rows = serialize_model_catalog(frontend=True)["models"]
+    for model in ("gpt-6-sol", "gpt-6-luna", "claude-opus-5-5", "grok-4.7"):
+        assert any(row["model"] == model for row in rows)
 
 
 def test_provider_translations_are_sdk_safe():

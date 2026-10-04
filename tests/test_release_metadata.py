@@ -34,6 +34,22 @@ def test_canonical_release_metadata_and_dependency_floors():
         assert '{ name = "google-genai", specifier = ">=1.56.0" }' in lockfile
 
 
+def test_urllib3_security_floor():
+    # All three September 2026 urllib3 advisories are fixed in 2.8.0.
+    # The manifest floor also protects pip installs that do not use uv.lock.
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert '"urllib3>=2.8.0"' in pyproject
+    assert _numeric_version(version("urllib3")) >= (2, 8, 0)
+
+    lockfile = (ROOT / "uv.lock").read_text(encoding="utf-8")
+    assert '{ name = "urllib3", specifier = ">=2.8.0" }' in lockfile
+    locked_versions = re.findall(
+        r'^name = "urllib3"\nversion = "([^"]+)"$', lockfile, re.MULTILINE
+    )
+    assert locked_versions
+    assert all(_numeric_version(value) >= (2, 8, 0) for value in locked_versions)
+
+
 def test_declared_google_genai_floor_supports_every_gemini_level():
     assert _numeric_version(version("google-genai")) >= (1, 56, 0)
     assert "thinking_level" in types.ThinkingConfig.model_fields

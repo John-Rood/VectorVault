@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.4.9.28 - 2026-10-04
+
+- Complete the existing stable-family reasoning audit: wire-verified named efforts for o3/o4-mini, GPT-5 Mini/Nano, and GPT-5.4/Mini/Nano were previously absent from the canonical catalog. Preserve true omission behavior and expose only route-accepted efforts.
+- Restore Gemini 3.1 Flash-Lite `minimal|low|medium|high` thinking (documented `minimal` default), verified on Generate Content.
+- Add first-party input/output, modality, and endpoint metadata for those families.
+- Hide Responses-only o3-pro from current Chat Completions selectors while retaining its explicit backend ID and endpoint limitation metadata.
+- Preserve the new GPT-6.1 Sol/Sonnet 5.5 additions, Sonnet 4.5 deprecation compatibility, defaults, and aliases from 7.4.9.27.
+
 ## 7.4.9.27 - 2026-10-04
 
 - Add stable OpenAI `gpt-6.1-sol` with 1,050,000 context/922,000 input/128,000 output limits and wire-verified Chat Completions `low|medium|high|xhigh` reasoning (`medium` default). Reject unsupported `none`, `minimal`, and `max`; function calling requires Responses.

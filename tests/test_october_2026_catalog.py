@@ -69,3 +69,43 @@ def test_newly_deprecated_sonnet_45_remains_backend_only_until_retirement():
     assert metadata['deprecated'] == '2026-09-30'
     assert metadata['retirement'] == '2026-11-30'
     assert translate_thinking_level('claude-sonnet-4-5', None) == {}
+
+
+@pytest.mark.parametrize('model,levels,default', [
+    ('o3', ['low','medium','high','xhigh'], 'medium'),
+    ('o4-mini', ['low','medium','high','xhigh'], 'medium'),
+    ('gpt-5-mini', ['minimal','low','medium','high'], 'medium'),
+    ('gpt-5-nano', ['minimal','low','medium','high'], 'medium'),
+    ('gpt-5.4', ['none','low','medium','high','xhigh'], 'none'),
+    ('gpt-5.4-mini', ['none','low','medium','high','xhigh'], 'none'),
+    ('gpt-5.4-nano', ['none','low','medium','high','xhigh'], 'none'),
+])
+def test_existing_stable_families_have_wire_verified_efforts(model, levels, default):
+    assert list_thinking_levels(model) == levels
+    assert default_thinking_level(model) == default
+    assert translate_thinking_level(model, None) == {}
+    assert model in get_front_models()
+    for level in levels:
+        assert translate_thinking_level(model, level) == {'reasoning_effort': level}
+    with pytest.raises(ModelCapabilityError):
+        translate_thinking_level(model, 'max')
+
+
+def test_responses_only_o3_pro_is_backend_only_not_a_chat_selector():
+    from vectorvault.ai import get_all_models
+    assert 'o3-pro' not in get_front_models()
+    assert 'o3-pro' in get_all_models()
+    assert get_model_capability('o3-pro')['metadata']['endpoints'] == ['responses']
+    assert translate_thinking_level('o3-pro', None) == {}
+
+
+def test_gemini_31_flash_lite_native_levels_and_minimal_default():
+    assert list_thinking_levels('gemini-3.1-flash-lite') == ['minimal','low','medium','high']
+    assert default_thinking_level('gemini-3.1-flash-lite') == 'minimal'
+    assert translate_thinking_level('gemini-3.1-flash-lite', None) == {}
+    for level in list_thinking_levels('gemini-3.1-flash-lite'):
+        assert translate_thinking_level('gemini-3.1-flash-lite', level) == {
+            'thinking_config': {'thinking_level': level.upper()},
+        }
+    with pytest.raises(ModelCapabilityError):
+        translate_thinking_level('gemini-3.1-flash-lite', 'none')

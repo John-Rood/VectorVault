@@ -46,20 +46,48 @@
       "frontend": true,
       "alias_for": null,
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "source": "https://developers.openai.com/api/docs/models/o3",
+        "retrieved": "2026-10-04",
+        "release_stage": "stable",
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ],
+        "max_output_tokens": 100000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "wire_verified": "2026-10-04: Chat Completions accepted omission and low|medium|high|xhigh; invalid efforts rejected before inference."
       }
     },
     {
       "id": "o3-pro",
       "provider": "openai",
       "context_window": 200000,
-      "frontend": true,
+      "frontend": false,
       "alias_for": null,
       "thinking": {
         "supported": false,
@@ -69,6 +97,24 @@
         "translation": null,
         "adaptive_thinking": false,
         "omit_parameters": []
+      },
+      "metadata": {
+        "source": "https://developers.openai.com/api/docs/models/o3-pro",
+        "retrieved": "2026-10-04",
+        "release_stage": "stable",
+        "endpoints": [
+          "responses"
+        ],
+        "max_output_tokens": 100000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "chat_completions_tool_note": "Responses-only model; the active Chat Completions adapter cannot invoke it.",
+        "wire_verified": "2026-10-04: Chat Completions returned 404: not a chat model."
       }
     },
     {
@@ -94,13 +140,41 @@
       "frontend": true,
       "alias_for": null,
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "source": "https://developers.openai.com/api/docs/models/o4-mini",
+        "retrieved": "2026-10-04",
+        "release_stage": "stable",
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ],
+        "max_output_tokens": 100000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "wire_verified": "2026-10-04: Chat Completions accepted omission and low|medium|high|xhigh; invalid efforts rejected before inference."
       }
     },
     {
@@ -190,13 +264,24 @@
       "frontend": true,
       "alias_for": null,
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "none",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
       },
       "metadata": {
         "context_window": 1050000,
@@ -211,7 +296,11 @@
         "endpoints": [
           "chat_completions",
           "responses"
-        ]
+        ],
+        "source": "https://developers.openai.com/api/docs/models/gpt-5.4",
+        "retrieved": "2026-10-04",
+        "release_stage": "stable",
+        "wire_verified": "2026-10-04: Chat Completions accepted omission and none|low|medium|high|xhigh; invalid efforts rejected before inference."
       }
     },
     {
@@ -263,13 +352,24 @@
       "frontend": true,
       "alias_for": null,
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "none",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
       },
       "metadata": {
         "context_window": 400000,
@@ -284,7 +384,12 @@
         "endpoints": [
           "chat_completions",
           "responses"
-        ]
+        ],
+        "source": "https://developers.openai.com/api/docs/models/gpt-5.4-mini",
+        "retrieved": "2026-10-04",
+        "release_stage": "stable",
+        "wire_verified": "2026-10-04: Chat Completions accepted omission and none|low|medium|high|xhigh; invalid efforts rejected before inference.",
+        "max_input_tokens": 272000
       }
     },
     {
@@ -294,13 +399,24 @@
       "frontend": true,
       "alias_for": null,
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "none",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
       },
       "metadata": {
         "context_window": 400000,
@@ -315,7 +431,12 @@
         "endpoints": [
           "chat_completions",
           "responses"
-        ]
+        ],
+        "source": "https://developers.openai.com/api/docs/models/gpt-5.4-nano",
+        "retrieved": "2026-10-04",
+        "release_stage": "stable",
+        "wire_verified": "2026-10-04: Chat Completions accepted omission and none|low|medium|high|xhigh; invalid efforts rejected before inference.",
+        "max_input_tokens": 272000
       }
     },
     {
@@ -719,13 +840,42 @@
       "frontend": true,
       "alias_for": null,
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "minimal",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "source": "https://developers.openai.com/api/docs/models/gpt-5-mini",
+        "retrieved": "2026-10-04",
+        "release_stage": "stable",
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ],
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "wire_verified": "2026-10-04: Chat Completions accepted omission and minimal|low|medium|high; invalid efforts rejected before inference.",
+        "max_input_tokens": 272000
       }
     },
     {
@@ -735,13 +885,42 @@
       "frontend": true,
       "alias_for": null,
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "minimal",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "source": "https://developers.openai.com/api/docs/models/gpt-5-nano",
+        "retrieved": "2026-10-04",
+        "release_stage": "stable",
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ],
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "wire_verified": "2026-10-04: Chat Completions accepted omission and minimal|low|medium|high; invalid efforts rejected before inference.",
+        "max_input_tokens": 272000
       }
     },
     {
@@ -2522,11 +2701,19 @@
       "frontend": true,
       "alias_for": null,
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "minimal",
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "minimal",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_level",
+          "parameter": "thinking_config.thinking_level"
+        },
         "adaptive_thinking": false,
         "omit_parameters": []
       },
@@ -2535,11 +2722,27 @@
         "max_output_tokens": 65536,
         "input_modalities": [
           "text",
-          "image"
+          "image",
+          "video",
+          "audio",
+          "pdf"
         ],
         "output_modalities": [
           "text"
-        ]
+        ],
+        "source": "https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-lite",
+        "retrieved": "2026-10-04",
+        "release_stage": "stable",
+        "max_input_tokens": 1048576,
+        "tools": [
+          "function_calling",
+          "google_search",
+          "google_maps",
+          "code_execution",
+          "file_search",
+          "url_context"
+        ],
+        "wire_verified": "2026-10-04: Generate Content accepted MINIMAL/LOW/MEDIUM/HIGH; minimal is the documented default and does not guarantee thinking is off."
       }
     },
     {
@@ -2861,7 +3064,9 @@
       "gpt-5.5-chat-latest",
       "gpt-6-sol",
       "gpt-6-luna",
-      "gpt-6.1-sol"
+      "gpt-6.1-sol",
+      "o3",
+      "o4-mini"
     ],
     "OPENAI_NO_STREAM_LIST": [
       "o1",
@@ -2993,6 +3198,42 @@
     },
     "anthropic_sonnet_5_5": {
       "url": "https://platform.claude.com/docs/en/models/sonnet-5-5/overview",
+      "retrieved": "2026-10-04"
+    },
+    "openai_o3": {
+      "url": "https://developers.openai.com/api/docs/models/o3",
+      "retrieved": "2026-10-04"
+    },
+    "openai_o4_mini": {
+      "url": "https://developers.openai.com/api/docs/models/o4-mini",
+      "retrieved": "2026-10-04"
+    },
+    "openai_gpt_5_mini": {
+      "url": "https://developers.openai.com/api/docs/models/gpt-5-mini",
+      "retrieved": "2026-10-04"
+    },
+    "openai_gpt_5_nano": {
+      "url": "https://developers.openai.com/api/docs/models/gpt-5-nano",
+      "retrieved": "2026-10-04"
+    },
+    "openai_gpt_5_4": {
+      "url": "https://developers.openai.com/api/docs/models/gpt-5.4",
+      "retrieved": "2026-10-04"
+    },
+    "openai_gpt_5_4_mini": {
+      "url": "https://developers.openai.com/api/docs/models/gpt-5.4-mini",
+      "retrieved": "2026-10-04"
+    },
+    "openai_gpt_5_4_nano": {
+      "url": "https://developers.openai.com/api/docs/models/gpt-5.4-nano",
+      "retrieved": "2026-10-04"
+    },
+    "gemini_3_1_flash_lite": {
+      "url": "https://ai.google.dev/gemini-api/docs/models/gemini-3.1-flash-lite",
+      "retrieved": "2026-10-04"
+    },
+    "gemini_3_thinking_legacy": {
+      "url": "https://ai.google.dev/gemini-api/docs/gemini-3",
       "retrieved": "2026-10-04"
     }
   },

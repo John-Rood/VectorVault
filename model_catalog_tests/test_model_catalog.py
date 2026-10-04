@@ -54,7 +54,6 @@ EXPECTED_CURRENT_MODEL_IDS = frozenset({'chat-latest',
  'grok-build-0.1',
  'grok-latest',
  'o3',
- 'o3-pro',
  'o4-mini'})
 EXPECTED_COMPATIBILITY_MODEL_IDS = frozenset({'chat-latest',
  'chatgpt-4o-latest',

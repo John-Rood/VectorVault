@@ -346,3 +346,32 @@ def test_october_new_models_stream_nonstream_and_omission_parameter_contracts():
     with pytest.raises(ModelCapabilityError):
         claude.make_call([], 'claude-sonnet-5-5', thinking_level='none')
     assert len(claude_recorder.calls) == 3
+
+
+@pytest.mark.parametrize('model', [
+    'o3', 'o4-mini', 'gpt-5-mini', 'gpt-5-nano',
+    'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano',
+])
+def test_restored_openai_family_stream_nonstream_payloads(model):
+    from vectorvault.model_catalog import list_thinking_levels
+    platform, recorder = _openai_platform()
+    for level in list_thinking_levels(model):
+        assert platform.make_call([], model, temperature=.8, thinking_level=level) == 'complete'
+        assert list(platform.stream_call([], model, temperature=.8, thinking_level=level)) == ['streamed']
+        assert recorder.calls[-2] == {'model': model, 'messages': [], 'reasoning_effort': level}
+        assert recorder.calls[-1] == {'model': model, 'messages': [], 'stream': True, 'reasoning_effort': level}
+    before=len(recorder.calls)
+    with pytest.raises(ModelCapabilityError):
+        platform.make_call([], model, thinking_level='max')
+    assert len(recorder.calls) == before
+
+
+def test_restored_gemini_lite_stream_nonstream_payloads():
+    from vectorvault.model_catalog import list_thinking_levels
+    platform, recorder = _gemini_platform()
+    for level in list_thinking_levels('gemini-3.1-flash-lite'):
+        assert platform.make_call([], 'gemini-3.1-flash-lite', thinking_level=level) == 'complete'
+        assert list(platform.stream_call([], 'gemini-3.1-flash-lite', thinking_level=level)) == ['streamed']
+        for call in recorder.calls[-2:]:
+            assert _dump_gemini_call(call)['config']['thinking_config'] == {'thinking_level': level.upper()}
+            assert call['model'] == 'gemini-3.1-flash-lite'

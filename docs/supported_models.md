@@ -4,7 +4,7 @@ Vector Vault routes model IDs to OpenAI, Anthropic, xAI, or Google by catalog me
 
 | Provider | Recommended default | Current stable IDs | Context window | Max output |
 | --- | --- | --- | ---: | ---: |
-| OpenAI | `gpt-6-astra` | `gpt-6-astra`, `gpt-6.1-sol`, `gpt-6-sol`, `gpt-6-luna`, `gpt-5.6`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.4-nano`, `gpt-5-mini`, `gpt-5-nano`, `o3`, `o4-mini`, `gpt-4o`, `chat-latest` | 400,000–1,050,000 | up to 128,000 |
+| OpenAI | `gpt-6-astra` | `gpt-6-astra`, `gpt-6.1-sol`, `gpt-6-sol`, `gpt-6-luna`, `gpt-5.6`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.4-nano`, `gpt-5-mini`, `gpt-5-nano`, `o3`, `o4-mini`, `gpt-4o`, `chat-latest` | 128,000–1,050,000 | up to 128,000 |
 | Anthropic | `claude-opus-5-5` (`claude-latest`) | `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-fable-5-1`, `claude-fable-5`, `claude-opus-5`, `claude-sonnet-5`, supported Claude 4.x stable IDs | up to 1,000,000 | up to 128,000 |
 | xAI | `grok-4.7` (product default) | `grok-4.7` (500k), `grok-4.6` (500k), `grok-4.5` (500k), `grok-4.3` (1M), `grok-4.20`, `grok-4.20-0309-reasoning`, `grok-4.20-0309-non-reasoning` (1M), `grok-build-0.1` (256k), `grok-latest` | up to 1,000,000 | model-dependent |
 | Google | `gemini-3.8-flash` (`gemini-latest`) | `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-flash-lite`, `gemini-2.5-pro`, `gemini-2.5-flash` | up to 1,048,576 | up to 65,536 |

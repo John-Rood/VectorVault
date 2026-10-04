@@ -365,6 +365,66 @@
       }
     },
     {
+      "id": "gpt-6.1-sol",
+      "provider": "openai",
+      "context_window": 1050000,
+      "frontend": true,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "max_input_tokens": 922000,
+        "max_output_tokens": 128000,
+        "modalities": {
+          "input": [
+            "text",
+            "image"
+          ],
+          "output": [
+            "text"
+          ]
+        },
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ],
+        "release_stage": "stable",
+        "source": "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+        "retrieved": "2026-10-04",
+        "wire_verified": "2026-10-04: Chat Completions accepted omission and low/medium/high/xhigh; rejected none/minimal/max with supported values low, medium, high, xhigh.",
+        "tools": [
+          "function_calling",
+          "web_search",
+          "file_search",
+          "code_interpreter",
+          "computer_use",
+          "mcp",
+          "image_generation",
+          "hosted_shell",
+          "apply_patch",
+          "skills",
+          "tool_search"
+        ],
+        "chat_completions_tool_note": "Function calling is not supported on Chat Completions; use Responses for tools with reasoning."
+      }
+    },
+    {
       "id": "gpt-6-sol",
       "provider": "openai",
       "context_window": 1050000,
@@ -1178,6 +1238,65 @@
       }
     },
     {
+      "id": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "context_window": 1000000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "tools": [
+          "function_calling",
+          "web_search",
+          "web_fetch",
+          "code_execution",
+          "browser_use",
+          "computer_use"
+        ],
+        "source": "https://platform.claude.com/docs/en/models/sonnet-5-5/overview",
+        "retrieved": "2026-10-04",
+        "release_stage": "stable",
+        "max_input_tokens": 1000000,
+        "computer_use_tool_version": "computer_20260922",
+        "tool_choice_note": "Forced tool use is unsupported.",
+        "wire_verified": "2026-10-04: Messages accepted omission and adaptive low/medium/high/xhigh/max effort; rejected none.",
+        "thinking_mode_note": "Adaptive thinking is on by default; between_tools suppresses up-front thinking at high effort or below and is a separate mode, not a generic effort level.",
+        "unsupported_parameters": [
+          "temperature",
+          "top_p",
+          "top_k"
+        ]
+      }
+    },
+    {
       "id": "claude-opus-4-8",
       "provider": "anthropic",
       "context_window": 1000000,
@@ -1389,7 +1508,7 @@
       "id": "claude-sonnet-4-5",
       "provider": "anthropic",
       "context_window": 1000000,
-      "frontend": true,
+      "frontend": false,
       "alias_for": null,
       "thinking": {
         "supported": false,
@@ -1409,7 +1528,12 @@
         ],
         "output_modalities": [
           "text"
-        ]
+        ],
+        "release_stage": "deprecated",
+        "deprecated": "2026-09-30",
+        "retirement": "2026-11-30",
+        "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations",
+        "retrieved": "2026-10-04"
       }
     },
     {
@@ -2736,7 +2860,8 @@
       "gpt-5.4-chat-latest",
       "gpt-5.5-chat-latest",
       "gpt-6-sol",
-      "gpt-6-luna"
+      "gpt-6-luna",
+      "gpt-6.1-sol"
     ],
     "OPENAI_NO_STREAM_LIST": [
       "o1",
@@ -2746,7 +2871,8 @@
       "o1",
       "o1-mini",
       "o3",
-      "o3-mini"
+      "o3-mini",
+      "gpt-6.1-sol"
     ],
     "ANTHROPIC_NO_TEMPERATURE_LIST": [
       "claude-opus-5-5",
@@ -2756,7 +2882,8 @@
       "claude-sonnet-5",
       "claude-opus-4-8",
       "claude-opus-4-7",
-      "claude-opus-4-6"
+      "claude-opus-4-6",
+      "claude-sonnet-5-5"
     ],
     "GEMINI_MULTIMODAL_MODELS": [
       "gemini-3.8-flash",
@@ -2859,8 +2986,16 @@
     "xai_grok_4_7": {
       "url": "https://docs.x.ai/developers/models/grok-4.7",
       "retrieved": "2026-09-27"
+    },
+    "openai_gpt_6_1_sol": {
+      "url": "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+      "retrieved": "2026-10-04"
+    },
+    "anthropic_sonnet_5_5": {
+      "url": "https://platform.claude.com/docs/en/models/sonnet-5-5/overview",
+      "retrieved": "2026-10-04"
     }
   },
-  "catalog_date": "2026-09-27",
+  "catalog_date": "2026-10-04",
   "omitted_thinking_level_behavior": "Omit all provider thinking/reasoning fields and preserve historical provider defaults."
 }

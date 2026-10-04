@@ -28,10 +28,10 @@ def test_packaged_resource_is_readable_complete_and_defensive():
     raw = json.loads(resource.read_text(encoding="utf-8"))
     assert raw == load_model_catalog()
     assert raw["schema_version"] == 1
-    assert len(raw["models"]) == 104
+    assert len(raw["models"]) == 106
     copied = get_model_thinking_catalog()
     copied["models"].clear()
-    assert len(load_model_catalog()["models"]) == 104
+    assert len(load_model_catalog()["models"]) == 106
 
 
 def test_every_catalog_entry_has_explicit_coherent_thinking_contract():

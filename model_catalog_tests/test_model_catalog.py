@@ -15,9 +15,9 @@ EXPECTED_CURRENT_MODEL_IDS = frozenset({'chat-latest',
  'claude-opus-4-8',
  'claude-opus-5',
  'claude-opus-5-5',
- 'claude-sonnet-4-5',
  'claude-sonnet-4-6',
  'claude-sonnet-5',
+ 'claude-sonnet-5-5',
  'default',
  'gemini-2.5-flash',
  'gemini-2.5-flash-lite',
@@ -41,6 +41,7 @@ EXPECTED_CURRENT_MODEL_IDS = frozenset({'chat-latest',
  'gpt-5.6-sol',
  'gpt-5.6-terra',
  'gpt-6-astra',
+ 'gpt-6.1-sol',
  'gpt-6-sol',
  'gpt-6-luna',
  'grok-4.20',
@@ -77,6 +78,7 @@ EXPECTED_COMPATIBILITY_MODEL_IDS = frozenset({'chat-latest',
  'claude-sonnet-4-5',
  'claude-sonnet-4-6',
  'claude-sonnet-5',
+ 'claude-sonnet-5-5',
  'default',
  'gemini-2.0-flash',
  'gemini-2.5-flash',
@@ -120,6 +122,7 @@ EXPECTED_COMPATIBILITY_MODEL_IDS = frozenset({'chat-latest',
  'gpt-5.6-sol',
  'gpt-5.6-terra',
  'gpt-6-astra',
+ 'gpt-6.1-sol',
  'gpt-6-sol',
  'gpt-6-luna',
  'grok-2-vision-latest',
@@ -176,6 +179,7 @@ class ModelCatalogTests(unittest.TestCase):
             self.assertEqual(ai.ANTHROPIC_MODELS[model], 1_000_000)
         for model in (
             'claude-fable-5-1', 'claude-fable-5', 'claude-opus-5', 'claude-sonnet-5',
+            'claude-sonnet-5-5',
             'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6',
             'claude-sonnet-4-6', 'claude-latest',
         ):
@@ -328,7 +332,8 @@ class ModelCatalogTests(unittest.TestCase):
             self.assertIn(model, ai.OPENAI_IMG_CAPABLE)
         for model in ('claude-fable-5-1', 'claude-fable-5', 'claude-opus-5', 'claude-sonnet-5'):
             self.assertIn(model, ai.ANTHROPIC_NO_TEMPERATURE_LIST)
-        for model in ('claude-fable-5-1', 'claude-fable-5', 'claude-opus-5', 'claude-sonnet-5', 'claude-opus-4-8', 'claude-latest'):
+        for model in ('claude-fable-5-1', 'claude-fable-5', 'claude-opus-5', 'claude-sonnet-5',
+                      'claude-sonnet-5-5', 'claude-opus-4-8', 'claude-latest'):
             self.assertIn('browser_use', ai.MODEL_METADATA[model]['tools'])
             self.assertIn('computer_use', ai.MODEL_METADATA[model]['tools'])
         self.assertNotIn('browser_use', ai.MODEL_METADATA['claude-opus-4-7'].get('tools', []))

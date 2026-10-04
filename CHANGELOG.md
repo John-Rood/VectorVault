@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.4.9.27 - 2026-10-04
+
+- Add stable OpenAI `gpt-6.1-sol` with 1,050,000 context/922,000 input/128,000 output limits and wire-verified Chat Completions `low|medium|high|xhigh` reasoning (`medium` default). Reject unsupported `none`, `minimal`, and `max`; function calling requires Responses.
+- Add stable Anthropic `claude-sonnet-5-5` with 1,000,000 context/128,000 output limits and adaptive `low|medium|high|xhigh|max` effort (`high` default). Omit unsupported temperature and preserve provider behavior when thinking is absent.
+- Hide newly deprecated Claude Sonnet 4.5 from current selectors (retirement November 30, 2026) while preserving backend/saved-flow compatibility.
+- Preserve all existing defaults, aliases, stable models, and compatibility IDs.
+
 ## 7.4.9.25 - 2026-09-20
 
 - Restore `temperature`, `top_p`, and `top_k` for Gemini 3.8 Flash after authenticated GenerateContent tests confirmed that the current GA route accepts each sampling control alongside explicit thinking levels. `candidate_count` remains omitted, and unsupported `minimal` thinking remains rejected.

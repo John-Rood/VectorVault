@@ -311,3 +311,38 @@ def test_september_27_new_models_reach_provider_calls_and_omission_is_noop():
         {"model": "grok-4.7", "messages": [], "reasoning_effort": "xhigh"},
         {"model": "grok-4.7", "messages": []},
     ]
+
+
+def test_october_new_models_stream_nonstream_and_omission_parameter_contracts():
+    from vectorvault.ai import ANTHROPIC_NO_TEMPERATURE_LIST, OPENAI_NO_TEMPERATURE_LIST
+
+    openai, openai_recorder = _openai_platform()
+    openai.no_temperature_list = OPENAI_NO_TEMPERATURE_LIST
+    assert openai.make_call([], 'gpt-6.1-sol', temperature=0.8, thinking_level='xhigh') == 'complete'
+    assert list(openai.stream_call([], 'gpt-6.1-sol', temperature=0.8, thinking_level='low')) == ['streamed']
+    assert openai.make_call([], 'gpt-6.1-sol', temperature=0.8) == 'complete'
+    assert openai_recorder.calls == [
+        {'model': 'gpt-6.1-sol', 'messages': [], 'reasoning_effort': 'xhigh'},
+        {'model': 'gpt-6.1-sol', 'messages': [], 'stream': True, 'reasoning_effort': 'low'},
+        {'model': 'gpt-6.1-sol', 'messages': []},
+    ]
+    for level in ('none', 'minimal', 'max'):
+        with pytest.raises(ModelCapabilityError):
+            openai.make_call([], 'gpt-6.1-sol', thinking_level=level)
+    assert len(openai_recorder.calls) == 3
+
+    claude, claude_recorder = _anthropic_platform()
+    claude.no_temperature_list = ANTHROPIC_NO_TEMPERATURE_LIST
+    assert claude.make_call([], 'claude-sonnet-5-5', temperature=0.8, thinking_level='max') == 'complete'
+    assert list(claude.stream_call([], 'claude-sonnet-5-5', temperature=0.8, thinking_level='low')) == ['streamed']
+    assert claude.make_call([], 'claude-sonnet-5-5', temperature=0.8) == 'complete'
+    assert claude_recorder.calls == [
+        {'model': 'claude-sonnet-5-5', 'messages': [], 'max_tokens': 8192,
+         'output_config': {'effort': 'max'}, 'thinking': {'type': 'adaptive'}},
+        {'model': 'claude-sonnet-5-5', 'messages': [], 'max_tokens': 8192, 'stream': True,
+         'output_config': {'effort': 'low'}, 'thinking': {'type': 'adaptive'}},
+        {'model': 'claude-sonnet-5-5', 'messages': [], 'max_tokens': 8192},
+    ]
+    with pytest.raises(ModelCapabilityError):
+        claude.make_call([], 'claude-sonnet-5-5', thinking_level='none')
+    assert len(claude_recorder.calls) == 3

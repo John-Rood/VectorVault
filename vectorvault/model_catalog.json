@@ -174,7 +174,8 @@
         "output_modalities": [
           "text"
         ],
-        "wire_verified": "2026-10-04: Chat Completions accepted omission and low|medium|high|xhigh; invalid efforts rejected before inference."
+        "wire_verified": "2026-10-04: Chat Completions accepted omission and low|medium|high|xhigh; invalid efforts rejected before inference.",
+        "sampling_note": "Non-default temperature is unsupported; the SDK omits temperature even when thinking_level is absent."
       }
     },
     {
@@ -342,7 +343,8 @@
         "endpoints": [
           "chat_completions",
           "responses"
-        ]
+        ],
+        "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent."
       }
     },
     {
@@ -482,7 +484,8 @@
         "release_stage": "stable",
         "source": "https://developers.openai.com/api/docs/models/gpt-6-astra",
         "retrieved": "2026-09-13",
-        "wire_verified": "2026-09-13: Chat Completions accepted low/xhigh and rejected none/max; provider error enumerated low, medium, high, xhigh."
+        "wire_verified": "2026-09-13: Chat Completions accepted low/xhigh and rejected none/max; provider error enumerated low, medium, high, xhigh.",
+        "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent."
       }
     },
     {
@@ -598,7 +601,8 @@
           "code_interpreter",
           "computer_use",
           "mcp"
-        ]
+        ],
+        "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent."
       }
     },
     {
@@ -654,7 +658,8 @@
           "code_interpreter",
           "computer_use",
           "mcp"
-        ]
+        ],
+        "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent."
       }
     },
     {
@@ -670,8 +675,7 @@
           "low",
           "medium",
           "high",
-          "xhigh",
-          "max"
+          "xhigh"
         ],
         "default": "medium",
         "omitted_behavior": "provider_default",
@@ -698,7 +702,9 @@
         "endpoints": [
           "chat_completions",
           "responses"
-        ]
+        ],
+        "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent.",
+        "wire_verified": "2026-10-04 full public-SDK matrix: Chat Completions accepts none|low|medium|high|xhigh and rejects max; omission must not send non-default temperature."
       }
     },
     {
@@ -714,8 +720,7 @@
           "low",
           "medium",
           "high",
-          "xhigh",
-          "max"
+          "xhigh"
         ],
         "default": "medium",
         "omitted_behavior": "provider_default",
@@ -742,7 +747,9 @@
         "endpoints": [
           "chat_completions",
           "responses"
-        ]
+        ],
+        "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent.",
+        "wire_verified": "2026-10-04 full public-SDK matrix: Chat Completions accepts none|low|medium|high|xhigh and rejects max; omission must not send non-default temperature."
       }
     },
     {
@@ -758,8 +765,7 @@
           "low",
           "medium",
           "high",
-          "xhigh",
-          "max"
+          "xhigh"
         ],
         "default": "medium",
         "omitted_behavior": "provider_default",
@@ -786,7 +792,9 @@
         "endpoints": [
           "chat_completions",
           "responses"
-        ]
+        ],
+        "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent.",
+        "wire_verified": "2026-10-04 full public-SDK matrix: Chat Completions accepts none|low|medium|high|xhigh and rejects max; omission must not send non-default temperature."
       }
     },
     {
@@ -802,8 +810,7 @@
           "low",
           "medium",
           "high",
-          "xhigh",
-          "max"
+          "xhigh"
         ],
         "default": "medium",
         "omitted_behavior": "provider_default",
@@ -830,7 +837,9 @@
         "endpoints": [
           "chat_completions",
           "responses"
-        ]
+        ],
+        "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent.",
+        "wire_verified": "2026-10-04 full public-SDK matrix: Chat Completions accepts none|low|medium|high|xhigh and rejects max; omission must not send non-default temperature."
       }
     },
     {
@@ -875,7 +884,8 @@
           "text"
         ],
         "wire_verified": "2026-10-04: Chat Completions accepted omission and minimal|low|medium|high; invalid efforts rejected before inference.",
-        "max_input_tokens": 272000
+        "max_input_tokens": 272000,
+        "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent."
       }
     },
     {
@@ -920,7 +930,8 @@
           "text"
         ],
         "wire_verified": "2026-10-04: Chat Completions accepted omission and minimal|low|medium|high; invalid efforts rejected before inference.",
-        "max_input_tokens": 272000
+        "max_input_tokens": 272000,
+        "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent."
       }
     },
     {
@@ -1153,7 +1164,8 @@
         "endpoints": [
           "chat_completions",
           "responses"
-        ]
+        ],
+        "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent."
       }
     },
     {
@@ -2929,7 +2941,7 @@
       "id": "gemini-2.5-flash-lite",
       "provider": "gemini",
       "context_window": 1048576,
-      "frontend": true,
+      "frontend": false,
       "alias_for": null,
       "thinking": {
         "supported": false,
@@ -2949,7 +2961,12 @@
         ],
         "output_modalities": [
           "text"
-        ]
+        ],
+        "source": "https://ai.google.dev/gemini-api/docs/models",
+        "retrieved": "2026-10-04",
+        "release_stage": "restricted",
+        "access_note": "Google still serves the 2.5 family but restricts it to accounts that previously used it; the production account receives HTTP 404 \"no longer available to new users\". Vendor recommends gemini-3.5-flash-lite.",
+        "wire_verified": "2026-10-04 full public-SDK matrix: 200 OK not observed; production key received 404 not-available-to-new-users on Generate Content and stream. gemini-2.5-pro and gemini-2.5-flash remained 200 OK with the same key."
       }
     },
     {
@@ -3077,7 +3094,19 @@
       "o1-mini",
       "o3",
       "o3-mini",
-      "gpt-6.1-sol"
+      "gpt-6.1-sol",
+      "o4-mini",
+      "gpt-5.5",
+      "gpt-5.6",
+      "gpt-5.6-sol",
+      "gpt-5.6-terra",
+      "gpt-5.6-luna",
+      "gpt-6-astra",
+      "gpt-6-sol",
+      "gpt-6-luna",
+      "gpt-5-mini",
+      "gpt-5-nano",
+      "chat-latest"
     ],
     "ANTHROPIC_NO_TEMPERATURE_LIST": [
       "claude-opus-5-5",
@@ -3234,6 +3263,10 @@
     },
     "gemini_3_thinking_legacy": {
       "url": "https://ai.google.dev/gemini-api/docs/gemini-3",
+      "retrieved": "2026-10-04"
+    },
+    "gemini_2_5_access_restriction": {
+      "url": "https://ai.google.dev/gemini-api/docs/models",
       "retrieved": "2026-10-04"
     }
   },

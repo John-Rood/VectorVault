@@ -109,3 +109,13 @@ def test_gemini_31_flash_lite_native_levels_and_minimal_default():
         }
     with pytest.raises(ModelCapabilityError):
         translate_thinking_level('gemini-3.1-flash-lite', 'none')
+
+
+def test_account_restricted_gemini_25_flash_lite_is_backend_only():
+    from vectorvault.ai import get_all_models, get_front_models
+    assert 'gemini-2.5-flash-lite' not in get_front_models()
+    assert 'gemini-2.5-flash-lite' in get_all_models()
+    metadata = get_model_capability('gemini-2.5-flash-lite')['metadata']
+    assert metadata['release_stage'] == 'restricted'
+    assert 'gemini-3.5-flash-lite' in metadata['access_note']
+    assert translate_thinking_level('gemini-2.5-flash-lite', None) == {}

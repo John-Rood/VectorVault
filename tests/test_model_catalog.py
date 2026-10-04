@@ -60,7 +60,7 @@ def test_every_catalog_entry_has_explicit_coherent_thinking_contract():
 def test_first_party_verified_provider_capabilities_and_aliases():
     assert list_thinking_levels("gpt-6-astra") == ["low", "medium", "high", "xhigh"]
     assert default_thinking_level("gpt-6-astra") == "medium"
-    assert list_thinking_levels("gpt-5.6") == ["none", "low", "medium", "high", "xhigh", "max"]
+    assert list_thinking_levels("gpt-5.6") == ["none", "low", "medium", "high", "xhigh"]
     assert default_thinking_level("gpt-5.6") == "medium"
     assert list_thinking_levels("gpt-5.5") == ["none", "low", "medium", "high", "xhigh"]
     assert list_thinking_levels("claude-opus-5") == ["low", "medium", "high", "xhigh", "max"]
@@ -131,7 +131,8 @@ def test_provider_translations_are_sdk_safe():
     assert model_rejects_parameter("gemini-3.8-flash", "candidate_count")
     with pytest.raises(ModelCapabilityError):
         translate_thinking_level("gemini-3.8-flash", "minimal")
-    assert translate_thinking_level("gpt-5.6", "max") == {"reasoning_effort": "max"}
+    with pytest.raises(ModelCapabilityError):
+        translate_thinking_level("gpt-5.6", "max")
     assert translate_thinking_level("grok-4.6", "xhigh") == {"reasoning_effort": "xhigh"}
     assert translate_thinking_level("grok-4.5", "medium") == {"reasoning_effort": "medium"}
     assert translate_thinking_level("claude-opus-5", "xhigh") == {
@@ -184,7 +185,7 @@ def test_serialization_and_enrichment_expose_stable_api_ui_shapes():
         "model": "gpt-5.6",
         "label": "GPT",
         "thinking": {
-            "levels": ["none", "low", "medium", "high", "xhigh", "max"],
+            "levels": ["none", "low", "medium", "high", "xhigh"],
             "default": "medium",
             "supported": True,
         },

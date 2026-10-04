@@ -1,4 +1,5 @@
 import threading
+import inspect
 import queue
 import tempfile
 from abc import ABC, abstractmethod
@@ -574,7 +575,11 @@ class GrokPlatform(LLMPlatform):
                 
                 response = self.client.chat.completions.create(**params)
                 for chunk in response:
-                    yield chunk.choices[0].delta.content
+                    if not chunk.choices:
+                        continue
+                    content = chunk.choices[0].delta.content
+                    if isinstance(content, str) and content:
+                        yield content
             except Exception as e:
                 yield str(e)
 
@@ -741,6 +746,33 @@ class AnthropicPlatform(LLMPlatform):
 
         return super().list_models()
 
+    def _message_create_params(self, params):
+        """Keep native legacy sampling working across Anthropic SDK schemas.
+
+        SDK 1.x removed the explicit temperature keyword, while the provider
+        still accepts it for legacy models. Use the SDK's documented extra_body
+        extension only after the canonical model rules allow this parameter.
+        Older SDKs (including the API's pinned 0.125.0) retain the direct keyword.
+        """
+        if "temperature" not in params:
+            return params
+        try:
+            parameters = inspect.signature(self.client.messages.create).parameters
+        except (TypeError, ValueError):
+            return params
+        if "temperature" in parameters or any(
+            parameter.kind == inspect.Parameter.VAR_KEYWORD
+            for parameter in parameters.values()
+        ):
+            return params
+        if "extra_body" not in parameters:
+            raise TypeError("Anthropic SDK cannot preserve supported legacy temperature; upgrade the SDK")
+        params = dict(params)
+        extra_body = dict(params.get("extra_body") or {})
+        extra_body["temperature"] = params.pop("temperature")
+        params["extra_body"] = extra_body
+        return params
+
     def make_call(self, messages, model, temperature=None, timeout=None, thinking_level=None, **kwargs):
         if self.client is None:
             raise ValueError("Anthropic client not initialized. Please provide a valid API key or set ANTHROPIC_API_KEY environment variable.")
@@ -762,7 +794,7 @@ class AnthropicPlatform(LLMPlatform):
                 # Newer Anthropic models reject `temperature`; only send it when supported.
                 if model not in self.no_temperature_list and not should_omit_parameter(model, thinking_level, "temperature"):
                     params["temperature"] = temperature if temperature else 0
-                response = self.client.messages.create(**params)
+                response = self.client.messages.create(**self._message_create_params(params))
                 response_queue.put(next((block.text for block in response.content if getattr(block, "type", None) == "text"), ""))
             except Exception as e:
                 response_queue.put(e)
@@ -798,7 +830,7 @@ class AnthropicPlatform(LLMPlatform):
                 # Newer Anthropic models reject `temperature`; only send it when supported.
                 if model not in self.no_temperature_list and not should_omit_parameter(model, thinking_level, "temperature"):
                     params["temperature"] = temperature if temperature else 0
-                response = self.client.messages.create(**params)
+                response = self.client.messages.create(**self._message_create_params(params))
 
 
                 for chunk in response:

@@ -1,5 +1,14 @@
 # Changelog
 
+## 7.4.9.29 - 2026-10-04
+
+- Fix unconditional temperature omission for o4-mini, GPT-5 Mini/Nano, GPT-5.5, the GPT-5.6 family, GPT-6 Astra/Sol/Luna and chat-latest: non-default sampling must be omitted even when `thinking_level` is absent, preserving saved-flow/provider-default compatibility.
+- Remove GPT-5.6 family `max` from the active Chat Completions effort set: the full live SDK matrix now rejects it on every variant. Keep Responses documentation distinct from the actual adapter contract.
+- Bridge Anthropic SDK1.x's removed temperature keyword through documented `extra_body` only for legacy models where direct authenticated API tests confirm sampling support; keep API SDK0.125.0 behavior unchanged and declare that minimum SDK floor.
+- Filter xAI streaming role/finish/usage chunks without text so valid thinking responses never yield `None`.
+- Hide Gemini 2.5 Flash-Lite from current selectors: the finished live matrix received HTTP 404 "no longer available to new users" on the production key while 2.5 Pro and 2.5 Flash stayed available. Keep the ID for saved-flow/back-compat and record the vendor-recommended successor gemini-3.5-flash-lite.
+- Final artifact retains all additions and wire-verified current-family metadata from 7.4.9.27/28, with unchanged model defaults and aliases.
+
 ## 7.4.9.28 - 2026-10-04
 
 - Complete the existing stable-family reasoning audit: wire-verified named efforts for o3/o4-mini, GPT-5 Mini/Nano, and GPT-5.4/Mini/Nano were previously absent from the canonical catalog. Preserve true omission behavior and expose only route-accepted efforts.

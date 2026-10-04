@@ -96,10 +96,10 @@ def _dump_gemini_call(call):
 
 def test_openai_nonstream_and_stream_emit_exact_reasoning_kwargs():
     platform, recorder = _openai_platform()
-    assert platform.make_call([], "gpt-5.6", temperature=0.7, thinking_level="max") == "complete"
+    assert platform.make_call([], "gpt-5.6", temperature=0.7, thinking_level="xhigh") == "complete"
     assert list(platform.stream_call([], "gpt-5.6", temperature=0.7, thinking_level="low")) == ["streamed"]
     assert recorder.calls == [
-        {"model": "gpt-5.6", "messages": [], "reasoning_effort": "max"},
+        {"model": "gpt-5.6", "messages": [], "reasoning_effort": "xhigh"},
         {"model": "gpt-5.6", "messages": [], "stream": True, "reasoning_effort": "low"},
     ]
 
@@ -375,3 +375,94 @@ def test_restored_gemini_lite_stream_nonstream_payloads():
         for call in recorder.calls[-2:]:
             assert _dump_gemini_call(call)['config']['thinking_config'] == {'thinking_level': level.upper()}
             assert call['model'] == 'gemini-3.1-flash-lite'
+
+
+def test_o4_mini_omitted_thinking_still_omits_unsupported_temperature():
+    from vectorvault.ai import OPENAI_NO_TEMPERATURE_LIST
+    platform, recorder = _openai_platform()
+    platform.no_temperature_list = OPENAI_NO_TEMPERATURE_LIST
+    assert platform.make_call([], 'o4-mini', temperature=.8) == 'complete'
+    assert list(platform.stream_call([], 'o4-mini', temperature=.8)) == ['streamed']
+    assert recorder.calls == [
+        {'model': 'o4-mini', 'messages': []},
+        {'model': 'o4-mini', 'messages': [], 'stream': True},
+    ]
+
+
+@pytest.mark.parametrize('model', [
+    'gpt-5-mini','gpt-5-nano','gpt-5.5','gpt-5.6','gpt-5.6-sol','gpt-5.6-terra',
+    'gpt-5.6-luna','gpt-6-astra','gpt-6-sol','gpt-6-luna','chat-latest',
+])
+def test_omitted_thinking_keeps_reasoning_omitted_and_drops_unsupported_sampling(model):
+    from vectorvault.ai import OPENAI_NO_TEMPERATURE_LIST
+    platform, recorder = _openai_platform()
+    platform.no_temperature_list = OPENAI_NO_TEMPERATURE_LIST
+    assert platform.make_call([], model, temperature=.8) == 'complete'
+    assert list(platform.stream_call([], model, temperature=.8)) == ['streamed']
+    assert recorder.calls == [
+        {'model': model, 'messages': []},
+        {'model': model, 'messages': [], 'stream': True},
+    ]
+
+
+@pytest.mark.parametrize('model',['gpt-5.6','gpt-5.6-sol','gpt-5.6-terra','gpt-5.6-luna'])
+def test_gpt56_max_now_fails_before_provider_call(model):
+    platform,recorder=_openai_platform()
+    with pytest.raises(ModelCapabilityError):platform.make_call([], model, thinking_level='max')
+    with pytest.raises(ModelCapabilityError):platform.stream_call([], model, thinking_level='max')
+    assert recorder.calls == []
+
+
+def test_grok_stream_ignores_role_finish_usage_and_nontext_chunks():
+    platform, recorder = _grok_platform()
+    def create(**params):
+        recorder.calls.append(params)
+        return iter([
+            SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content=None))]),
+            SimpleNamespace(choices=[]),
+            SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content='answer'))]),
+            SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content=''))]),
+            SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content=None))]),
+        ])
+    platform.client.chat.completions.create=create
+    assert list(platform.stream_call([], 'grok-4.7', thinking_level='xhigh')) == ['answer']
+
+
+@pytest.mark.parametrize('model,level',[
+    ('claude-opus-4-5',None),('claude-opus-4-5','high'),
+    ('claude-sonnet-4-6',None),('claude-haiku-4-5',None),
+])
+def test_anthropic_new_sdk_preserves_native_legacy_sampling_via_extra_body(model,level):
+    platform,recorder=_anthropic_platform()
+    original_create=recorder.create
+    # SDK1.x exposes extra_body but not a temperature keyword. This signature
+    # intentionally rejects accidental unsupported keyword passthrough.
+    def create(*,model,messages,max_tokens,stream=False,output_config=None,thinking=None,extra_body=None):
+        params={'model':model,'messages':messages,'max_tokens':max_tokens}
+        if stream:params['stream']=True
+        if output_config is not None:params['output_config']=output_config
+        if thinking is not None:params['thinking']=thinking
+        if extra_body is not None:params['extra_body']=extra_body
+        return original_create(**params)
+    platform.client.messages.create=create
+    assert platform.make_call([],model,temperature=.8,thinking_level=level)=='complete'
+    assert list(platform.stream_call([],model,temperature=.8,thinking_level=level))==['streamed']
+    for call in recorder.calls:
+        assert 'temperature' not in call
+        assert call['extra_body']=={'temperature':.8}
+    if level is not None:
+        assert recorder.calls[0]['output_config']=={'effort':level}
+
+
+def test_anthropic_canonical_sampling_rejection_precedes_sdk_extra_body_bridge():
+    from vectorvault.ai import ANTHROPIC_NO_TEMPERATURE_LIST
+    platform,recorder=_anthropic_platform()
+    platform.no_temperature_list=ANTHROPIC_NO_TEMPERATURE_LIST
+    original_create=recorder.create
+    def create(*,model,messages,max_tokens,extra_body=None):
+        params={'model':model,'messages':messages,'max_tokens':max_tokens}
+        if extra_body is not None:params['extra_body']=extra_body
+        return original_create(**params)
+    platform.client.messages.create=create
+    assert platform.make_call([],'claude-sonnet-5-5',temperature=.8)=='complete'
+    assert 'extra_body' not in recorder.calls[0]

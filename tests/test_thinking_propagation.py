@@ -85,10 +85,10 @@ def test_vault_get_chat_validates_resolves_and_propagates():
 
 def test_vault_get_chat_stream_validates_resolves_and_propagates():
     vault = _bare_vault()
-    assert list(vault.get_chat_stream("hello", model="gpt-5.6", thinking_level="MAX")) == [
+    assert list(vault.get_chat_stream("hello", model="gpt-5.6", thinking_level="XHIGH")) == [
         "streamed", "!END"
     ]
-    assert vault._ai.calls == [("llm_stream", "max")]
+    assert vault._ai.calls == [("llm_stream", "xhigh")]
 
 
 def test_vault_resolves_aliases_but_preserves_unknown_models_when_level_is_omitted():

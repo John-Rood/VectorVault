@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vector-vault"
-version = "7.4.9.28"
+version = "7.4.9.29"
 description = "Vector database and generative AI cloud storage"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -19,7 +19,7 @@ dependencies = [
   "faiss-cpu",
   "openai",
   "tiktoken",
-  "anthropic",
+  "anthropic>=0.125.0",
   "pymupdf",
   "google-genai>=1.56.0",
 ]

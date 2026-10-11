@@ -84,7 +84,10 @@ def test_existing_stable_families_have_wire_verified_efforts(model, levels, defa
     assert list_thinking_levels(model) == levels
     assert default_thinking_level(model) == default
     assert translate_thinking_level(model, None) == {}
-    assert model in get_front_models()
+    from vectorvault.ai import get_all_models
+    assert model in get_all_models()
+    # GPT-5.4 Nano was deprecated by OpenAI on 2026-10-01 (shutdown 2027-04-01): backend/saved-flow only.
+    assert (model in get_front_models()) is (model != 'gpt-5.4-nano')
     for level in levels:
         assert translate_thinking_level(model, level) == {'reasoning_effort': level}
     with pytest.raises(ModelCapabilityError):

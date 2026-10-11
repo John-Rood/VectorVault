@@ -28,10 +28,10 @@ def test_packaged_resource_is_readable_complete_and_defensive():
     raw = json.loads(resource.read_text(encoding="utf-8"))
     assert raw == load_model_catalog()
     assert raw["schema_version"] == 1
-    assert len(raw["models"]) == 106
+    assert len(raw["models"]) == 107
     copied = get_model_thinking_catalog()
     copied["models"].clear()
-    assert len(load_model_catalog()["models"]) == 106
+    assert len(load_model_catalog()["models"]) == 107
 
 
 def test_every_catalog_entry_has_explicit_coherent_thinking_contract():
@@ -69,8 +69,8 @@ def test_first_party_verified_provider_capabilities_and_aliases():
     assert default_thinking_level("grok-4.6") == "high"
     assert list_thinking_levels("grok-4.5") == ["low", "medium", "high"]
     assert default_thinking_level("grok-4.5") == "high"
-    assert list_thinking_levels("grok-4.3") == ["none", "low", "medium", "high"]
-    assert default_thinking_level("grok-4.3") is None
+    assert list_thinking_levels("grok-4.3") == ["none", "low", "medium", "high", "xhigh"]
+    assert default_thinking_level("grok-4.3") == "low"
     assert list_thinking_levels("claude-fable-5-1") == ["low", "medium", "high", "xhigh", "max"]
     assert default_thinking_level("claude-fable-5-1") == "high"
     assert list_thinking_levels("gemini-3.8-flash") == ["low", "medium", "high"]

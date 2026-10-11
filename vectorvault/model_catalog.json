@@ -80,7 +80,8 @@
         "output_modalities": [
           "text"
         ],
-        "wire_verified": "2026-10-04: Chat Completions accepted omission and low|medium|high|xhigh; invalid efforts rejected before inference."
+        "wire_verified": "2026-10-04: Chat Completions accepted omission and low|medium|high|xhigh; invalid efforts rejected before inference.",
+        "snapshot_retirement_note": "OpenAI announced removal of the dated default snapshot on 2026-12-11 (https://developers.openai.com/api/docs/deprecations); the undated ID is retained until OpenAI repoints or removes it."
       }
     },
     {
@@ -114,7 +115,8 @@
           "text"
         ],
         "chat_completions_tool_note": "Responses-only model; the active Chat Completions adapter cannot invoke it.",
-        "wire_verified": "2026-10-04: Chat Completions returned 404: not a chat model."
+        "wire_verified": "2026-10-04: Chat Completions returned 404: not a chat model.",
+        "snapshot_retirement_note": "OpenAI announced removal of the dated default snapshot on 2026-12-11 (https://developers.openai.com/api/docs/deprecations); the undated ID is retained until OpenAI repoints or removes it."
       }
     },
     {
@@ -398,7 +400,7 @@
       "id": "gpt-5.4-nano",
       "provider": "openai",
       "context_window": 400000,
-      "frontend": true,
+      "frontend": false,
       "alias_for": null,
       "thinking": {
         "supported": true,
@@ -434,11 +436,14 @@
           "chat_completions",
           "responses"
         ],
-        "source": "https://developers.openai.com/api/docs/models/gpt-5.4-nano",
-        "retrieved": "2026-10-04",
-        "release_stage": "stable",
+        "source": "https://developers.openai.com/api/docs/deprecations",
+        "retrieved": "2026-10-11",
+        "release_stage": "deprecated",
         "wire_verified": "2026-10-04: Chat Completions accepted omission and none|low|medium|high|xhigh; invalid efforts rejected before inference.",
-        "max_input_tokens": 272000
+        "max_input_tokens": 272000,
+        "deprecated": "2026-10-01",
+        "retirement": "2027-04-01",
+        "replacement": "gpt-6-luna"
       }
     },
     {
@@ -885,7 +890,8 @@
         ],
         "wire_verified": "2026-10-04: Chat Completions accepted omission and minimal|low|medium|high; invalid efforts rejected before inference.",
         "max_input_tokens": 272000,
-        "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent."
+        "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent.",
+        "snapshot_retirement_note": "OpenAI announced removal of the dated default snapshot on 2026-12-11 (https://developers.openai.com/api/docs/deprecations); the undated ID is retained until OpenAI repoints or removes it."
       }
     },
     {
@@ -931,7 +937,8 @@
         ],
         "wire_verified": "2026-10-04: Chat Completions accepted omission and minimal|low|medium|high; invalid efforts rejected before inference.",
         "max_input_tokens": 272000,
-        "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent."
+        "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent.",
+        "snapshot_retirement_note": "OpenAI announced removal of the dated default snapshot on 2026-12-11 (https://developers.openai.com/api/docs/deprecations); the undated ID is retained until OpenAI repoints or removes it."
       }
     },
     {
@@ -1378,8 +1385,9 @@
         "release_stage": "stable",
         "max_input_tokens": 1000000,
         "thinking_always_on": true,
-        "computer_use_tool_version": "computer_20260922",
-        "tool_choice_note": "Forced tool use is unsupported."
+        "computer_use_tool_version": "computer_toolset_20260801",
+        "tool_choice_note": "Forced tool use is unsupported.",
+        "computer_use_tool_verified": "2026-10-11: Messages accepts computer_toolset_20260801; computer_20260922 is rejected as an unknown tool type."
       }
     },
     {
@@ -1476,7 +1484,7 @@
         "retrieved": "2026-10-04",
         "release_stage": "stable",
         "max_input_tokens": 1000000,
-        "computer_use_tool_version": "computer_20260922",
+        "computer_use_tool_version": "computer_toolset_20260801",
         "tool_choice_note": "Forced tool use is unsupported.",
         "wire_verified": "2026-10-04: Messages accepted omission and adaptive low/medium/high/xhigh/max effort; rejected none.",
         "thinking_mode_note": "Adaptive thinking is on by default; between_tools suppresses up-front thinking at high effort or below and is a separate mode, not a generic effort level.",
@@ -1484,7 +1492,70 @@
           "temperature",
           "top_p",
           "top_k"
+        ],
+        "computer_use_tool_verified": "2026-10-11: Messages accepts computer_toolset_20260801; computer_20260922 is rejected as an unknown tool type."
+      }
+    },
+    {
+      "id": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "frontend": true,
+      "alias_for": null,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
         ]
+      },
+      "metadata": {
+        "context_window": 1000000,
+        "max_output_tokens": 128000,
+        "input_modalities": [
+          "text",
+          "image"
+        ],
+        "output_modalities": [
+          "text"
+        ],
+        "tools": [
+          "function_calling",
+          "web_search",
+          "web_fetch",
+          "code_execution",
+          "browser_use",
+          "computer_use"
+        ],
+        "source": "https://platform.claude.com/docs/en/models/haiku-5-5/overview",
+        "retrieved": "2026-10-11",
+        "release_stage": "stable",
+        "max_input_tokens": 1000000,
+        "computer_use_tool_version": "computer_toolset_20260801",
+        "tool_choice_note": "Forced tool_choice (any or a named tool) is accepted but the response starts with the tool call and has no thinking block; use auto to let the model think first.",
+        "wire_verified": "2026-10-11: Messages accepted omission and adaptive low/medium/high/xhigh/max effort; rejected none; rejected temperature 0.5 (temperature accepts only 1). computer_toolset_20260801, browser_toolset_20260801, web_search_20260318, web_fetch_20260318 and code_execution_20260120 declarations accepted.",
+        "thinking_mode_note": "Adaptive thinking is on by default at medium effort; thinking {\"type\":\"disabled\"} is accepted at high effort or below and is a separate mode, not a generic effort level. Manual budget_tokens thinking and assistant prefill return 400.",
+        "unsupported_parameters": [
+          "temperature",
+          "top_p",
+          "top_k"
+        ],
+        "sampling_note": "temperature must be 1 and top_p must be 0.99 when sent; any top_k, or both temperature and top_p, returns 400. VectorVault omits all three.",
+        "released": "2026-10-07",
+        "retirement": "not sooner than 2027-10-07"
       }
     },
     {
@@ -1783,7 +1854,11 @@
         ],
         "output_modalities": [
           "text"
-        ]
+        ],
+        "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations",
+        "retrieved": "2026-10-11",
+        "release_stage": "active",
+        "retirement_note": "Anthropic lists claude-haiku-4-5-20251001 as Active with tentative retirement not sooner than 2026-10-15; no deprecation has been announced and the Models API reports lifecycle active with no retires_at. Retained until Anthropic announces deprecation."
       }
     },
     {
@@ -2137,9 +2212,10 @@
           "none",
           "low",
           "medium",
-          "high"
+          "high",
+          "xhigh"
         ],
-        "default": null,
+        "default": "low",
         "omitted_behavior": "provider_default",
         "translation": {
           "kind": "xai_reasoning_effort",
@@ -2161,7 +2237,12 @@
         "tools": [
           "function_calling",
           "structured_outputs"
-        ]
+        ],
+        "source": "https://docs.x.ai/developers/models/grok-4.3",
+        "retrieved": "2026-10-11",
+        "release_stage": "stable",
+        "reasoning_default": "low",
+        "wire_verified": "2026-10-11: chat completions accepted none/low/medium/high/xhigh; rejected max."
       }
     },
     {
@@ -2561,7 +2642,7 @@
       "id": "gemini-3.7-flash",
       "provider": "gemini",
       "context_window": 1048576,
-      "frontend": true,
+      "frontend": false,
       "alias_for": null,
       "thinking": {
         "supported": true,
@@ -2598,7 +2679,13 @@
           "search_grounding",
           "url_context",
           "computer_use"
-        ]
+        ],
+        "release_stage": "deprecated",
+        "deprecated": "2026-10-08",
+        "routed_to": "gemini-3.8-flash",
+        "source": "https://ai.google.dev/gemini-api/docs/deprecations",
+        "retrieved": "2026-10-11",
+        "deprecation_note": "Deprecated by Google on 2026-10-08; provider routes requests for gemini-3.7-flash to gemini-3.8-flash. Hidden from current selectors; retained for saved flows."
       }
     },
     {
@@ -2640,7 +2727,7 @@
       "id": "gemini-3.5-flash",
       "provider": "gemini",
       "context_window": 1048576,
-      "frontend": true,
+      "frontend": false,
       "alias_for": null,
       "thinking": {
         "supported": true,
@@ -2668,7 +2755,13 @@
         ],
         "output_modalities": [
           "text"
-        ]
+        ],
+        "release_stage": "deprecated",
+        "deprecated": "2026-10-08",
+        "routed_to": "gemini-3.6-flash",
+        "source": "https://ai.google.dev/gemini-api/docs/deprecations",
+        "retrieved": "2026-10-11",
+        "deprecation_note": "Deprecated by Google on 2026-10-08; provider routes requests for gemini-3.5-flash to gemini-3.6-flash. Hidden from current selectors; retained for saved flows."
       }
     },
     {
@@ -2754,7 +2847,8 @@
           "file_search",
           "url_context"
         ],
-        "wire_verified": "2026-10-04: Generate Content accepted MINIMAL/LOW/MEDIUM/HIGH; minimal is the documented default and does not guarantee thinking is off."
+        "wire_verified": "2026-10-04: Generate Content accepted MINIMAL/LOW/MEDIUM/HIGH; minimal is the documented default and does not guarantee thinking is off.",
+        "shutdown_note": "Google lists an earliest shutdown of 2027-05-07 with gemini-3.5-flash-lite as replacement (https://ai.google.dev/gemini-api/docs/deprecations); the model page still lists it as stable."
       }
     },
     {
@@ -3117,7 +3211,8 @@
       "claude-opus-4-8",
       "claude-opus-4-7",
       "claude-opus-4-6",
-      "claude-sonnet-5-5"
+      "claude-sonnet-5-5",
+      "claude-haiku-5-5"
     ],
     "GEMINI_MULTIMODAL_MODELS": [
       "gemini-3.8-flash",
@@ -3268,8 +3363,28 @@
     "gemini_2_5_access_restriction": {
       "url": "https://ai.google.dev/gemini-api/docs/models",
       "retrieved": "2026-10-04"
+    },
+    "anthropic_haiku_5_5": {
+      "url": "https://platform.claude.com/docs/en/models/haiku-5-5/overview",
+      "retrieved": "2026-10-11"
+    },
+    "anthropic_deprecations": {
+      "url": "https://platform.claude.com/docs/en/about-claude/model-deprecations",
+      "retrieved": "2026-10-11"
+    },
+    "openai_deprecations": {
+      "url": "https://developers.openai.com/api/docs/deprecations",
+      "retrieved": "2026-10-11"
+    },
+    "gemini_deprecations": {
+      "url": "https://ai.google.dev/gemini-api/docs/deprecations",
+      "retrieved": "2026-10-11"
+    },
+    "anthropic_computer_use": {
+      "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool",
+      "retrieved": "2026-10-11"
     }
   },
-  "catalog_date": "2026-10-04",
+  "catalog_date": "2026-10-11",
   "omitted_thinking_level_behavior": "Omit all provider thinking/reasoning fields and preserve historical provider defaults."
 }

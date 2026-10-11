@@ -1,5 +1,14 @@
 # Changelog
 
+## 7.4.9.30 - 2026-10-11
+
+- Add Anthropic `claude-haiku-5-5` (released 2026-10-07; stable, 1,000,000 context, 128,000 output, text+image input). It uses adaptive `low|medium|high|xhigh|max` effort with Anthropic's documented `medium` default, rejects `none`, `temperature` other than 1 and all `top_p`/`top_k`, and is omitted from sampling like the other no-temperature Claude 5 models. Wire-verified against the Messages API on 2026-10-11 along with current hosted browser, computer-use, web search/fetch and code-execution tool declarations.
+- Correct Claude Opus 5.5 / Sonnet 5.5 computer-use metadata: the accepted Claude API toolset is `computer_toolset_20260801` (the previously recorded `computer_20260922` is rejected by the provider as an unknown tool type).
+- Correct xAI Grok 4.3 reasoning contract to `none|low|medium|high|xhigh` with provider default `low` (official model page and authenticated Chat Completions; `max` is rejected). Newer Grok defaults are unchanged.
+- Hide newly deprecated `gemini-3.7-flash` (Google deprecated 2026-10-08; auto-routed to `gemini-3.8-flash`), `gemini-3.5-flash` (deprecated; routed to `gemini-3.6-flash`) and `gpt-5.4-nano` (OpenAI deprecated 2026-10-01, shutdown 2027-04-01, replacement `gpt-6-luna`) from current selectors. IDs, aliases, limits and thinking maps remain for saved flows/backend callers.
+- Record OpenAI's 2026-12-11 removal of dated GPT-5 Mini/Nano, o3 and o3-pro default snapshots and Gemini 3.1 Flash-Lite's earliest 2027-05-07 shutdown as metadata only; undated IDs are unchanged.
+- Defaults, aliases and the wire-verified GPT-6 Astra/GPT-6.1 Sol/Gemini 3.8 Flash contracts are unchanged.
+
 ## 7.4.9.29 - 2026-10-04
 
 - Fix unconditional temperature omission for o4-mini, GPT-5 Mini/Nano, GPT-5.5, the GPT-5.6 family, GPT-6 Astra/Sol/Luna and chat-latest: non-default sampling must be omitted even when `thinking_level` is absent, preserving saved-flow/provider-default compatibility.

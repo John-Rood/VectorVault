@@ -16,10 +16,12 @@ def test_august_2026_models_are_complete_and_frontend_visible():
     assert catalog["defaults"]["gemini"] == "gemini-3.8-flash"
     assert rows["grok-4.6"]["frontend"] is True
     assert rows["grok-4.6"]["context_window"] == 500_000
-    assert rows["gemini-3.7-flash"]["frontend"] is True
+    assert rows["gemini-3.7-flash"]["frontend"] is False  # deprecated 2026-10-08; hidden but saved-flow compatible
+    assert rows["gemini-3.6-flash"]["frontend"] is True
     assert rows["gemini-3.7-flash"]["context_window"] == 1_048_576
     assert model_maps(True)["grok"]["grok-4.6"] == 500_000
-    assert model_maps(True)["gemini"]["gemini-3.7-flash"] == 1_048_576
+    assert "gemini-3.7-flash" not in model_maps(True)["gemini"]
+    assert model_maps(False)["gemini"]["gemini-3.7-flash"] == 1_048_576
 
 
 def test_august_2026_thinking_and_alias_contracts():

@@ -17,9 +17,9 @@ def _numeric_version(value):
 
 def test_canonical_release_metadata_and_dependency_floors():
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    assert re.search(r'^version = "7\.4\.9\.30"$', pyproject, re.MULTILINE)
+    assert re.search(r'^version = "7\.4\.9\.31"$', pyproject, re.MULTILINE)
     assert re.search(r'^requires-python = ">=3\.10"$', pyproject, re.MULTILINE)
-    assert '"google-genai>=1.56.0"' in pyproject
+    assert '"google-genai>=2.30.1"' in pyproject
     assert not (ROOT / "setup.py").exists()
 
     lock_path = ROOT / "uv.lock"
@@ -27,15 +27,15 @@ def test_canonical_release_metadata_and_dependency_floors():
         lockfile = lock_path.read_text(encoding="utf-8")
         assert re.search(r'^requires-python = ">=3\.10"$', lockfile, re.MULTILINE)
         assert re.search(
-            r'^name = "vector-vault"\nversion = "7\.4\.9\.30"$',
+            r'^name = "vector-vault"\nversion = "7\.4\.9\.31"$',
             lockfile,
             re.MULTILINE,
         )
-        assert '{ name = "google-genai", specifier = ">=1.56.0" }' in lockfile
+        assert '{ name = "google-genai", specifier = ">=2.30.1" }' in lockfile
 
 
 def test_declared_google_genai_floor_supports_every_gemini_level():
-    assert _numeric_version(version("google-genai")) >= (1, 56, 0)
+    assert _numeric_version(version("google-genai")) >= (2, 30, 1)
     assert "thinking_level" in types.ThinkingConfig.model_fields
 
     for level in ("MINIMAL", "LOW", "MEDIUM", "HIGH"):

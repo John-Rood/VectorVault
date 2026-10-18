@@ -955,13 +955,21 @@
         "translation": null,
         "adaptive_thinking": false,
         "omit_parameters": []
+      },
+      "metadata": {
+        "release_stage": "deprecated",
+        "deprecated": "2026-10-14",
+        "retirement": "2027-01-14",
+        "replacement": "gpt-6-luna",
+        "source": "https://developers.openai.com/api/docs/deprecations",
+        "retrieved": "2026-10-18"
       }
     },
     {
       "id": "gpt-4o",
       "provider": "openai",
       "context_window": 128000,
-      "frontend": true,
+      "frontend": false,
       "alias_for": null,
       "thinking": {
         "supported": false,
@@ -971,6 +979,14 @@
         "translation": null,
         "adaptive_thinking": false,
         "omit_parameters": []
+      },
+      "metadata": {
+        "release_stage": "deprecated",
+        "deprecated": "2026-10-14",
+        "retirement": "2027-01-14",
+        "replacement": "gpt-6-luna",
+        "source": "https://developers.openai.com/api/docs/deprecations",
+        "retrieved": "2026-10-18"
       }
     },
     {
@@ -2639,6 +2655,89 @@
       }
     },
     {
+      "id": "gemini-4-argon",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": true,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_level",
+          "parameter": "thinking_config.thinking_level"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature",
+          "top_p",
+          "top_k",
+          "candidate_count",
+          "thinking_budget"
+        ]
+      },
+      "metadata": {
+        "max_input_tokens": 1048576,
+        "max_output_tokens": 1048576,
+        "context_accounting": "unified_input_thinking_output",
+        "default_max_output_tokens": 65536,
+        "per_request_output_tokens": {
+          "rest_nonstream": 32768,
+          "stream": 65536
+        },
+        "long_decode_requires": "google-genai>=2.30.1; max_output_tokens>65536; total input+thinking+output<=1048576",
+        "modalities": {
+          "input": [
+            "text",
+            "image",
+            "video",
+            "audio",
+            "pdf"
+          ],
+          "output": [
+            "text"
+          ]
+        },
+        "endpoints": [
+          "generate_content",
+          "stream_generate_content"
+        ],
+        "tools": [
+          "function_calling",
+          "structured_outputs",
+          "search_grounding",
+          "url_context",
+          "code_execution",
+          "file_search",
+          "google_maps_grounding",
+          "agentic_video_understanding"
+        ],
+        "preview_tools": [
+          "computer_use"
+        ],
+        "caching": "implicit_only",
+        "release_stage": "ga",
+        "released": "2026-10-13",
+        "source": "https://ai.google.dev/gemini-api/docs/models/gemini-4-argon",
+        "retrieved": "2026-10-18",
+        "unsupported_parameters": [
+          "temperature",
+          "top_p",
+          "top_k",
+          "candidate_count",
+          "cached_content",
+          "thinking_budget"
+        ],
+        "thinking_always_on": true,
+        "recommended_http_timeout_seconds": 1200
+      }
+    },
+    {
       "id": "gemini-3.7-flash",
       "provider": "gemini",
       "context_window": 1048576,
@@ -3229,7 +3328,8 @@
       "gemini-2.0-flash",
       "gemini-3-pro-preview",
       "gemini-3-pro-image",
-      "gemini-3-pro-image-preview"
+      "gemini-3-pro-image-preview",
+      "gemini-4-argon"
     ],
     "GEMINI_THINKING_MODELS": [
       "gemini-3.8-flash",
@@ -3244,7 +3344,8 @@
       "gemini-2.5-flash",
       "gemini-2.5-flash-lite",
       "gemini-2.0-flash",
-      "gemini-latest"
+      "gemini-latest",
+      "gemini-4-argon"
     ]
   },
   "references": {
@@ -3386,5 +3487,6 @@
     }
   },
   "catalog_date": "2026-10-11",
-  "omitted_thinking_level_behavior": "Omit all provider thinking/reasoning fields and preserve historical provider defaults."
+  "omitted_thinking_level_behavior": "Omit all provider thinking/reasoning fields and preserve historical provider defaults.",
+  "catalog_version": "2026-10-18"
 }

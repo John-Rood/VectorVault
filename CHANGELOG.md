@@ -1,5 +1,12 @@
 # Changelog
 
+## 7.4.9.31 - 2026-10-18
+
+- Add GA `gemini-4-argon` (released October 13), unified 1,048,576 input/thinking/output tokens, long decode up to the remaining context, `low|medium|high` thinking with `medium` provider default; `minimal` is unsupported.
+- Record route-specific output limits (32,768 direct REST non-streaming / 65,536 streaming; SDK automatic continuation), implicit-only caching, modalities and tools. Omit deprecated sampling/budget fields and unsupported explicit caching for Argon only.
+- Require `google-genai>=2.30.1` for Argon's automatic long-decode continuation. Existing Gemini 3 sampling and all provider defaults/aliases remain unchanged; missing thinking stays omitted.
+- Hide newly deprecated `gpt-4o` from current selectors. Preserve GPT-4o and already backend-only GPT-4o Mini for saved flows until their January 14, 2027 shutdown, with October 14 deprecation metadata.
+
 ## 7.4.9.30 - 2026-10-11
 
 - Add Anthropic `claude-haiku-5-5` (released 2026-10-07; stable, 1,000,000 context, 128,000 output, text+image input). It uses adaptive `low|medium|high|xhigh|max` effort with Anthropic's documented `medium` default, rejects `none`, `temperature` other than 1 and all `top_p`/`top_k`, and is omitted from sampling like the other no-temperature Claude 5 models. Wire-verified against the Messages API on 2026-10-11 along with current hosted browser, computer-use, web search/fetch and code-execution tool declarations.

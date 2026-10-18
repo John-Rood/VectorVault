@@ -124,7 +124,7 @@ vault = Vault(user='your_email',
               gemini_key='your_gemini_api_key',      # For Google Gemini models
               vault='any_vault_name',
               verbose=False,
-              model='gpt-4o')  # Set your preferred default model
+              model='gpt-6-astra')  # Set your preferred default model
 ```
 
 ## API Key Requirements
@@ -142,8 +142,8 @@ vault = Vault(user='your_email',
 
 ```python
 # OpenAI models (requires openai_key)
-vault.get_chat("Hello", model="gpt-4o")
-vault.get_chat("Hello", model="gpt-4o-mini") 
+vault.get_chat("Hello", model="gpt-6-astra")
+vault.get_chat("Hello", model="gpt-5-mini")
 vault.get_chat("Hello", model="o1")
 
 # Grok models (requires grok_key)  
@@ -476,7 +476,7 @@ vault = Vault(
     api_key='vv_api_...', 
     openai_key='sk-...', 
     vault='customer_support',
-    model='gpt-4o'  # Default model for this vault
+    model='gpt-6-astra'  # Default model for this vault
 )
 
 # Build a context-aware response with conversation history
@@ -858,7 +858,7 @@ class CustomerServiceAgent:
             api_key='vv_api_...',
             openai_key='sk-...',
             vault='customer_service_v3',
-            model='gpt-4o',  # Higher accuracy for customer-facing
+            model='gpt-6-astra',  # Higher accuracy for customer-facing
             conversation_user_id=None  # Set per customer session
         )
         
@@ -962,7 +962,7 @@ Switch between AI platforms seamlessly mid-conversation:
 
 ```python
 # Start with OpenAI
-response = vault.get_chat("Analyze this data", model="gpt-4o")
+response = vault.get_chat("Analyze this data", model="gpt-6-astra")
 
 # Switch to Claude for opinion
 response = vault.get_chat("What's your take?", model="claude-opus-5")

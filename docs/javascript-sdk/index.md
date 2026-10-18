@@ -150,7 +150,7 @@ The `params` object can include any of the following properties:
 - `n_context`: The number of context turns you want to receive.
 - `return_context`: A boolean to include the context in the response.
 - `smart_history_search`: A boolean to enable smart history searching.
-- `model`: The model you want to use, e.g., `"gpt-4o"`.
+- `model`: The model you want to use, e.g., `"gpt-6-astra"`.
 - `include_context_meta`: A boolean to include metadata about the context.
 - `metatag`, `metatag_prefixes`, `metatag_suffixes`: Arrays for advanced context tagging.
 - `custom_prompt`: A custom prompt to be used instead of the default.

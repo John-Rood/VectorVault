@@ -1,5 +1,8 @@
 # VectorVault JavaScript Client - Quick Reference
 
+
+> Legacy JavaScript SDK versions may still default to `gpt-4o`, deprecated October 14, 2026 and retiring January 14, 2027. Set `model` explicitly (for example `gpt-6-astra`), and consult [Supported Models](../supported_models.md) for the current package/Cloud catalog.
+
 A quick reference guide for the VectorVault API. For detailed documentation, see `API_DOCUMENTATION.md`.
 
 ## Installation
@@ -42,7 +45,7 @@ const response = await vv.getChat({
   text: 'Your question',
   get_context: true,
   n_context: 4,
-  model: 'gpt-4o',
+  model: 'gpt-6-astra',
   temperature: 0.7
 });
 ```

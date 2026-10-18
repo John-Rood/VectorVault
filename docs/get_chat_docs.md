@@ -241,7 +241,7 @@ The AI system automatically handles model switching between platforms. Simply ch
 
 ```python
 # OpenAI model
-response = vault.get_chat("Analyze this data", model="gpt-4o")
+response = vault.get_chat("Analyze this data", model="gpt-6-astra")
 
 # Switch to Claude mid-conversation 
 response = vault.get_chat("What's your opinion?", model="claude-opus-5")
@@ -252,7 +252,7 @@ response = vault.get_chat("Be creative", model="grok-4.5")
 # All in the same conversation - platform switching is automatic
 for chunk in vault.get_chat_stream(
     "Creative writing task",
-    model="gpt-4o",
+    model="gpt-6-astra",
     temperature=0.7,
     timeout=60
 ):
@@ -354,7 +354,7 @@ def handle_support_query(user_message, conversation_history):
             history=conversation_history,
             get_context=True,
             smart_history_search=True,  # Essential for handling "What about that issue?" type queries
-            model="gpt-4o"
+            model="gpt-6-astra"
         )
     )
 ```

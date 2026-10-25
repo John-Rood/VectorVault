@@ -1,10 +1,10 @@
 # Supported AI Models
 
-Vector Vault routes model IDs to OpenAI, Anthropic, xAI, or Google by catalog membership. The aliases below are the recommended VectorVault Cloud/runtime defaults as of **October 18, 2026**; explicit stable IDs are also supported. The SDK source on `main`, the published `vector-vault==7.4.9.31` package, and VectorVault Cloud share this package-owned catalog.
+Vector Vault routes model IDs to OpenAI, Anthropic, xAI, or Google by catalog membership. The aliases below are the recommended VectorVault Cloud/runtime defaults as of **October 25, 2026**; explicit stable IDs are also supported. The SDK source on `main`, the published `vector-vault==7.4.9.32` package, and VectorVault Cloud share this package-owned catalog.
 
 | Provider | Recommended default | Current stable IDs | Context window | Max output |
 | --- | --- | --- | ---: | ---: |
-| OpenAI | `gpt-6-astra` | `gpt-6-astra`, `gpt-6.1-sol`, `gpt-6-sol`, `gpt-6-luna`, `gpt-5.6`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5-mini`, `gpt-5-nano`, `o3`, `o4-mini`, `chat-latest` | 128,000–1,050,000 | up to 128,000 |
+| OpenAI | `gpt-6-astra` | `gpt-6-astra`, `gpt-6.1-sol`, `gpt-6-sol`, `gpt-6-luna`, `gpt-5.6`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5-mini`, `gpt-5-nano`, `o3`, `chat-latest` | 128,000–1,050,000 | up to 128,000 |
 | Anthropic | `claude-opus-5-5` (`claude-latest`) | `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`, `claude-fable-5-1`, `claude-fable-5`, `claude-opus-5`, `claude-sonnet-5`, supported Claude 4.x stable IDs | up to 1,000,000 | up to 128,000 |
 | xAI | `grok-4.7` (product default) | `grok-4.7` (500k), `grok-4.6` (500k), `grok-4.5` (500k), `grok-4.3` (1M), `grok-4.20`, `grok-4.20-0309-reasoning`, `grok-4.20-0309-non-reasoning` (1M), `grok-build-0.1` (256k), `grok-latest` | up to 1,000,000 | model-dependent |
 | Google | `gemini-3.8-flash` (`gemini-latest`, unchanged) | `gemini-4-argon`, `gemini-3.8-flash`, `gemini-3.6-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-flash-lite`, `gemini-2.5-pro`, `gemini-2.5-flash` | up to 1,048,576 | Argon: remaining unified window; others up to 65,536 |
@@ -25,15 +25,24 @@ Gemini 3.8 Flash is GA and replaces 3.7 Flash as the Google product default and 
 
 ## Compatibility IDs
 
+OpenAI shut down `o4-mini`, `o1`, `o3-mini`, `gpt-4`, and `gpt-3.5-turbo` on **October 23, 2026**; the API now returns `model_not_found` for them. VectorVault removed `o4-mini` from current selectors and resolves every retired ID locally to OpenAI's documented substitute before calling the provider: `o4-mini` and `gpt-3.5-turbo` → `gpt-5.6-terra`; `o1`, `o3-mini`, and `gpt-4` → `gpt-5.6-sol`. The same substitution now applies to earlier shut-down IDs that still appeared in saved records (`o1-mini` → `gpt-5.6-terra`; `chatgpt-4o-latest` and `gpt-5`/`5.1`/`5.2`/`5.3-chat-latest` → `gpt-5.6-sol`). Saved flows keep running, retired IDs are never sent upstream, and saved o4-mini reasoning levels (`low|medium|high|xhigh`) remain valid on GPT-5.6 Terra. `gpt-4o-audio-preview` (shut down May 7, 2026) has no text-chat substitute because its successor `gpt-audio-1.5` requires audio input or output; it is retained only so legacy records load.
+
 OpenAI deprecated GPT-4o and GPT-4o Mini on October 14, with shutdown scheduled for **January 14, 2027** and `gpt-6-luna` as the provider-recommended replacement. `gpt-4o` and `gpt-4o-mini` are hidden from current selectors but remain available through `/all_model_list` for saved flows before shutdown. Select a current model for new workloads.
 
 The SDK's backend catalog retains older provider-accepted or redirected IDs so existing integrations and saved VectorFlow graphs continue to load. Retired Claude Sonnet 4 IDs (`claude-sonnet-4-0`, `claude-sonnet-4-20250514`), redirected Grok 3/4 aliases, and legacy Gemini shorthand `gemini-3.1-pro` are compatibility-only and are intentionally absent from current model selectors. The Gemini shorthand resolves locally to the accurately labeled preview ID `gemini-3.1-pro-preview`; that preview remains backend-only. The documented deprecated `gpt-5.3-chat-latest` snapshot remains a backend-only pass-through ID at 128k context/16,384 output. The invalid `gpt-5.3` and undocumented GPT-5.4/5.5 chat aliases are translated locally for compatibility but hidden from selectors. Shut-down Gemini 3 preview and Gemini 2.0 IDs are also excluded from the current stable list and migrated locally where a safe successor exists.
 
-Claude Sonnet 4.5 (`claude-sonnet-4-5`) was deprecated on September 30, 2026 and is now hidden from current selectors. It remains backend-compatible for existing saved flows until the provider retirement on November 30, 2026. Records without `thinking_level` still omit the provider parameter rather than forcing a level.
+Claude Sonnet 4.5 (`claude-sonnet-4-5`, 200,000-token context, 64,000 output) was deprecated on September 30, 2026 and is now hidden from current selectors. It remains backend-compatible for existing saved flows until the provider retirement on November 30, 2026. Records without `thinking_level` still omit the provider parameter rather than forcing a level.
 
 xAI's official `grok-latest` alias remains preserved as the previously documented `grok-4.3` target; Vector Vault defaults new code/chat work to `grok-4.7` because xAI now recommends it for those workloads. Grok 4.3 supports `none`, `low`, `medium`, `high`, and `xhigh` reasoning effort (provider default `low` when omitted), text and image input, function calling, and structured outputs. xAI's model index and individual model pages agree that Grok 4.5 has a 500,000-token context and the Grok 4.20 reasoning/non-reasoning family has a 1,000,000-token context. Current xAI aliases—including `grok-4.5-latest`, `grok-build-latest`, `grok-4.3-latest`, the stable Grok 4.20 aliases, and Grok Build's `grok-code-fast*` aliases—are supported in the backend catalog and normalized locally to their documented canonical IDs. They are hidden from selectors when they would duplicate an existing stable-model option. The beta-only Grok 4.20 Multi-Agent model is not promoted into the stable selector catalog.
 
 Use an explicit compatibility ID only while migrating an existing workload. New code should use the recommended default alias or a current stable ID from the table above.
+
+## October 25, 2026 update
+
+- **OpenAI October 23 shutdowns**: `o4-mini` leaves the current selector list. `o4-mini`, `o1`, `o3-mini`, `gpt-4`, `gpt-3.5-turbo` and previously retired chat snapshots now route locally to `gpt-5.6-terra` / `gpt-5.6-sol` for saved flows (see Compatibility IDs).
+- **Anthropic SDK 2**: Anthropic's Python SDK 2.0 (October 21) sends API version `2026-10-21`, which rejects `temperature`, `top_p` and `top_k`. VectorVault 7.4.9.32 keeps explicit sampling working on Claude models that accept it (Opus 4.5, Sonnet 4.6, Haiku 4.5, Sonnet 4.5) by sending `anthropic-version: 2023-06-01` on those requests, as Anthropic's migration guide allows. Claude models that reject sampling are unaffected.
+- **Claude Sonnet 4.5** context corrected to 200,000 tokens.
+- No new generally available text models from OpenAI, Anthropic, xAI or Google since October 18. Defaults, aliases and every current thinking contract were re-verified on the live APIs and are unchanged.
 
 ## October 18, 2026 update
 

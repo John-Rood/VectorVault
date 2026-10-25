@@ -73,7 +73,6 @@ def test_newly_deprecated_sonnet_45_remains_backend_only_until_retirement():
 
 @pytest.mark.parametrize('model,levels,default', [
     ('o3', ['low','medium','high','xhigh'], 'medium'),
-    ('o4-mini', ['low','medium','high','xhigh'], 'medium'),
     ('gpt-5-mini', ['minimal','low','medium','high'], 'medium'),
     ('gpt-5-nano', ['minimal','low','medium','high'], 'medium'),
     ('gpt-5.4', ['none','low','medium','high','xhigh'], 'none'),

@@ -1472,7 +1472,7 @@ wheels = [
 
 [[package]]
 name = "vector-vault"
-version = "7.4.9.31"
+version = "7.4.9.32"
 source = { editable = "." }
 dependencies = [
     { name = "annoy" },

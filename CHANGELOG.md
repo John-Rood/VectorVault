@@ -1,5 +1,14 @@
 # Changelog
 
+## 7.4.9.32 - 2026-10-25
+
+- OpenAI shut down `o4-mini`, `o1`, `o3-mini`, `gpt-4` and `gpt-3.5-turbo` on October 23, 2026 (authenticated Chat Completions now returns HTTP 404 `model_not_found`). Remove `o4-mini` from current selectors and resolve every retired ID locally to OpenAI's documented substitute (`gpt-5.6-terra` for o4-mini/gpt-3.5-turbo, `gpt-5.6-sol` for o1/o3-mini/gpt-4) so saved flows keep running; retired IDs are never sent upstream.
+- Apply the same local substitution to previously shut-down `o1-mini`, `chatgpt-4o-latest` and `gpt-5`/`5.1`/`5.2`/`5.3-chat-latest`, which also return 404. `gpt-4o-audio-preview` is recorded as retired without an alias because its successor `gpt-audio-1.5` requires audio input or output.
+- Retired IDs inherit the substitute's context window and thinking contract; omitted `thinking_level` remains a provider-default no-op, and saved o4-mini levels (`low|medium|high|xhigh`) stay valid on GPT-5.6 Terra.
+- Anthropic SDK 2.x (October 21) defaults to API version `2026-10-21`, which rejects `temperature`/`top_p`/`top_k`. Fresh installs of 7.4.9.31 therefore failed every call to sampling-capable legacy Claude models (Opus 4.5, Sonnet 4.6, Haiku 4.5, Sonnet 4.5). When the canonical catalog allows sampling, the SDK bridge now pins `anthropic-version: 2023-06-01` per Anthropic's migration guide; no-sampling Claude models keep the SDK default. SDK 0.125.0 behavior is unchanged.
+- Correct deprecated `claude-sonnet-4-5` context to 200,000 tokens (Models API and context-window docs).
+- Defaults, aliases and every current thinking contract are unchanged (re-verified on the wire October 25).
+
 ## 7.4.9.31 - 2026-10-18
 
 - Add GA `gemini-4-argon` (released October 13), unified 1,048,576 input/thinking/output tokens, long decode up to the remaining context, `low|medium|high` thinking with `medium` provider default; `minimal` is unsupported.

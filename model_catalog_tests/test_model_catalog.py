@@ -50,8 +50,7 @@ EXPECTED_CURRENT_MODEL_IDS = frozenset({'chat-latest',
  'grok-4.7',
  'grok-build-0.1',
  'grok-latest',
- 'o3',
- 'o4-mini'})
+ 'o3'})
 EXPECTED_COMPATIBILITY_MODEL_IDS = frozenset({'chat-latest',
  'chatgpt-4o-latest',
  'chatgpt-latest',
@@ -184,6 +183,7 @@ class ModelCatalogTests(unittest.TestCase):
             self.assertEqual(ai.MODEL_METADATA[model]['max_output_tokens'], 128_000)
         for model in ('claude-opus-4-5', 'claude-sonnet-4-5', 'claude-haiku-4-5'):
             self.assertEqual(ai.MODEL_METADATA[model]['max_output_tokens'], 64_000)
+            self.assertEqual(ai.ANTHROPIC_MODELS[model], 200_000)
         for model in ('grok-4.6', 'grok-4.6-latest', 'grok-4.5', 'grok-4.5-latest', 'grok-build-latest'):
             self.assertEqual(ai.GROK_MODELS[model], 500_000)
         for model in ('grok-4.3', 'grok-4.3-latest'):
@@ -216,9 +216,10 @@ class ModelCatalogTests(unittest.TestCase):
         self.assertEqual(ai.MODEL_METADATA['gemini-3-pro-image']['max_output_tokens'], 32_768)
         for model in ('claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6'):
             self.assertEqual(ai.ANTHROPIC_MODELS[model], 1_000_000)
-        self.assertEqual(ai.OPENAI_MODELS['gpt-4'], 8_192)
-        self.assertEqual(ai.OPENAI_MODELS['gpt-3.5-turbo'], 16_385)
-        self.assertEqual(ai.OPENAI_MODELS['gpt-5.3-chat-latest'], 128_000)
+        # Retired OpenAI IDs inherit their local substitute's context window.
+        self.assertEqual(ai.OPENAI_MODELS['gpt-4'], 1_050_000)
+        self.assertEqual(ai.OPENAI_MODELS['gpt-3.5-turbo'], 1_050_000)
+        self.assertEqual(ai.OPENAI_MODELS['gpt-5.3-chat-latest'], 1_050_000)
 
     def test_latest_and_default_routes(self):
         expected = {
@@ -248,11 +249,23 @@ class ModelCatalogTests(unittest.TestCase):
             'gemini-3-pro-preview': 'gemini-3.1-pro-preview',
             'gemini-3-pro-image-preview': 'gemini-3-pro-image',
             'gemini-2.0-flash': 'gemini-3.6-flash',
+            # OpenAI shut these down; resolve to provider-documented substitutes.
+            'o4-mini': 'gpt-5.6-terra',
+            'o1': 'gpt-5.6-sol',
+            'o1-mini': 'gpt-5.6-terra',
+            'o3-mini': 'gpt-5.6-sol',
+            'gpt-4': 'gpt-5.6-sol',
+            'gpt-3.5-turbo': 'gpt-5.6-terra',
+            'chatgpt-4o-latest': 'gpt-5.6-sol',
+            'gpt-5-chat-latest': 'gpt-5.6-sol',
+            'gpt-5.1-chat-latest': 'gpt-5.6-sol',
+            'gpt-5.2-chat-latest': 'gpt-5.6-sol',
+            'gpt-5.3-chat-latest': 'gpt-5.6-sol',
         }
         for alias, target in expected.items():
             self.assertEqual(ai.LATEST_MODELS_MAP[alias], target)
-        self.assertNotIn('gpt-5.3-chat-latest', ai.LATEST_MODELS_MAP)
-        self.assertEqual(ai.MODEL_METADATA['gpt-5.3-chat-latest']['max_output_tokens'], 16_384)
+        self.assertNotIn('gpt-4o-audio-preview', ai.LATEST_MODELS_MAP)
+        self.assertEqual(ai.MODEL_METADATA['gpt-5.3-chat-latest']['release_stage'], 'retired')
         self.assertEqual(ai.OPENAI_MODELS['default'], 'gpt-6-astra')
         self.assertEqual(ai.ANTHROPIC_MODELS['default'], 'claude-opus-5-5')
         self.assertEqual(ai.GROK_MODELS['default'], 'grok-4.7')

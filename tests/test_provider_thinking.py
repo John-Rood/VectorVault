@@ -349,7 +349,7 @@ def test_october_new_models_stream_nonstream_and_omission_parameter_contracts():
 
 
 @pytest.mark.parametrize('model', [
-    'o3', 'o4-mini', 'gpt-5-mini', 'gpt-5-nano',
+    'o3', 'gpt-5-mini', 'gpt-5-nano',
     'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.4-nano',
 ])
 def test_restored_openai_family_stream_nonstream_payloads(model):
@@ -377,15 +377,16 @@ def test_restored_gemini_lite_stream_nonstream_payloads():
             assert call['model'] == 'gemini-3.1-flash-lite'
 
 
-def test_o4_mini_omitted_thinking_still_omits_unsupported_temperature():
+def test_retired_o4_mini_resolves_to_substitute_and_still_omits_temperature():
+    """o4-mini was shut down 2026-10-23; saved flows route to gpt-5.6-terra."""
     from vectorvault.ai import OPENAI_NO_TEMPERATURE_LIST
     platform, recorder = _openai_platform()
     platform.no_temperature_list = OPENAI_NO_TEMPERATURE_LIST
     assert platform.make_call([], 'o4-mini', temperature=.8) == 'complete'
     assert list(platform.stream_call([], 'o4-mini', temperature=.8)) == ['streamed']
     assert recorder.calls == [
-        {'model': 'o4-mini', 'messages': []},
-        {'model': 'o4-mini', 'messages': [], 'stream': True},
+        {'model': 'gpt-5.6-terra', 'messages': []},
+        {'model': 'gpt-5.6-terra', 'messages': [], 'stream': True},
     ]
 
 
@@ -450,6 +451,8 @@ def test_anthropic_new_sdk_preserves_native_legacy_sampling_via_extra_body(model
     for call in recorder.calls:
         assert 'temperature' not in call
         assert call['extra_body']=={'temperature':.8}
+        # SDK1-style signature without extra_headers: no header injected.
+        assert 'extra_headers' not in call
     if level is not None:
         assert recorder.calls[0]['output_config']=={'effort':level}
 

@@ -10,33 +10,75 @@
     {
       "id": "o1",
       "provider": "openai",
-      "context_window": 200000,
+      "context_window": 1050000,
       "frontend": false,
-      "alias_for": null,
+      "alias_for": "gpt-5.6-sol",
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "shutdown": "2026-10-23",
+        "replacement": "gpt-5.6-sol",
+        "local_substitute": "gpt-5.6-sol",
+        "source": "https://developers.openai.com/api/docs/deprecations",
+        "retrieved": "2026-10-25",
+        "wire_verified": "2026-10-25: authenticated Chat Completions returned HTTP 404 model_not_found for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to the provider-documented substitute so saved flows keep running. Never sent upstream."
       }
     },
     {
       "id": "o1-mini",
       "provider": "openai",
-      "context_window": 128000,
+      "context_window": 1050000,
       "frontend": false,
-      "alias_for": null,
+      "alias_for": "gpt-5.6-terra",
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "shutdown": "2025-10-27",
+        "replacement": "o4-mini (itself shut down 2026-10-23; substitute gpt-5.6-terra)",
+        "local_substitute": "gpt-5.6-terra",
+        "source": "https://developers.openai.com/api/docs/deprecations",
+        "retrieved": "2026-10-25",
+        "wire_verified": "2026-10-25: authenticated Chat Completions returned HTTP 404 model_not_found for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to the provider-documented substitute so saved flows keep running. Never sent upstream."
       }
     },
     {
@@ -122,28 +164,13 @@
     {
       "id": "o3-mini",
       "provider": "openai",
-      "context_window": 128000,
+      "context_window": 1050000,
       "frontend": false,
-      "alias_for": null,
-      "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
-        "adaptive_thinking": false,
-        "omit_parameters": []
-      }
-    },
-    {
-      "id": "o4-mini",
-      "provider": "openai",
-      "context_window": 200000,
-      "frontend": true,
-      "alias_for": null,
+      "alias_for": "gpt-5.6-sol",
       "thinking": {
         "supported": true,
         "levels": [
+          "none",
           "low",
           "medium",
           "high",
@@ -161,39 +188,88 @@
         ]
       },
       "metadata": {
-        "source": "https://developers.openai.com/api/docs/models/o4-mini",
-        "retrieved": "2026-10-04",
-        "release_stage": "stable",
-        "endpoints": [
-          "chat_completions",
-          "responses"
+        "release_stage": "retired",
+        "shutdown": "2026-10-23",
+        "replacement": "gpt-5.6-sol",
+        "local_substitute": "gpt-5.6-sol",
+        "source": "https://developers.openai.com/api/docs/deprecations",
+        "retrieved": "2026-10-25",
+        "wire_verified": "2026-10-25: authenticated Chat Completions returned HTTP 404 model_not_found for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to the provider-documented substitute so saved flows keep running. Never sent upstream."
+      }
+    },
+    {
+      "id": "o4-mini",
+      "provider": "openai",
+      "context_window": 1050000,
+      "frontend": false,
+      "alias_for": "gpt-5.6-terra",
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
         ],
-        "max_output_tokens": 100000,
-        "input_modalities": [
-          "text",
-          "image"
-        ],
-        "output_modalities": [
-          "text"
-        ],
-        "wire_verified": "2026-10-04: Chat Completions accepted omission and low|medium|high|xhigh; invalid efforts rejected before inference.",
-        "sampling_note": "Non-default temperature is unsupported; the SDK omits temperature even when thinking_level is absent."
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "shutdown": "2026-10-23",
+        "replacement": "gpt-5.6-terra",
+        "local_substitute": "gpt-5.6-terra",
+        "source": "https://developers.openai.com/api/docs/deprecations",
+        "retrieved": "2026-10-25",
+        "wire_verified": "2026-10-25: authenticated Chat Completions returned HTTP 404 model_not_found for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to the provider-documented substitute so saved flows keep running. Never sent upstream."
       }
     },
     {
       "id": "gpt-4",
       "provider": "openai",
-      "context_window": 8192,
+      "context_window": 1050000,
       "frontend": false,
-      "alias_for": null,
+      "alias_for": "gpt-5.6-sol",
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "shutdown": "2026-10-23",
+        "replacement": "gpt-5.6-sol",
+        "local_substitute": "gpt-5.6-sol",
+        "source": "https://developers.openai.com/api/docs/deprecations",
+        "retrieved": "2026-10-25",
+        "wire_verified": "2026-10-25: authenticated Chat Completions returned HTTP 404 model_not_found for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to the provider-documented substitute so saved flows keep running. Never sent upstream."
       }
     },
     {
@@ -1003,101 +1079,200 @@
         "translation": null,
         "adaptive_thinking": false,
         "omit_parameters": []
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "shutdown": "2026-05-07",
+        "replacement": "gpt-audio-1.5",
+        "source": "https://developers.openai.com/api/docs/deprecations",
+        "retrieved": "2026-10-25",
+        "wire_verified": "2026-10-25: Chat Completions returned HTTP 404; gpt-audio-1.5 rejects text-only chat (audio input or output required), so no local text alias is defined.",
+        "compatibility_note": "Retained only so legacy records load; requests fail upstream."
       }
     },
     {
       "id": "chatgpt-4o-latest",
       "provider": "openai",
-      "context_window": 128000,
+      "context_window": 1050000,
       "frontend": false,
-      "alias_for": null,
+      "alias_for": "gpt-5.6-sol",
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "shutdown": "2026-02-17",
+        "replacement": "gpt-5.1-chat-latest (itself shut down 2026-07-23; substitute gpt-5.6-sol)",
+        "local_substitute": "gpt-5.6-sol",
+        "source": "https://developers.openai.com/api/docs/deprecations",
+        "retrieved": "2026-10-25",
+        "wire_verified": "2026-10-25: authenticated Chat Completions returned HTTP 404 model_not_found for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to the provider-documented substitute so saved flows keep running. Never sent upstream."
       }
     },
     {
       "id": "gpt-5-chat-latest",
       "provider": "openai",
-      "context_window": 400000,
+      "context_window": 1050000,
       "frontend": false,
-      "alias_for": null,
+      "alias_for": "gpt-5.6-sol",
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "shutdown": "2026-07-23",
+        "replacement": "gpt-5.6-sol",
+        "local_substitute": "gpt-5.6-sol",
+        "source": "https://developers.openai.com/api/docs/deprecations",
+        "retrieved": "2026-10-25",
+        "wire_verified": "2026-10-25: authenticated Chat Completions returned HTTP 404 model_not_found for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to the provider-documented substitute so saved flows keep running. Never sent upstream."
       }
     },
     {
       "id": "gpt-5.1-chat-latest",
       "provider": "openai",
-      "context_window": 400000,
+      "context_window": 1050000,
       "frontend": false,
-      "alias_for": null,
+      "alias_for": "gpt-5.6-sol",
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "shutdown": "2026-07-23",
+        "replacement": "gpt-5.6-sol",
+        "local_substitute": "gpt-5.6-sol",
+        "source": "https://developers.openai.com/api/docs/deprecations",
+        "retrieved": "2026-10-25",
+        "wire_verified": "2026-10-25: authenticated Chat Completions returned HTTP 404 model_not_found for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to the provider-documented substitute so saved flows keep running. Never sent upstream."
       }
     },
     {
       "id": "gpt-5.2-chat-latest",
       "provider": "openai",
-      "context_window": 400000,
+      "context_window": 1050000,
       "frontend": false,
-      "alias_for": null,
+      "alias_for": "gpt-5.6-sol",
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "shutdown": "2026-08-10",
+        "replacement": "gpt-5.6-sol",
+        "local_substitute": "gpt-5.6-sol",
+        "source": "https://developers.openai.com/api/docs/deprecations",
+        "retrieved": "2026-10-25",
+        "wire_verified": "2026-10-25: authenticated Chat Completions returned HTTP 404 model_not_found for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to the provider-documented substitute so saved flows keep running. Never sent upstream."
       }
     },
     {
       "id": "gpt-5.3-chat-latest",
       "provider": "openai",
-      "context_window": 128000,
+      "context_window": 1050000,
       "frontend": false,
-      "alias_for": null,
+      "alias_for": "gpt-5.6-sol",
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
       },
       "metadata": {
-        "context_window": 128000,
-        "max_output_tokens": 16384,
-        "input_modalities": [
-          "text",
-          "image"
-        ],
-        "output_modalities": [
-          "text"
-        ],
-        "endpoints": [
-          "chat_completions"
-        ],
-        "release_status": "deprecated"
+        "release_stage": "retired",
+        "shutdown": "2026-08-10",
+        "replacement": "gpt-5.6-sol",
+        "local_substitute": "gpt-5.6-sol",
+        "source": "https://developers.openai.com/api/docs/deprecations",
+        "retrieved": "2026-10-25",
+        "wire_verified": "2026-10-25: authenticated Chat Completions returned HTTP 404 model_not_found for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to the provider-documented substitute so saved flows keep running. Never sent upstream."
       }
     },
     {
@@ -1146,17 +1321,38 @@
     {
       "id": "gpt-3.5-turbo",
       "provider": "openai",
-      "context_window": 16385,
+      "context_window": 1050000,
       "frontend": false,
-      "alias_for": null,
+      "alias_for": "gpt-5.6-terra",
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
         "adaptive_thinking": false,
-        "omit_parameters": []
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "shutdown": "2026-10-23",
+        "replacement": "gpt-5.6-terra",
+        "local_substitute": "gpt-5.6-terra",
+        "source": "https://developers.openai.com/api/docs/deprecations",
+        "retrieved": "2026-10-25",
+        "wire_verified": "2026-10-25: authenticated Chat Completions returned HTTP 404 model_not_found for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to the provider-documented substitute so saved flows keep running. Never sent upstream."
       }
     },
     {
@@ -1785,7 +1981,7 @@
     {
       "id": "claude-sonnet-4-5",
       "provider": "anthropic",
-      "context_window": 1000000,
+      "context_window": 200000,
       "frontend": false,
       "alias_for": null,
       "thinking": {
@@ -1798,7 +1994,7 @@
         "omit_parameters": []
       },
       "metadata": {
-        "context_window": 1000000,
+        "context_window": 200000,
         "max_output_tokens": 64000,
         "input_modalities": [
           "text",
@@ -1811,7 +2007,9 @@
         "deprecated": "2026-09-30",
         "retirement": "2026-11-30",
         "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations",
-        "retrieved": "2026-10-04"
+        "retrieved": "2026-10-25",
+        "source_context": "https://platform.claude.com/docs/en/build-with-claude/context-windows",
+        "models_api_verified": "2026-10-25: GET /v1/models reports max_input_tokens 200000, max_tokens 64000 for claude-sonnet-4-5-20250929."
       }
     },
     {
@@ -3475,7 +3673,7 @@
     },
     "openai_deprecations": {
       "url": "https://developers.openai.com/api/docs/deprecations",
-      "retrieved": "2026-10-11"
+      "retrieved": "2026-10-25"
     },
     "gemini_deprecations": {
       "url": "https://ai.google.dev/gemini-api/docs/deprecations",
@@ -3484,9 +3682,13 @@
     "anthropic_computer_use": {
       "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool",
       "retrieved": "2026-10-11"
+    },
+    "anthropic_api_2026_10_21": {
+      "url": "https://platform.claude.com/docs/en/api/migration-2026-10-21",
+      "retrieved": "2026-10-25"
     }
   },
-  "catalog_date": "2026-10-11",
+  "catalog_date": "2026-10-25",
   "omitted_thinking_level_behavior": "Omit all provider thinking/reasoning fields and preserve historical provider defaults.",
-  "catalog_version": "2026-10-18"
+  "catalog_version": "2026-10-25"
 }

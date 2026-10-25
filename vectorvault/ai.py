@@ -35,6 +35,10 @@ from .model_catalog import (
     translate_thinking_level,
 )
 
+# Anthropic API version that still accepts explicit sampling parameters.
+# SDK 2.x defaults to 2026-10-21, which rejects temperature/top_p/top_k.
+ANTHROPIC_SAMPLING_API_VERSION = "2023-06-01"
+
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -753,6 +757,12 @@ class AnthropicPlatform(LLMPlatform):
         still accepts it for legacy models. Use the SDK's documented extra_body
         extension only after the canonical model rules allow this parameter.
         Older SDKs (including the API's pinned 0.125.0) retain the direct keyword.
+
+        SDK 2.x sends API version ``2026-10-21`` by default, which rejects
+        ``temperature``/``top_p``/``top_k`` outright. Anthropic's migration
+        guide says requests relying on a non-default sampling value should stay
+        on ``2023-06-01``, so the bridged request pins that version header.
+        Models without sampling support never reach this bridge.
         """
         if "temperature" not in params:
             return params
@@ -771,6 +781,10 @@ class AnthropicPlatform(LLMPlatform):
         extra_body = dict(params.get("extra_body") or {})
         extra_body["temperature"] = params.pop("temperature")
         params["extra_body"] = extra_body
+        if "extra_headers" in parameters:
+            extra_headers = dict(params.get("extra_headers") or {})
+            extra_headers.setdefault("anthropic-version", ANTHROPIC_SAMPLING_API_VERSION)
+            params["extra_headers"] = extra_headers
         return params
 
     def make_call(self, messages, model, temperature=None, timeout=None, thinking_level=None, **kwargs):

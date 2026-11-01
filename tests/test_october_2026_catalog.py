@@ -86,7 +86,9 @@ def test_existing_stable_families_have_wire_verified_efforts(model, levels, defa
     from vectorvault.ai import get_all_models
     assert model in get_all_models()
     # GPT-5.4 Nano was deprecated by OpenAI on 2026-10-01 (shutdown 2027-04-01): backend/saved-flow only.
-    assert (model in get_front_models()) is (model != 'gpt-5.4-nano')
+    # GPT-5.4 Nano (2026-10-01) and undated o3/GPT-5 Mini/Nano (shutdown 2026-12-11) are
+    # deprecated: backend/saved-flow only.
+    assert (model in get_front_models()) is (model not in {'gpt-5.4-nano', 'o3', 'gpt-5-mini', 'gpt-5-nano'})
     for level in levels:
         assert translate_thinking_level(model, level) == {'reasoning_effort': level}
     with pytest.raises(ModelCapabilityError):

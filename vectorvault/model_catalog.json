@@ -85,7 +85,7 @@
       "id": "o3",
       "provider": "openai",
       "context_window": 200000,
-      "frontend": true,
+      "frontend": false,
       "alias_for": null,
       "thinking": {
         "supported": true,
@@ -109,7 +109,7 @@
       "metadata": {
         "source": "https://developers.openai.com/api/docs/models/o3",
         "retrieved": "2026-10-04",
-        "release_stage": "stable",
+        "release_stage": "deprecated",
         "endpoints": [
           "chat_completions",
           "responses"
@@ -123,7 +123,11 @@
           "text"
         ],
         "wire_verified": "2026-10-04: Chat Completions accepted omission and low|medium|high|xhigh; invalid efforts rejected before inference.",
-        "snapshot_retirement_note": "OpenAI announced removal of the dated default snapshot on 2026-12-11 (https://developers.openai.com/api/docs/deprecations); the undated ID is retained until OpenAI repoints or removes it."
+        "deprecated": "2026-06-11",
+        "retirement": "2026-12-11",
+        "replacement": "gpt-5.6-sol",
+        "deprecation_source": "https://developers.openai.com/api/docs/deprecations",
+        "deprecation_verified": "2026-11-01: GET /v1/models/o3 reports shutdown_date 2026-12-11 for the undated ID itself (not only the dated snapshot); still callable until shutdown."
       }
     },
     {
@@ -144,7 +148,7 @@
       "metadata": {
         "source": "https://developers.openai.com/api/docs/models/o3-pro",
         "retrieved": "2026-10-04",
-        "release_stage": "stable",
+        "release_stage": "deprecated",
         "endpoints": [
           "responses"
         ],
@@ -158,7 +162,12 @@
         ],
         "chat_completions_tool_note": "Responses-only model; the active Chat Completions adapter cannot invoke it.",
         "wire_verified": "2026-10-04: Chat Completions returned 404: not a chat model.",
-        "snapshot_retirement_note": "OpenAI announced removal of the dated default snapshot on 2026-12-11 (https://developers.openai.com/api/docs/deprecations); the undated ID is retained until OpenAI repoints or removes it."
+        "deprecated": "2026-06-11",
+        "retirement": "2026-12-11",
+        "replacement": "gpt-5.6-sol",
+        "deprecation_source": "https://developers.openai.com/api/docs/deprecations",
+        "deprecation_verified": "2026-11-01: GET /v1/models/o3-pro reports shutdown_date 2026-12-11 for the undated ID itself (not only the dated snapshot); still callable until shutdown.",
+        "replacement_note": "gpt-5.6-sol with reasoning.mode pro (Responses)"
       }
     },
     {
@@ -286,6 +295,14 @@
         "translation": null,
         "adaptive_thinking": false,
         "omit_parameters": []
+      },
+      "metadata": {
+        "release_stage": "deprecated",
+        "deprecated": "2026-06-11",
+        "retirement": "2026-12-11",
+        "replacement": "gpt-5.6-sol",
+        "deprecation_source": "https://developers.openai.com/api/docs/deprecations",
+        "deprecation_verified": "2026-11-01: GET /v1/models/gpt-5 reports shutdown_date 2026-12-11 for the undated ID itself (not only the dated snapshot); still callable until shutdown."
       }
     },
     {
@@ -302,6 +319,13 @@
         "translation": null,
         "adaptive_thinking": false,
         "omit_parameters": []
+      },
+      "metadata": {
+        "release_stage": "deprecated",
+        "deprecated": "2026-10-01",
+        "retirement": "2027-04-01",
+        "replacement": "gpt-6-sol",
+        "deprecation_source": "https://developers.openai.com/api/docs/deprecations"
       }
     },
     {
@@ -630,6 +654,72 @@
       }
     },
     {
+      "id": "gpt-6.1-terra",
+      "provider": "openai",
+      "context_window": 1050000,
+      "frontend": true,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "openai_reasoning_effort",
+          "parameter": "reasoning_effort"
+        },
+        "adaptive_thinking": false,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "max_input_tokens": 922000,
+        "max_output_tokens": 128000,
+        "modalities": {
+          "input": [
+            "text",
+            "image"
+          ],
+          "output": [
+            "text"
+          ]
+        },
+        "endpoints": [
+          "chat_completions",
+          "responses"
+        ],
+        "release_stage": "stable",
+        "released": "2026-10-26",
+        "knowledge_cutoff": "2026-06-01",
+        "source": "https://developers.openai.com/api/docs/models/gpt-6.1-terra",
+        "retrieved": "2026-11-01",
+        "wire_verified": "2026-11-01: Chat Completions accepted omission and none|low|medium|high|xhigh; rejected minimal and max with provider enumerating none, low, medium, high, xhigh. Image input accepted.",
+        "documented_reasoning_note": "The model page also lists max for reasoning.effort (Responses); the active Chat Completions route rejects it, so it is not exposed.",
+        "tools": [
+          "function_calling",
+          "web_search",
+          "file_search",
+          "code_interpreter",
+          "computer_use",
+          "mcp",
+          "image_generation",
+          "hosted_shell",
+          "apply_patch",
+          "skills",
+          "tool_search"
+        ],
+        "chat_completions_tool_note": "Function tools on Chat Completions work only with reasoning_effort none; use Responses for tools with reasoning.",
+        "sampling_note": "Non-default temperature is rejected unless reasoning_effort is none and top_p is unsupported; the SDK omits temperature unconditionally, matching the GPT-6 family.",
+        "successor_of": "gpt-5.6-terra"
+      }
+    },
+    {
       "id": "gpt-6-sol",
       "provider": "openai",
       "context_window": 1050000,
@@ -927,7 +1017,7 @@
       "id": "gpt-5-mini",
       "provider": "openai",
       "context_window": 400000,
-      "frontend": true,
+      "frontend": false,
       "alias_for": null,
       "thinking": {
         "supported": true,
@@ -951,7 +1041,7 @@
       "metadata": {
         "source": "https://developers.openai.com/api/docs/models/gpt-5-mini",
         "retrieved": "2026-10-04",
-        "release_stage": "stable",
+        "release_stage": "deprecated",
         "endpoints": [
           "chat_completions",
           "responses"
@@ -967,14 +1057,18 @@
         "wire_verified": "2026-10-04: Chat Completions accepted omission and minimal|low|medium|high; invalid efforts rejected before inference.",
         "max_input_tokens": 272000,
         "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent.",
-        "snapshot_retirement_note": "OpenAI announced removal of the dated default snapshot on 2026-12-11 (https://developers.openai.com/api/docs/deprecations); the undated ID is retained until OpenAI repoints or removes it."
+        "deprecated": "2026-06-11",
+        "retirement": "2026-12-11",
+        "replacement": "gpt-5.6-terra",
+        "deprecation_source": "https://developers.openai.com/api/docs/deprecations",
+        "deprecation_verified": "2026-11-01: GET /v1/models/gpt-5-mini reports shutdown_date 2026-12-11 for the undated ID itself (not only the dated snapshot); still callable until shutdown."
       }
     },
     {
       "id": "gpt-5-nano",
       "provider": "openai",
       "context_window": 400000,
-      "frontend": true,
+      "frontend": false,
       "alias_for": null,
       "thinking": {
         "supported": true,
@@ -998,7 +1092,7 @@
       "metadata": {
         "source": "https://developers.openai.com/api/docs/models/gpt-5-nano",
         "retrieved": "2026-10-04",
-        "release_stage": "stable",
+        "release_stage": "deprecated",
         "endpoints": [
           "chat_completions",
           "responses"
@@ -1014,7 +1108,11 @@
         "wire_verified": "2026-10-04: Chat Completions accepted omission and minimal|low|medium|high; invalid efforts rejected before inference.",
         "max_input_tokens": 272000,
         "sampling_note": "Non-default temperature is unsupported on active Chat Completions; the SDK omits temperature even when thinking_level is absent.",
-        "snapshot_retirement_note": "OpenAI announced removal of the dated default snapshot on 2026-12-11 (https://developers.openai.com/api/docs/deprecations); the undated ID is retained until OpenAI repoints or removes it."
+        "deprecated": "2026-06-11",
+        "retirement": "2026-12-11",
+        "replacement": "gpt-5.6-luna",
+        "deprecation_source": "https://developers.openai.com/api/docs/deprecations",
+        "deprecation_verified": "2026-11-01: GET /v1/models/gpt-5-nano reports shutdown_date 2026-12-11 for the undated ID itself (not only the dated snapshot); still callable until shutdown."
       }
     },
     {
@@ -1928,17 +2026,39 @@
     {
       "id": "claude-opus-4-1",
       "provider": "anthropic",
-      "context_window": 200000,
+      "context_window": 1000000,
       "frontend": false,
-      "alias_for": null,
+      "alias_for": "claude-opus-4-8",
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
-        "adaptive_thinking": false,
-        "omit_parameters": []
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "retirement": "2026-08-05",
+        "retired_snapshot": "claude-opus-4-1-20250805",
+        "replacement": "claude-opus-4-8",
+        "local_substitute": "claude-opus-4-8",
+        "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations",
+        "retrieved": "2026-11-01",
+        "wire_verified": "2026-11-01: authenticated Messages API returned HTTP 404 not_found_error for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to Anthropic's documented replacement so saved flows keep running. Never sent upstream."
       }
     },
     {
@@ -2015,33 +2135,77 @@
     {
       "id": "claude-sonnet-4-0",
       "provider": "anthropic",
-      "context_window": 200000,
+      "context_window": 1000000,
       "frontend": false,
-      "alias_for": null,
+      "alias_for": "claude-sonnet-5-5",
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
-        "adaptive_thinking": false,
-        "omit_parameters": []
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "retirement": "2026-06-15",
+        "retired_snapshot": "claude-sonnet-4-20250514",
+        "replacement": "claude-sonnet-5-5",
+        "local_substitute": "claude-sonnet-5-5",
+        "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations",
+        "retrieved": "2026-11-01",
+        "wire_verified": "2026-11-01: authenticated Messages API returned HTTP 404 not_found_error for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to Anthropic's documented replacement so saved flows keep running. Never sent upstream."
       }
     },
     {
       "id": "claude-sonnet-4-20250514",
       "provider": "anthropic",
-      "context_window": 200000,
+      "context_window": 1000000,
       "frontend": false,
-      "alias_for": null,
+      "alias_for": "claude-sonnet-5-5",
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
-        "adaptive_thinking": false,
-        "omit_parameters": []
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "retirement": "2026-06-15",
+        "retired_snapshot": "claude-sonnet-4-20250514",
+        "replacement": "claude-sonnet-5-5",
+        "local_substitute": "claude-sonnet-5-5",
+        "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations",
+        "retrieved": "2026-11-01",
+        "wire_verified": "2026-11-01: authenticated Messages API returned HTTP 404 not_found_error for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to Anthropic's documented replacement so saved flows keep running. Never sent upstream."
       }
     },
     {
@@ -2078,33 +2242,77 @@
     {
       "id": "claude-3-7-sonnet-latest",
       "provider": "anthropic",
-      "context_window": 200000,
+      "context_window": 1000000,
       "frontend": false,
-      "alias_for": null,
+      "alias_for": "claude-sonnet-5-5",
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
-        "adaptive_thinking": false,
-        "omit_parameters": []
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "retirement": "2026-02-19",
+        "retired_snapshot": "claude-3-7-sonnet-20250219",
+        "replacement": "claude-sonnet-5-5",
+        "local_substitute": "claude-sonnet-5-5",
+        "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations",
+        "retrieved": "2026-11-01",
+        "wire_verified": "2026-11-01: authenticated Messages API returned HTTP 404 not_found_error for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to Anthropic's documented replacement so saved flows keep running. Never sent upstream."
       }
     },
     {
       "id": "claude-3-5-sonnet-latest",
       "provider": "anthropic",
-      "context_window": 200000,
+      "context_window": 1000000,
       "frontend": false,
-      "alias_for": null,
+      "alias_for": "claude-sonnet-5-5",
       "thinking": {
-        "supported": false,
-        "levels": [],
-        "default": null,
-        "omitted_behavior": "no_provider_parameter",
-        "translation": null,
-        "adaptive_thinking": false,
-        "omit_parameters": []
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature"
+        ]
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "retirement": "2025-10-28",
+        "retired_snapshot": "claude-3-5-sonnet-20241022",
+        "replacement": "claude-sonnet-5-5",
+        "local_substitute": "claude-sonnet-5-5",
+        "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations",
+        "retrieved": "2026-11-01",
+        "wire_verified": "2026-11-01: authenticated Messages API returned HTTP 404 not_found_error for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to Anthropic's documented replacement so saved flows keep running. Never sent upstream."
       }
     },
     {
@@ -2112,7 +2320,7 @@
       "provider": "anthropic",
       "context_window": 200000,
       "frontend": false,
-      "alias_for": null,
+      "alias_for": "claude-haiku-4-5",
       "thinking": {
         "supported": false,
         "levels": [],
@@ -2121,6 +2329,17 @@
         "translation": null,
         "adaptive_thinking": false,
         "omit_parameters": []
+      },
+      "metadata": {
+        "release_stage": "retired",
+        "retirement": "2026-02-19",
+        "retired_snapshot": "claude-3-5-haiku-20241022",
+        "replacement": "claude-haiku-4-5",
+        "local_substitute": "claude-haiku-4-5",
+        "source": "https://platform.claude.com/docs/en/about-claude/model-deprecations",
+        "retrieved": "2026-11-01",
+        "wire_verified": "2026-11-01: authenticated Messages API returned HTTP 404 not_found_error for this ID; substitute accepted.",
+        "compatibility_note": "Retired upstream; resolved locally to Anthropic's documented replacement so saved flows keep running. Never sent upstream."
       }
     },
     {
@@ -2913,9 +3132,7 @@
           "code_execution",
           "file_search",
           "google_maps_grounding",
-          "agentic_video_understanding"
-        ],
-        "preview_tools": [
+          "agentic_video_understanding",
           "computer_use"
         ],
         "caching": "implicit_only",
@@ -2932,7 +3149,8 @@
           "thinking_budget"
         ],
         "thinking_always_on": true,
-        "recommended_http_timeout_seconds": 1200
+        "recommended_http_timeout_seconds": 1200,
+        "computer_use_ga": "2026-10-30 (https://ai.google.dev/gemini-api/docs/changelog; supported model list https://ai.google.dev/gemini-api/docs/computer-use#model-versions)"
       }
     },
     {
@@ -3473,6 +3691,7 @@
       "gpt-6-sol",
       "gpt-6-luna",
       "gpt-6.1-sol",
+      "gpt-6.1-terra",
       "o3",
       "o4-mini"
     ],
@@ -3486,6 +3705,7 @@
       "o3",
       "o3-mini",
       "gpt-6.1-sol",
+      "gpt-6.1-terra",
       "o4-mini",
       "gpt-5.5",
       "gpt-5.6",
@@ -3669,11 +3889,11 @@
     },
     "anthropic_deprecations": {
       "url": "https://platform.claude.com/docs/en/about-claude/model-deprecations",
-      "retrieved": "2026-10-11"
+      "retrieved": "2026-11-01"
     },
     "openai_deprecations": {
       "url": "https://developers.openai.com/api/docs/deprecations",
-      "retrieved": "2026-10-25"
+      "retrieved": "2026-11-01"
     },
     "gemini_deprecations": {
       "url": "https://ai.google.dev/gemini-api/docs/deprecations",
@@ -3686,9 +3906,13 @@
     "anthropic_api_2026_10_21": {
       "url": "https://platform.claude.com/docs/en/api/migration-2026-10-21",
       "retrieved": "2026-10-25"
+    },
+    "openai_gpt_6_1_terra": {
+      "url": "https://developers.openai.com/api/docs/models/gpt-6.1-terra",
+      "retrieved": "2026-11-01"
     }
   },
-  "catalog_date": "2026-10-25",
+  "catalog_date": "2026-11-01",
   "omitted_thinking_level_behavior": "Omit all provider thinking/reasoning fields and preserve historical provider defaults.",
-  "catalog_version": "2026-10-25"
+  "catalog_version": "2026-11-01"
 }

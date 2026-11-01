@@ -23,7 +23,9 @@ def test_argon_stable_unified_context_long_decode_metadata():
     assert metadata['default_max_output_tokens'] == 65_536
     assert metadata['per_request_output_tokens'] == {'rest_nonstream': 32_768, 'stream': 65_536}
     assert metadata['caching'] == 'implicit_only'
-    assert metadata['preview_tools'] == ['computer_use']
+    # Computer Use went GA on 2026-10-30 (see test_november_01_2026_catalog).
+    assert 'computer_use' in metadata['tools']
+    assert 'preview_tools' not in metadata
     assert metadata['modalities']['input'] == ['text', 'image', 'video', 'audio', 'pdf']
     assert metadata['modalities']['output'] == ['text']
     assert list_thinking_levels(model) == ['low', 'medium', 'high']

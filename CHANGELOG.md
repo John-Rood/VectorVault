@@ -1,5 +1,13 @@
 # Changelog
 
+## 7.4.9.33 - 2026-11-01
+
+- Add OpenAI `gpt-6.1-terra` (released October 26, 2026; stable; 1,050,000 context, 922,000 max input, 128,000 output; text+image input). The active Chat Completions route accepts `none|low|medium|high|xhigh` (provider default `medium`) and rejects `minimal` and the Responses-only `max` (wire-verified November 1). Non-default `temperature` is omitted unconditionally and function tools on Chat Completions require `none`, matching the GPT-6 family.
+- OpenAI's `GET /v1/models` now reports `shutdown_date: 2026-12-11` for the undated `o3`, `gpt-5-mini`, `gpt-5-nano`, `gpt-5` and `o3-pro` IDs themselves (deprecations page, June 11 notice). Hide `o3`, `gpt-5-mini` and `gpt-5-nano` from current selectors and record deprecation/replacement metadata (`gpt-5.6-sol` / `gpt-5.6-terra` / `gpt-5.6-luna`). They still call themselves upstream until shutdown; saved-flow thinking levels are unchanged. Record `gpt-5.1` deprecation (shutdown 2027-04-01, replacement `gpt-6-sol`).
+- Route retired Anthropic IDs that now return HTTP 404 locally to Anthropic's documented replacements so saved flows keep running: `claude-opus-4-1` -> `claude-opus-4-8`; `claude-sonnet-4-0`, `claude-sonnet-4-20250514`, `claude-3-7-sonnet-latest`, `claude-3-5-sonnet-latest` -> `claude-sonnet-5-5`; `claude-3-5-haiku-latest` -> `claude-haiku-4-5`. Retired IDs are never sent upstream and inherit the replacement's limits, thinking contract and sampling rules.
+- Gemini Computer Use reached GA on October 30: record `computer_use` as a supported (not preview) Gemini 4 Argon tool.
+- Defaults, aliases and every other current thinking contract are unchanged (re-verified on the wire November 1).
+
 ## 7.4.9.32 - 2026-10-25
 
 - OpenAI shut down `o4-mini`, `o1`, `o3-mini`, `gpt-4` and `gpt-3.5-turbo` on October 23, 2026 (authenticated Chat Completions now returns HTTP 404 `model_not_found`). Remove `o4-mini` from current selectors and resolve every retired ID locally to OpenAI's documented substitute (`gpt-5.6-terra` for o4-mini/gpt-3.5-turbo, `gpt-5.6-sol` for o1/o3-mini/gpt-4) so saved flows keep running; retired IDs are never sent upstream.

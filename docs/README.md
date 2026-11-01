@@ -143,8 +143,8 @@ vault = Vault(user='your_email',
 ```python
 # OpenAI models (requires openai_key)
 vault.get_chat("Hello", model="gpt-6-astra")
-vault.get_chat("Hello", model="gpt-5-mini")
-vault.get_chat("Hello", model="o1")
+vault.get_chat("Hello", model="gpt-6.1-terra")
+vault.get_chat("Hello", model="gpt-6-luna", thinking_level="low")
 
 # Grok models (requires grok_key)  
 vault.get_chat("Hello", model="grok-4.5")

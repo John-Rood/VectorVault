@@ -13,6 +13,8 @@ authors = [{name = "John Rood", email = "john@johnrood.com"}]
 dependencies = [
   "numpy",
   "requests",
+  # Security floor for Requests' transport (CVE-2026-97687/97688/97689).
+  "urllib3>=2.8.0",
   "bs4",
   "google-cloud-storage",
   "annoy",

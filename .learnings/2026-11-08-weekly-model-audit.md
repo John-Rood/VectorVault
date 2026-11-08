@@ -1,0 +1,7 @@
+# November 8, 2026 model audit
+
+- Google deprecated gemini-2.5-pro and gemini-2.5-flash November 2. Hide only new selections, retaining original IDs and budget-only/no-named-level semantics until the provider's December 1 redirect (3.8 Flash / 3.5 Flash-Lite). Do not prematurely alias them or silently acquire successor thinking controls. Flash-Lite 2.5 is explicitly not part of this deprecation; its prior account restriction remains.
+- Google's canonical documentation moved to https://aistudio.google.com/docs/; old ai.google.dev fetches can 404 while the browser redirects successfully.
+- Fresh current SDK resolution (openai 3.46 / anthropic 2.6 / google-genai 3) uses httpx2 transitively, no longer installing httpx. VectorVault imports httpx directly in ai.py, so declare it explicitly; clean-install verification must never rely on an old environment masking this missing dependency.
+- Package tests: 172 passed. Current canonical provider matrix: 186/186 successful calls, omission plus every declared thinking level for 38 unique selectable canonical models. Defaults and all current effort sets remain unchanged.
+- GPT-6-Cyber is Daybreak-approval restricted, not a public general text-selector addition. No other current text model changes identified from official OpenAI/Anthropic/xAI/Google catalogs, release notes and authenticated model listings.

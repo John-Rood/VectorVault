@@ -17,9 +17,11 @@ def _numeric_version(value):
 
 def test_canonical_release_metadata_and_dependency_floors():
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    assert re.search(r'^version = "7\.4\.9\.33"$', pyproject, re.MULTILINE)
+    assert re.search(r'^version = "7\.4\.9\.34"$', pyproject, re.MULTILINE)
     assert re.search(r'^requires-python = ">=3\.10"$', pyproject, re.MULTILINE)
     assert '"google-genai>=2.30.1"' in pyproject
+    # Current provider SDKs use httpx2; our direct import still needs httpx.
+    assert '"httpx"' in pyproject
     assert not (ROOT / "setup.py").exists()
 
     lock_path = ROOT / "uv.lock"
@@ -27,7 +29,7 @@ def test_canonical_release_metadata_and_dependency_floors():
         lockfile = lock_path.read_text(encoding="utf-8")
         assert re.search(r'^requires-python = ">=3\.10"$', lockfile, re.MULTILINE)
         assert re.search(
-            r'^name = "vector-vault"\nversion = "7\.4\.9\.33"$',
+            r'^name = "vector-vault"\nversion = "7\.4\.9\.34"$',
             lockfile,
             re.MULTILINE,
         )

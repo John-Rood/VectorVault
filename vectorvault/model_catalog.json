@@ -3496,7 +3496,7 @@
       "id": "gemini-2.5-pro",
       "provider": "gemini",
       "context_window": 1048576,
-      "frontend": true,
+      "frontend": false,
       "alias_for": null,
       "thinking": {
         "supported": false,
@@ -3516,14 +3516,21 @@
         ],
         "output_modalities": [
           "text"
-        ]
+        ],
+        "release_stage": "deprecated",
+        "deprecated": "2026-11-02",
+        "provider_redirect_date": "2026-12-01",
+        "replacement": "gemini-3.8-flash",
+        "source": "https://aistudio.google.com/docs/deprecations",
+        "retrieved": "2026-11-08",
+        "deprecation_note": "Deprecated by Google on 2026-11-02 and unavailable in new selectors. Effective 2026-12-01, Google automatically routes requests to gemini-3.8-flash; review thought signatures, thinking_budget migration and sampling compatibility before that date. Retained without a premature local alias for saved flows; current budget-only thinking behavior is unchanged."
       }
     },
     {
       "id": "gemini-2.5-flash",
       "provider": "gemini",
       "context_window": 1048576,
-      "frontend": true,
+      "frontend": false,
       "alias_for": null,
       "thinking": {
         "supported": false,
@@ -3543,7 +3550,14 @@
         ],
         "output_modalities": [
           "text"
-        ]
+        ],
+        "release_stage": "deprecated",
+        "deprecated": "2026-11-02",
+        "provider_redirect_date": "2026-12-01",
+        "replacement": "gemini-3.5-flash-lite",
+        "source": "https://aistudio.google.com/docs/deprecations",
+        "retrieved": "2026-11-08",
+        "deprecation_note": "Deprecated by Google on 2026-11-02 and unavailable in new selectors. Effective 2026-12-01, Google automatically routes requests to gemini-3.5-flash-lite; review thought signatures, thinking_budget migration and sampling compatibility before that date. Retained without a premature local alias for saved flows; current budget-only thinking behavior is unchanged."
       }
     },
     {
@@ -3896,8 +3910,8 @@
       "retrieved": "2026-11-01"
     },
     "gemini_deprecations": {
-      "url": "https://ai.google.dev/gemini-api/docs/deprecations",
-      "retrieved": "2026-10-11"
+      "url": "https://aistudio.google.com/docs/deprecations",
+      "retrieved": "2026-11-08"
     },
     "anthropic_computer_use": {
       "url": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/computer-use-tool",
@@ -3910,9 +3924,13 @@
     "openai_gpt_6_1_terra": {
       "url": "https://developers.openai.com/api/docs/models/gpt-6.1-terra",
       "retrieved": "2026-11-01"
+    },
+    "gemini_november_2_deprecations": {
+      "url": "https://aistudio.google.com/docs/changelog#11-02-2026",
+      "retrieved": "2026-11-08"
     }
   },
-  "catalog_date": "2026-11-01",
+  "catalog_date": "2026-11-08",
   "omitted_thinking_level_behavior": "Omit all provider thinking/reasoning fields and preserve historical provider defaults.",
-  "catalog_version": "2026-11-01"
+  "catalog_version": "2026-11-08"
 }

@@ -168,4 +168,4 @@ def test_defaults_unchanged_and_catalog_version():
         'openai': 'gpt-6-astra', 'anthropic': 'claude-opus-5-5',
         'grok': 'grok-4.7', 'gemini': 'gemini-3.8-flash',
     }
-    assert catalog['catalog_version'] == '2026-11-01'
+    assert catalog['catalog_version'] >= '2026-11-01'

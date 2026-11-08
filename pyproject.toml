@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vector-vault"
-version = "7.4.9.33"
+version = "7.4.9.34"
 description = "Vector database and generative AI cloud storage"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -13,6 +13,7 @@ authors = [{name = "John Rood", email = "john@johnrood.com"}]
 dependencies = [
   "numpy",
   "requests",
+  "httpx",
   "bs4",
   "google-cloud-storage",
   "annoy",

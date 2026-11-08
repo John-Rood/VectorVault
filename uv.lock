@@ -1472,7 +1472,7 @@ wheels = [
 
 [[package]]
 name = "vector-vault"
-version = "7.4.9.33"
+version = "7.4.9.34"
 source = { editable = "." }
 dependencies = [
     { name = "annoy" },
@@ -1481,6 +1481,7 @@ dependencies = [
     { name = "faiss-cpu" },
     { name = "google-cloud-storage" },
     { name = "google-genai" },
+    { name = "httpx" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
     { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
@@ -1498,6 +1499,7 @@ requires-dist = [
     { name = "faiss-cpu" },
     { name = "google-cloud-storage" },
     { name = "google-genai", specifier = ">=2.30.1" },
+    { name = "httpx" },
     { name = "numpy" },
     { name = "openai" },
     { name = "pymupdf" },

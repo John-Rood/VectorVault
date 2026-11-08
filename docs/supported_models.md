@@ -41,6 +41,12 @@ Google deprecated `gemini-2.5-pro` and `gemini-2.5-flash` on **November 2, 2026*
 
 Use an explicit compatibility ID only while migrating an existing workload. New code should use the recommended default alias or a current stable ID from the table above.
 
+## Embedding and media boundaries
+
+The current model table and thinking selectors above cover text-chat execution. The Cloud app defaults to OpenAI `text-embedding-3-small` for retrieval and exposes Small/Large OpenAI embedding choices; a text-model update is not an embedding-space migration.
+
+**Known SDK limitation found November 8:** the optional `GeminiPlatform.create_embeddings` adapter still references retired `models/text-embedding-004` as its default (Google shutdown: January 14, 2026) and uses an incompatible `content` argument with the current Google Python SDK. Direct Gemini embedding use requires a separate adapter/migration repair; it is not certified by this text/thinking release. Do not silently substitute a different embedding model for an existing vault: embedding-space compatibility and any required re-indexing must be verified first. Google's November 6 redirect from `gemini-embedding-2-preview` to `gemini-embedding-2` is a separate same-space provider migration, not a safe substitute for old `text-embedding-004` vectors.
+
 ## November 8, 2026 update
 
 - **Google 2.5 deprecations**: hide `gemini-2.5-pro` / `gemini-2.5-flash` from new selectors; publish December 1 provider redirect metadata, preserving saved-flow IDs and no-named-thinking semantics. There are **43** current selector rows (previously 45), including aliases and Default.

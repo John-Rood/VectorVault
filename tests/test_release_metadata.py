@@ -1,6 +1,7 @@
 from importlib.metadata import version
 from pathlib import Path
 import re
+import sys
 import warnings
 
 from google.genai import types
@@ -18,8 +19,9 @@ def _numeric_version(value):
 def test_canonical_release_metadata_and_dependency_floors():
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     assert re.search(r'^version = "7\.4\.9\.35"$', pyproject, re.MULTILINE)
-    assert re.search(r'^requires-python = ">=3\.11"$', pyproject, re.MULTILINE)
-    assert '"google-genai>=3.3.0"' in pyproject
+    assert re.search(r'^requires-python = ">=3\.10"$', pyproject, re.MULTILINE)
+    assert '"google-genai>=2.30.1; python_version < \'3.11\'"' in pyproject
+    assert '"google-genai>=3.3.0; python_version >= \'3.11\'"' in pyproject
     # Current provider SDKs use httpx2; our direct import still needs httpx.
     assert '"httpx"' in pyproject
     assert not (ROOT / "setup.py").exists()
@@ -27,17 +29,19 @@ def test_canonical_release_metadata_and_dependency_floors():
     lock_path = ROOT / "uv.lock"
     if lock_path.is_file():
         lockfile = lock_path.read_text(encoding="utf-8")
-        assert re.search(r'^requires-python = ">=3\.11"$', lockfile, re.MULTILINE)
+        assert re.search(r'^requires-python = ">=3\.10"$', lockfile, re.MULTILINE)
         assert re.search(
             r'^name = "vector-vault"\nversion = "7\.4\.9\.35"$',
             lockfile,
             re.MULTILINE,
         )
-        assert '{ name = "google-genai", specifier = ">=3.3.0" }' in lockfile
+        assert 'specifier = ">=3.3.0"' in lockfile
+        assert 'specifier = ">=2.30.1"' in lockfile
 
 
 def test_declared_google_genai_floor_supports_every_gemini_level():
-    assert _numeric_version(version("google-genai")) >= (3, 3, 0)
+    sdk_version = _numeric_version(version("google-genai"))
+    assert sdk_version >= ((3, 3, 0) if sys.version_info >= (3, 11) else (2, 30, 1))
     assert "thinking_level" in types.ThinkingConfig.model_fields
 
     for level in ("MINIMAL", "LOW", "MEDIUM", "HIGH", "XHIGH"):
@@ -47,5 +51,10 @@ def test_declared_google_genai_floor_supports_every_gemini_level():
                 thinking_config=types.ThinkingConfig(thinking_level=level)
             )
             serialized = config.model_dump(exclude_none=True, mode="json")
-        assert caught == []
+        # Older Python3.10-compatible SDKs serialize the wire-verified value,
+        # but warn because their enum predates Hydrogen. No value is dropped.
+        if level == "XHIGH" and sdk_version < (3, 3, 0):
+            assert caught and all("not a valid ThinkingLevel" in str(w.message) for w in caught)
+        else:
+            assert caught == []
         assert serialized == {"thinking_config": {"thinking_level": level}}

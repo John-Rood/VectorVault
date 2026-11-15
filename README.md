@@ -191,7 +191,7 @@ Local mode stores everything in `~/.vectorvault/`. Cloud mode syncs to our manag
 
 ## Requirements
 
-- Python 3.11+ (required by the Google GenAI SDK for current Gemini thinking levels)
+- Python 3.10+ (Python 3.11+ uses the current Google GenAI SDK; 3.10 retains a compatible older SDK)
 - OpenAI API key (for embeddings)
 
 ## Resources

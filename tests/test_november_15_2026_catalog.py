@@ -17,6 +17,7 @@ MODELS = {
 def test_new_public_models_limits_defaults_and_omission(model):
     levels, default = MODELS[model]
     assert model in get_front_models()
+    assert load_model_catalog()['catalog_date'] == load_model_catalog()['catalog_version'] == '2026-11-15'
     capability = get_model_capability(model)
     assert capability['context_window'] == (1_000_000 if model.startswith('claude') else 1_048_576)
     assert capability['metadata']['max_output_tokens'] == (128_000 if model.startswith('claude') else 1_048_576)

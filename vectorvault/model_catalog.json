@@ -1502,6 +1502,70 @@
       }
     },
     {
+      "id": "claude-fable-5-2",
+      "provider": "anthropic",
+      "context_window": 1000000,
+      "frontend": true,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "anthropic_effort",
+          "parameter": "output_config.effort"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature",
+          "top_p",
+          "top_k"
+        ]
+      },
+      "metadata": {
+        "max_input_tokens": 1000000,
+        "max_output_tokens": 128000,
+        "modalities": {
+          "input": [
+            "text",
+            "image"
+          ],
+          "output": [
+            "text"
+          ]
+        },
+        "endpoints": [
+          "messages"
+        ],
+        "tools": [
+          "function_calling",
+          "web_search",
+          "web_fetch",
+          "code_execution",
+          "browser_use",
+          "computer_use"
+        ],
+        "release_stage": "stable",
+        "source": "https://platform.claude.com/docs/en/models/fable-5-2/overview",
+        "retrieved": "2026-11-15",
+        "released": "2026-11-09",
+        "preserved_thinking_note": "Thinking blocks are conversation-prefix and account bound. Keep prior returned blocks unchanged; VectorVault text chat does not replay provider thinking blocks.",
+        "zero_data_retention_note": "Requires 30-day provider data retention; not available under zero data retention unless expressly authorized by Anthropic. Do not select for workloads requiring those controls without provider authorization.",
+        "thinking_always_on": true,
+        "unsupported_tool_choice": [
+          "any",
+          "tool"
+        ],
+        "computer_use_tool_version": "computer_toolset_20260801"
+      }
+    },
+    {
       "id": "claude-fable-5-1",
       "provider": "anthropic",
       "context_window": 1000000,
@@ -3072,6 +3136,175 @@
       }
     },
     {
+      "id": "gemini-4-carbon",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": true,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "default": "medium",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_level",
+          "parameter": "thinking_config.thinking_level"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature",
+          "top_p",
+          "top_k",
+          "candidate_count",
+          "thinking_budget"
+        ]
+      },
+      "metadata": {
+        "max_input_tokens": 1048576,
+        "max_output_tokens": 1048576,
+        "context_accounting": "unified_input_thinking_output",
+        "default_max_output_tokens": 65536,
+        "per_request_output_tokens": {
+          "rest_nonstream": 32768,
+          "stream": 65536
+        },
+        "long_decode_requires": "google-genai>=3.3.0; max_output_tokens>65536; total input+thinking+output<=1048576",
+        "modalities": {
+          "input": [
+            "text",
+            "image",
+            "video",
+            "audio",
+            "pdf"
+          ],
+          "output": [
+            "text"
+          ]
+        },
+        "endpoints": [
+          "generate_content",
+          "stream_generate_content"
+        ],
+        "tools": [
+          "function_calling",
+          "structured_outputs",
+          "search_grounding",
+          "url_context",
+          "code_execution",
+          "file_search",
+          "google_maps_grounding",
+          "agentic_video_understanding",
+          "computer_use"
+        ],
+        "caching": "implicit_only",
+        "release_stage": "ga",
+        "released": "2026-11-10",
+        "source": "https://aistudio.google.com/docs/models/gemini-4-carbon",
+        "retrieved": "2026-11-15",
+        "unsupported_parameters": [
+          "temperature",
+          "top_p",
+          "top_k",
+          "candidate_count",
+          "cached_content",
+          "thinking_budget"
+        ],
+        "thinking_always_on": true,
+        "recommended_http_timeout_seconds": 1200,
+        "computer_use_ga": "2026-11-10",
+        "long_decode_note": "Input, thinking and output share 1,048,576 tokens. Default output limit is 65,536; REST non-streaming hops cap at 32,768 and streaming at 65,536. Generate Content client-side continuation can reach the remaining window; Interactions additionally supports background execution. Token counts include thinking.",
+        "thinking_note": "Named levels only; no minimal/off or numeric budget control. The provider ignores in-range sampling values; VectorVault omits sampling, candidate_count and explicit cached_content. Omitted thinking preserves the provider default medium."
+      }
+    },
+    {
+      "id": "gemini-4-hydrogen",
+      "provider": "gemini",
+      "context_window": 1048576,
+      "frontend": true,
+      "thinking": {
+        "supported": true,
+        "levels": [
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
+        "default": "high",
+        "omitted_behavior": "provider_default",
+        "translation": {
+          "kind": "gemini_thinking_level",
+          "parameter": "thinking_config.thinking_level"
+        },
+        "adaptive_thinking": true,
+        "omit_parameters": [
+          "temperature",
+          "top_p",
+          "top_k",
+          "candidate_count",
+          "thinking_budget"
+        ]
+      },
+      "metadata": {
+        "max_input_tokens": 1048576,
+        "max_output_tokens": 1048576,
+        "context_accounting": "unified_input_thinking_output",
+        "default_max_output_tokens": 65536,
+        "per_request_output_tokens": {
+          "rest_nonstream": 65536,
+          "stream": 65536
+        },
+        "long_decode_requires": "google-genai>=3.3.0; max_output_tokens>65536; total input+thinking+output<=1048576",
+        "modalities": {
+          "input": [
+            "text",
+            "image",
+            "video",
+            "audio",
+            "pdf"
+          ],
+          "output": [
+            "text"
+          ]
+        },
+        "endpoints": [
+          "generate_content",
+          "stream_generate_content"
+        ],
+        "tools": [
+          "function_calling",
+          "structured_outputs",
+          "search_grounding",
+          "url_context",
+          "code_execution",
+          "file_search",
+          "google_maps_grounding",
+          "agentic_video_understanding",
+          "computer_use"
+        ],
+        "caching": "implicit_only",
+        "release_stage": "ga",
+        "released": "2026-11-12",
+        "source": "https://aistudio.google.com/docs/models/gemini-4-hydrogen",
+        "retrieved": "2026-11-15",
+        "unsupported_parameters": [
+          "temperature",
+          "top_p",
+          "top_k",
+          "candidate_count",
+          "cached_content",
+          "thinking_budget"
+        ],
+        "thinking_always_on": true,
+        "recommended_http_timeout_seconds": 1200,
+        "computer_use_ga": "2026-11-12",
+        "long_decode_note": "Input, thinking and output share 1,048,576 tokens. Default output limit is 65,536; REST non-streaming hops cap at 65,536 and streaming at 65,536. Generate Content client-side continuation can reach the remaining window; Interactions additionally supports background execution. Token counts include thinking.",
+        "thinking_note": "Named levels only; no minimal/off or numeric budget control. The provider ignores in-range sampling values; VectorVault omits sampling, candidate_count and explicit cached_content. Omitted thinking preserves the provider default high."
+      }
+    },
+    {
       "id": "gemini-4-argon",
       "provider": "gemini",
       "context_window": 1048576,
@@ -3743,7 +3976,8 @@
       "claude-opus-4-7",
       "claude-opus-4-6",
       "claude-sonnet-5-5",
-      "claude-haiku-5-5"
+      "claude-haiku-5-5",
+      "claude-fable-5-2"
     ],
     "GEMINI_MULTIMODAL_MODELS": [
       "gemini-3.8-flash",
@@ -3761,7 +3995,9 @@
       "gemini-3-pro-preview",
       "gemini-3-pro-image",
       "gemini-3-pro-image-preview",
-      "gemini-4-argon"
+      "gemini-4-argon",
+      "gemini-4-carbon",
+      "gemini-4-hydrogen"
     ],
     "GEMINI_THINKING_MODELS": [
       "gemini-3.8-flash",
@@ -3777,7 +4013,9 @@
       "gemini-2.5-flash-lite",
       "gemini-2.0-flash",
       "gemini-latest",
-      "gemini-4-argon"
+      "gemini-4-argon",
+      "gemini-4-carbon",
+      "gemini-4-hydrogen"
     ]
   },
   "references": {
@@ -3928,9 +4166,16 @@
     "gemini_november_2_deprecations": {
       "url": "https://aistudio.google.com/docs/changelog#11-02-2026",
       "retrieved": "2026-11-08"
-    }
+    },
+    "anthropic-fable-5-2": "https://platform.claude.com/docs/en/models/fable-5-2/overview",
+    "anthropic-fable-5-2-changes": "https://platform.claude.com/docs/en/models/fable-5-2/whats-new-fable-5-2",
+    "gemini-4-carbon": "https://aistudio.google.com/docs/models/gemini-4-carbon",
+    "gemini-4-carbon-changes": "https://aistudio.google.com/docs/whats-new-gemini-4-carbon",
+    "gemini-4-hydrogen": "https://aistudio.google.com/docs/models/gemini-4-hydrogen",
+    "gemini-4-hydrogen-changes": "https://aistudio.google.com/docs/whats-new-gemini-4-hydrogen",
+    "gemini-4-long-decode": "https://aistudio.google.com/docs/long-decode"
   },
   "catalog_date": "2026-11-08",
   "omitted_thinking_level_behavior": "Omit all provider thinking/reasoning fields and preserve historical provider defaults.",
-  "catalog_version": "2026-11-08"
+  "catalog_version": "2026-11-15"
 }

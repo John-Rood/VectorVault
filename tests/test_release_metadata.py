@@ -17,9 +17,9 @@ def _numeric_version(value):
 
 def test_canonical_release_metadata_and_dependency_floors():
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    assert re.search(r'^version = "7\.4\.9\.34"$', pyproject, re.MULTILINE)
-    assert re.search(r'^requires-python = ">=3\.10"$', pyproject, re.MULTILINE)
-    assert '"google-genai>=2.30.1"' in pyproject
+    assert re.search(r'^version = "7\.4\.9\.35"$', pyproject, re.MULTILINE)
+    assert re.search(r'^requires-python = ">=3\.11"$', pyproject, re.MULTILINE)
+    assert '"google-genai>=3.3.0"' in pyproject
     # Current provider SDKs use httpx2; our direct import still needs httpx.
     assert '"httpx"' in pyproject
     assert not (ROOT / "setup.py").exists()
@@ -27,20 +27,20 @@ def test_canonical_release_metadata_and_dependency_floors():
     lock_path = ROOT / "uv.lock"
     if lock_path.is_file():
         lockfile = lock_path.read_text(encoding="utf-8")
-        assert re.search(r'^requires-python = ">=3\.10"$', lockfile, re.MULTILINE)
+        assert re.search(r'^requires-python = ">=3\.11"$', lockfile, re.MULTILINE)
         assert re.search(
-            r'^name = "vector-vault"\nversion = "7\.4\.9\.34"$',
+            r'^name = "vector-vault"\nversion = "7\.4\.9\.35"$',
             lockfile,
             re.MULTILINE,
         )
-        assert '{ name = "google-genai", specifier = ">=2.30.1" }' in lockfile
+        assert '{ name = "google-genai", specifier = ">=3.3.0" }' in lockfile
 
 
 def test_declared_google_genai_floor_supports_every_gemini_level():
-    assert _numeric_version(version("google-genai")) >= (2, 30, 1)
+    assert _numeric_version(version("google-genai")) >= (3, 3, 0)
     assert "thinking_level" in types.ThinkingConfig.model_fields
 
-    for level in ("MINIMAL", "LOW", "MEDIUM", "HIGH"):
+    for level in ("MINIMAL", "LOW", "MEDIUM", "HIGH", "XHIGH"):
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             config = types.GenerateContentConfig(

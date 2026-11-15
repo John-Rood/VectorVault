@@ -51,7 +51,7 @@ def test_hidden_model_still_emits_exact_legacy_id_and_omits_thinking(model):
 def test_selector_payload_defaults_and_account_restricted_flash_lite():
     current = {r['model'] for r in serialize_model_catalog(frontend=True)['models']}
     all_rows = {r['model']: r for r in serialize_model_catalog(frontend=False)['models']}
-    assert len(current) == 43
+    assert len(current) == 46
     assert current.isdisjoint(DEPRECATED)
     for model, replacement in DEPRECATED.items():
         assert all_rows[model]['metadata']['replacement'] == replacement
@@ -61,4 +61,4 @@ def test_selector_payload_defaults_and_account_restricted_flash_lite():
     assert 'gemini-2.5-flash-lite' not in current
     # Google explicitly says Flash-Lite is not part of the Nov 2 deprecation.
     assert get_model_capability('gemini-2.5-flash-lite')['metadata'].get('release_stage') != 'deprecated'
-    assert load_model_catalog()['catalog_version'] == '2026-11-08'
+    assert load_model_catalog()['catalog_version'] == '2026-11-15'
